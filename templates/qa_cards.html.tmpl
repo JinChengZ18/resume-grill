@@ -114,7 +114,7 @@
   <div class="sub" id="sub"></div>
   <div class="bar" id="bar">
     <span id="tabs"></span>
-    <button class="btn" id="toggleAll">收起全部答案（自测）</button>
+    <button class="btn" id="toggleAll"></button>
     <span class="links" id="links"></span>
   </div>
 </div></header>
@@ -126,15 +126,16 @@
 
 <script>
 const PAYLOAD = /*__PAYLOAD__*/{};
+const L = /*__LABELS__*/{};
 const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const fmt = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
 const meta = PAYLOAD.meta||{};
 const cands = PAYLOAD.candidates||{};
 const ids = Object.keys(cands);
 
-document.getElementById("h1").textContent = meta.title || "提问-回答攻防卡片";
-document.getElementById("sub").textContent = meta.subtitle || "对抗性技术面试 · 建议提问 → 期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问";
-document.title = meta.title || document.title;
+document.getElementById("h1").textContent = meta.title || L.doc_title;
+document.getElementById("sub").textContent = meta.subtitle || L.sub_default;
+document.title = meta.title || L.doc_title;
 
 // tabs
 document.getElementById("tabs").innerHTML = ids.map((id,i)=>
@@ -151,43 +152,43 @@ function renderCard(c){
   return `<article class="card">
     <div class="card-h"><span class="badge">${esc(c.n)}</span><h3>${esc(c.title)}${anchor}</h3></div>
     ${ladderBlock}
-    <div class="ask"><span class="k">建议提问 · L3 硬核验伪</span>${fmt(c.ask)}</div>
+    <div class="ask"><span class="k">${esc(L.ask_k)}</span>${fmt(c.ask)}</div>
     <details class="ans" open>
-      <summary>参考答案与判分要点</summary>
-      <div class="blk good"><div class="bt">期望的优质回答</div><ul>${li(c.good)}</ul></div>
-      <div class="blk pass"><div class="bt">及格线 · 必须听到</div><ul>${li(c.pass)}</ul></div>
-      <div class="blk tell"><div class="bt">典型露馅</div><p>${fmt(c.tell)}</p></div>
-      <div class="blk probe"><div class="bt">追问</div><p>${fmt(c.probe)}</p></div>
+      <summary>${esc(L.ans_summary)}</summary>
+      <div class="blk good"><div class="bt">${esc(L.good_h)}</div><ul>${li(c.good)}</ul></div>
+      <div class="blk pass"><div class="bt">${esc(L.pass_bt)}</div><ul>${li(c.pass)}</ul></div>
+      <div class="blk tell"><div class="bt">${esc(L.tell_h)}</div><p>${fmt(c.tell)}</p></div>
+      <div class="blk probe"><div class="bt">${esc(L.probe_h)}</div><p>${fmt(c.probe)}</p></div>
     </details>
   </article>`;
 }
 function renderCand(d){
-  const rlink = d.resume ? `<a class="rlink" href="${esc(d.resume)}">📄 原始简历 PDF</a>` : "";
+  const rlink = d.resume ? `<a class="rlink" href="${esc(d.resume)}">${esc(L.resume_link)}</a>` : "";
   const flags = (d.flags||[]).map(f=>`<li>${fmt(f)}</li>`).join("");
   const strengths = (d.strengths||[]).map(s=>`<li>${fmt(s)}</li>`).join("");
   const o = d.opener||{};
   const oq = (o.questions||[]).map(q=>`<li>${fmt(q)}</li>`).join("");
   const opener = o.title ? `<article class="card">
-    <div class="card-h"><span class="badge behav">开场</span><h3>${esc(o.title)}</h3></div>
+    <div class="card-h"><span class="badge behav">${esc(L.opener_badge)}</span><h3>${esc(o.title)}</h3></div>
     <div class="ask"><ul style="margin:0;padding-left:18px">${oq}</ul></div>
-    <div class="behav-note"><b>期望的行为：</b>${fmt(o.expect)}<br><b>露馅：</b>${fmt(o.tell)}</div>
+    <div class="behav-note"><b>${esc(L.opener_expect)}${esc(L.colon)}</b>${fmt(o.expect)}<br><b>${esc(L.opener_tell)}${esc(L.colon)}</b>${fmt(o.tell)}</div>
   </article>` : "";
   const cards = (d.cards||[]).map(renderCard).join("");
   const probes = (d.probes||[]).map(p=>`<li><span class="pt">${esc(p.tag)}</span>${fmt(p.q)}</li>`).join("");
-  const probesBlock = (d.probes||[]).length ? `<details class="probes"><summary>补充探针（${d.probes.length} 条 · 无标准答案，答顺后继续加压）</summary><ul>${probes}</ul></details>` : "";
+  const probesBlock = (d.probes||[]).length ? `<details class="probes"><summary>${esc(L.probes_pre)}${d.probes.length}${esc(L.probes_post)}</summary><ul>${probes}</ul></details>` : "";
   return `<div class="profile">
       <h2>${esc(d.name)}${rlink}</h2>
       <p>${fmt(d.profile)}</p>
       ${d.ruler?`<div class="ruler">${fmt(d.ruler)}</div>`:""}
-      ${(d.strengths||[]).length?`<div class="stitle s-good">★ 亮点 · 真实强项</div><ul class="strengths">${strengths}</ul>`:""}
-      ${(d.flags||[]).length?`<div class="stitle s-flag">▲ 关键红旗</div><ul class="flags">${flags}</ul>`:""}
+      ${(d.strengths||[]).length?`<div class="stitle s-good">${esc(L.strengths_title)}</div><ul class="strengths">${strengths}</ul>`:""}
+      ${(d.flags||[]).length?`<div class="stitle s-flag">${esc(L.flags_title)}</div><ul class="flags">${flags}</ul>`:""}
     </div>${opener}${cards}${probesBlock}`;
 }
 
 const sections = document.getElementById("sections");
 sections.innerHTML = ids.map((id,i)=>
   `<section data-sec="${esc(id)}" class="${i===0?'':'hide'}">${renderCand(cands[id])}</section>`).join("");
-document.getElementById("foot").textContent = meta.footer || "诚实降级（承认课程demo/没上生产/gold自标）应视为强信号，不扣分。";
+document.getElementById("foot").textContent = meta.footer || L.footer_default;
 
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
@@ -198,9 +199,10 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
 }));
 const tgl = document.getElementById("toggleAll");
 let open = true;
+tgl.textContent = L.collapse_all;
 tgl.addEventListener("click",()=>{
   open=!open;
   document.querySelectorAll("details.ans").forEach(d=>d.open=open);
-  tgl.textContent = open ? "收起全部答案（自测）" : "展开全部答案";
+  tgl.textContent = open ? L.collapse_all : L.expand_all;
 });
 </script>

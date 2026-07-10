@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>__TITLE__ · 现场评分卡</title>
+<title>__TITLE__</title>
 <style>
   :root{ --ink:#1a1a1a; --line:#bcbcbc; --soft:#666; --accent:#2b4a7a; --tint:#eef2f8; }
   *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
@@ -42,38 +42,40 @@
 <div id="root"></div>
 <script>
 const PAYLOAD = /*__PAYLOAD__*/{};
+const L = /*__LABELS__*/{};
 const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const box = '<span class="box"></span>';
 const meta = PAYLOAD.meta||{};
 const cands = PAYLOAD.candidates||{};
 
-function strongCue(c){ return (c.pass||[]).slice(0,2).join("；"); }
+function strongCue(c){ return (c.pass||[]).slice(0,2).join(L.list_sep); }
 function row(num, title, strong, tell, behav){
   return `<tr class="${behav?'behav':''}">
     <td><div class="qn"><span class="num">${esc(num)}</span> ${esc(title)}</div>
-      <div class="cue"><span class="g">强</span> ${esc(strong)}　<span class="b">露馅</span> ${esc(tell)}</div>
+      <div class="cue"><span class="g">${esc(L.col_strong)}</span> ${esc(strong)}&nbsp;&nbsp;<span class="b">${esc(L.col_tell)}</span> ${esc(tell)}</div>
       <div class="note"></div></td>
     <td class="s">${box}</td><td class="s">${box}</td><td class="s">${box}</td></tr>`;
 }
 function page(id, d){
   const o = d.opener||{};
   let rows = "";
-  if(o.title) rows += row("0.", o.title.replace(/（.*/,"").trim(), o.expect, o.tell, true);
+  if(o.title) rows += row("0.", o.title.replace(/[（(].*/,"").trim(), o.expect, o.tell, true);
   (d.cards||[]).forEach(c=> rows += row("★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false));
   return `<div class="page">
-    <h1>现场技术面试评分卡 · ${esc(d.name)}</h1>
-    <div class="meta"><span>日期 <b>${esc(meta.date||"")}</b></span><span>面试官 ______</span><span>整理 ${esc(meta.by||"J.C.")}</span></div>
-    ${d.ruler?`<div class="ruler"><b>标尺：</b>${esc(d.ruler)}</div>`:""}
-    <div class="legend">打分：<b>强</b>=命中及格线、到实现层；<b>中</b>=方向对但缺细节/只答一半；<b>露馅</b>=停在术语层或明显错误。★为核心验伪题（对应攻防卡片 Q1–Q6）。</div>
+    <h1>${esc(L.scorecard_h1)} · ${esc(d.name)}</h1>
+    <div class="meta"><span>${esc(L.date)} <b>${esc(meta.date||"")}</b></span><span>${esc(L.interviewer)} ______</span><span>${esc(L.prep_by)} ${esc(meta.by||"J.C.")}</span></div>
+    ${d.ruler?`<div class="ruler"><b>${esc(L.ruler_h)}${esc(L.colon)}</b>${esc(d.ruler)}</div>`:""}
+    <div class="legend">${esc(L.legend)}</div>
     <table><colgroup><col><col class="c-s"><col class="c-s"><col class="c-s"></colgroup>
-      <tr><th class="q">题目与判分线索</th><th>强</th><th>中</th><th>露馅</th></tr>
+      <tr><th class="q">${esc(L.col_q)}</th><th>${esc(L.col_strong)}</th><th>${esc(L.col_mid)}</th><th>${esc(L.col_tell)}</th></tr>
       ${rows}
     </table>
     <div class="verdict">
-      <span class="opts">综合结论：<b>进入下一轮</b> ${box}　<b>待定</b> ${box}　<b>淘汰</b> ${box}</span>
-      <span class="sign">强/中/露馅 计数 ___ / ___ / ___　签名 <span class="u"></span></span>
+      <span class="opts">${esc(L.verdict_label)}${esc(L.colon)}<b>${esc(L.advance)}</b> ${box}&nbsp;&nbsp;<b>${esc(L.hold)}</b> ${box}&nbsp;&nbsp;<b>${esc(L.reject)}</b> ${box}</span>
+      <span class="sign">${esc(L.count_label)} ___ / ___ / ___&nbsp;&nbsp;${esc(L.sign_label)} <span class="u"></span></span>
     </div>
   </div>`;
 }
+document.title = (meta.title ? meta.title + " · " : "") + L.scorecard_suffix;
 document.getElementById("root").innerHTML = Object.keys(cands).map(id=>page(id, cands[id])).join("");
 </script>

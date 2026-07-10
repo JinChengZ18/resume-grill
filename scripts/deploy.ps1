@@ -4,7 +4,7 @@
 #  copy-deploy is the robust fallback. Re-run this after editing the skill.)
 $ErrorActionPreference = 'Stop'
 $repo   = Split-Path -Parent $PSScriptRoot
-$deploy = Join-Path $env:USERPROFILE '.claude\skills\adversarial-interview'
+$deploy = Join-Path $env:USERPROFILE '.claude\skills\resume-grill'
 foreach ($d in @('scripts','templates','reference')) {
   New-Item -ItemType Directory -Force -Path (Join-Path $deploy $d) | Out-Null
 }

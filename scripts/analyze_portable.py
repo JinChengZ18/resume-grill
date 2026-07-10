@@ -15,26 +15,55 @@ analyze_portable.py — 运行无关的分析编排（不依赖 Claude Code 的 
   # 单调回退：一次模型调用产出全部（跳过分域 Probe，深度略降，结构一致）
   python analyze_portable.py --resumes resumes.json --out payload.json --single
 
+输出语言:
+  缺省 --lang auto：按简历正文自动判定（中文简历出中文、英文简历出英文），使产物语言与输入一致。
+  也可显式指定 --lang zh|en|<ISO 码>（写进 payload.meta.lang，render.py 据此本地化界面文案）。
+
 接入模型（三选一）:
-  1) 环境变量 ADV_LLM_PROVIDER=openai    + OPENAI_API_KEY   (+ ADV_LLM_MODEL, 默认 gpt-4.1)
-  2) 环境变量 ADV_LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY(+ ADV_LLM_MODEL, 默认 claude-opus-4-8)
-  3) 环境变量 ADV_LLM_PROVIDER=custom    + ADV_LLM_CALL=your_module:your_func
+  1) 环境变量 RG_LLM_PROVIDER=openai    + OPENAI_API_KEY   (+ RG_LLM_MODEL, 默认 gpt-4.1)
+  2) 环境变量 RG_LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY(+ RG_LLM_MODEL, 默认 claude-opus-4-8)
+  3) 环境变量 RG_LLM_PROVIDER=custom    + RG_LLM_CALL=your_module:your_func
      其中 your_func(system, user, schema)->dict 用你自己的模型返回符合 schema 的 JSON。
 """
-import argparse, importlib, json, os, sys
+import argparse, importlib, json, os, re, sys
 
 NCORE_DEFAULT = 6
 BANNED = "交付、再生、天然、免费、回连、让渡、封顶、能量账、省下、补上、旋钮、喂、健壮、落地"
 
-ROLE = (
-    "你是国内一线 AI 公司的资深技术面试官，风格严苛、对简历注水极度敏感。你深知中文简历常见把戏："
+# 面试官人设（语言中立；输出语言由 directive() 追加进 system 提示决定）
+ROLE_BASE = (
+    "你是一线科技公司的资深技术面试官，风格严苛、对简历注水极度敏感。你深知简历常见把戏："
     "大量“参与”其实贡献极小；百分比指标（“节省65%”“提升28%”）常无严谨基线；课程/短期项目包装成“系统”；"
     "术语背后是调库还是真懂原理需要戳穿。提问必须具体、扎进底层实现（数据结构/阈值/失败模式/评估口径/为何这么选），"
     "能区分“真做过”与“只会写在简历上”。同时你也是公正的评估者：在戳穿注水的同时，如实识别候选人真实、可验证的强项与亮点"
     "——扎实的技术深度、真实的 ownership、诚实的自我降级都算加分项。不为对抗而对抗：候选人确实强就大方肯定，"
-    "确实弱也不硬挑刺、不为凑数编造红旗；据实评价，不强求优缺点对称、不面面俱到。全部用中文；"
-    "散文遵循中英文之间不加多余空格、中文用全角标点；不要出现这些词：" + BANNED + "。"
+    "确实弱也不硬挑刺、不为凑数编造红旗；据实评价，不强求优缺点对称、不面面俱到。"
 )
+
+
+def detect_lang(text):
+    """按简历正文粗判输出语言：含相当比例汉字 → zh，否则 en。"""
+    s = text or ""
+    han = len(re.findall(r"[㐀-鿿豈-﫿]", s))
+    latin = len(re.findall(r"[A-Za-z]", s))
+    if han == 0:
+        return "en"
+    return "zh" if han / (han + latin + 1) > 0.1 else "en"
+
+
+def directive(lang):
+    """输出语言指令，追加到 system 提示末尾，令产物语言与输入一致。"""
+    if lang == "zh":
+        return ("全部用简体中文输出；散文遵循中英文之间不加多余空格、中文用全角标点；"
+                "不要出现这些词：" + BANNED + "。")
+    if lang == "en":
+        return "Write ALL output — every field, question, and answer key — in natural, direct English technical prose."
+    return ('Write ALL output — every field, question, level label, and answer key — in the language with ISO '
+            'code "%s" (the résumé\'s own language). Keep it natural and idiomatic.' % lang)
+
+
+def role_for(lang):
+    return ROLE_BASE + "\n\n【输出语言】" + directive(lang)
 
 # ---- schemas (镜像 analyze.js / pipeline-spec.md) ----
 TRIAGE = {
@@ -104,16 +133,16 @@ SINGLE["properties"]["probes"] = AUTHOR["properties"]["probes"]
 
 # ---- pluggable model call ----
 def _load_custom():
-    spec = os.environ.get("ADV_LLM_CALL", "")
+    spec = os.environ.get("RG_LLM_CALL", "")
     if ":" not in spec:
-        raise RuntimeError("ADV_LLM_PROVIDER=custom 需要 ADV_LLM_CALL=module:function")
+        raise RuntimeError("RG_LLM_PROVIDER=custom 需要 RG_LLM_CALL=module:function")
     mod, fn = spec.split(":", 1)
     return getattr(importlib.import_module(mod), fn)
 
 def call_llm(system, user, schema):
-    """返回符合 schema 的 dict。按 ADV_LLM_PROVIDER 分派；也可整体替换本函数。"""
-    provider = os.environ.get("ADV_LLM_PROVIDER", "").lower()
-    model = os.environ.get("ADV_LLM_MODEL", "")
+    """返回符合 schema 的 dict。按 RG_LLM_PROVIDER 分派；也可整体替换本函数。"""
+    provider = os.environ.get("RG_LLM_PROVIDER", "").lower()
+    model = os.environ.get("RG_LLM_MODEL", "")
     if provider == "custom":
         return _load_custom()(system, user, schema)
     if provider == "openai":
@@ -138,7 +167,7 @@ def call_llm(system, user, schema):
                 return block.input
         raise RuntimeError("anthropic 未返回 tool_use")
     raise RuntimeError(
-        "未接入模型。设 ADV_LLM_PROVIDER=openai|anthropic|custom（见文件头），或直接替换 call_llm()。")
+        "未接入模型。设 RG_LLM_PROVIDER=openai|anthropic|custom（见文件头），或直接替换 call_llm()。")
 
 
 # ---- prompts ----
@@ -190,22 +219,23 @@ def p_revise(cards, corrections):
 
 
 # ---- orchestration ----
-def analyze_one(c, ncore, single):
+def analyze_one(c, ncore, single, lang):
     rb = resume_block(c)
+    role = role_for(lang)
     if single:
-        s = call_llm(ROLE, p_single(rb, ncore), SINGLE)
+        s = call_llm(role, p_single(rb, ncore), SINGLE)
         cards = s.get("cards", [])
         tri = s
         probes = s.get("probes", [])
     else:
-        tri = call_llm(ROLE, p_triage(rb), TRIAGE)
+        tri = call_llm(role, p_triage(rb), TRIAGE)
         probes = []
         for d in (tri.get("domains") or []):
             try:
-                probes.append(call_llm(ROLE, p_probe(rb, d), PROBE))
+                probes.append(call_llm(role, p_probe(rb, d), PROBE))
             except Exception as e:
                 sys.stderr.write("probe failed [%s]: %s\n" % (d.get("key"), e))
-        authored = call_llm(ROLE, p_author(rb, tri, probes, ncore), AUTHOR)
+        authored = call_llm(role, p_author(rb, tri, probes, ncore), AUTHOR)
         cards = authored.get("cards", [])
         probes = authored.get("probes", [])
     # fact-check + revise
@@ -213,11 +243,12 @@ def analyze_one(c, ncore, single):
     if cards:
         try:
             ver = call_llm(
-                "你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，做对抗式事实核查。全部用中文。",
+                "你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，做对抗式事实核查。\n\n【输出语言】"
+                + directive(lang),
                 p_verify(cards), VERIFY)
             factcheck = ver.get("verdict")
             if ver.get("corrections"):
-                rev = call_llm(ROLE, p_revise(cards, ver["corrections"]), REVISE)
+                rev = call_llm(role, p_revise(cards, ver["corrections"]), REVISE)
                 if rev.get("cards"):
                     cards = rev["cards"]
         except Exception as e:
@@ -230,12 +261,26 @@ def analyze_one(c, ncore, single):
         "_factcheck": factcheck}}
 
 
-def build_candidates_from_resumes(items):
+DEFAULT_TITLE = {"zh": "对抗性技术面试", "en": "Adversarial Technical Interview"}
+CAND_WORD = {"zh": "候选人", "en": "Candidate "}
+
+
+def build_candidates_from_resumes(items, lang):
+    word = CAND_WORD.get(lang, CAND_WORD["en"])
     cands = []
     for i, it in enumerate(items):
-        cands.append({"id": chr(65 + i), "label": "候选人%s · %s" % (chr(65 + i), it.get("file", "")),
+        cands.append({"id": chr(65 + i), "label": "%s%s · %s" % (word, chr(65 + i), it.get("file", "")),
                       "role_hint": "", "resume": it.get("file"), "resume_text": it.get("text", "")})
     return cands
+
+
+def resolve_lang(explicit, meta, text):
+    """显式 --lang / meta.lang（非 auto）优先，否则按简历正文自动判定。"""
+    for cand in (explicit, meta.get("lang")):
+        c = str(cand or "").lower()
+        if c and c != "auto":
+            return c
+    return detect_lang(text)
 
 
 def main():
@@ -244,31 +289,41 @@ def main():
     ap.add_argument("--resumes", help="extract_pdf.py 产出的 resumes.json（自动编排候选人）")
     ap.add_argument("--out", required=True, help="输出 payload.json 路径")
     ap.add_argument("--meta", help="可选 meta.json")
-    ap.add_argument("--title", default="对抗性技术面试")
+    ap.add_argument("--title", default="")
     ap.add_argument("--date", default="")
+    ap.add_argument("--lang", default="auto",
+                    help="输出语言 zh|en|<ISO>|auto（缺省 auto：按简历正文自动判定，使产物语言与输入一致）")
     ap.add_argument("--single", action="store_true", help="单调回退：一次调用产出全部")
     ap.add_argument("--ncore", type=int, default=NCORE_DEFAULT)
     a = ap.parse_args()
 
-    meta, cands = {}, []
+    meta, cands, items = {}, [], None
     if a.inp:
         obj = json.load(open(a.inp, encoding="utf-8"))
         meta, cands = obj.get("meta", {}), obj.get("candidates", [])
     elif a.resumes:
-        cands = build_candidates_from_resumes(json.load(open(a.resumes, encoding="utf-8")))
+        items = json.load(open(a.resumes, encoding="utf-8"))
     else:
         ap.error("需要 --in 或 --resumes 之一")
     if a.meta:
         meta = json.load(open(a.meta, encoding="utf-8"))
-    meta.setdefault("title", a.title)
+
+    sample = "\n".join((c.get("resume_text") or "") for c in cands) if cands \
+        else "\n".join((it.get("text") or "") for it in (items or []))
+    lang = resolve_lang(a.lang, meta, sample)
+    if items is not None:
+        cands = build_candidates_from_resumes(items, lang)
+
+    meta.setdefault("title", a.title or DEFAULT_TITLE.get(lang, DEFAULT_TITLE["en"]))
     if a.date:
         meta["date"] = a.date
     meta.setdefault("by", "J.C.")
+    meta["lang"] = lang
 
     out = {}
     for c in cands:
-        sys.stderr.write("analyzing %s ...\n" % (c.get("label") or c.get("id")))
-        r = analyze_one(c, a.ncore, a.single)
+        sys.stderr.write("analyzing %s (lang=%s) ...\n" % (c.get("label") or c.get("id"), lang))
+        r = analyze_one(c, a.ncore, a.single, lang)
         out[r["id"]] = r["cand"]
 
     payload = {"meta": meta, "candidates": out}
