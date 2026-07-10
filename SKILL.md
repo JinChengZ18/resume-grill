@@ -80,6 +80,14 @@ python "SK/scripts/render.py" "<work>/payload.json" "<output_dir>" "<slug>"
 - HTML 自包含（无 `http`/CDN 外链）；跨文件链接为本地相对路径；`resume` 链接指向真实存在的 PDF。
 - 如需目视确认渲染：把 HTML 副本放 scratchpad、用 `python -m http.server --bind 127.0.0.1` 起在本机（**勿**对外暴露含简历 PII 的目录），preview_eval 检查 DOM，然后清理。
 
+**6. 交付给用户**（别让用户翻文件夹）
+产出后，用 markdown 链接把三件套的**本地路径**直接回给用户（多数 agent 界面会渲染成可点击链接），一句话点出各文件用途，例如：
+- [现场评分卡](<output_dir>/<slug>_scorecard.html) — 一页 A4，打印现场打分
+- [攻防卡片](<output_dir>/<slug>_qa_cards.html) — 答案折叠自测
+- [完整指南](<output_dir>/<slug>_guide.md) — 深挖
+
+再附一两句判研要点（真实强项、关键红旗；多人时谁更强），并给出 `<output_dir>` 路径，让用户零成本打开，无需自己在文件夹里翻找。
+
 ## 在其它 agent 系统里运行（运行无关）
 
 分析逻辑与 Claude Code 的 Workflow 运行时解耦，可被任意 agent 框架调用：
@@ -92,7 +100,7 @@ python "SK/scripts/render.py" "<work>/payload.json" "<output_dir>" "<slug>"
   python scripts/render.py payload.json <out_dir> <slug>
   ```
   编排能力有限时加 `--single`（单次调用产出全部，深度略降、结构一致）。
-- SKILL.md 采用开放的 Agent Skills 格式（frontmatter + 指令），Claude Code / Claude.ai / Agent SDK 直接识别；上面的 CLI 让不认 SKILL.md 的系统也能纯脚本调用。渲染层（`render.py` + 模板）本就零依赖、与运行时无关。
+- SKILL.md 是**跨 agent 通用标准**：同一技能目录在 Claude Code（`~/.claude/skills`）、Codex CLI（`~/.codex/skills`）等支持 skills 的 agent 里都能直接识别、按描述模糊触发——`python scripts/install.py` 会自动装进检测到的各家（详见仓库 README）。不认 SKILL.md 的系统用上面的纯脚本 CLI 调用即可。渲染层（`render.py` + 模板）本就零依赖、与运行时无关。
 
 ## 目录约定（应对简历积压）
 见交付根目录的 `README.md`。约定：新简历放 `inbox/`；每批产物放 `output/<slug>/`（含三件套，PDF 复制或软链进同目录以便 `resume` 本地链接可用）；`BG/` 保留首个人工样例。命名一律 `<YYYYMMDD>_<批次名>_{guide.md,scorecard.html,qa_cards.html}`。

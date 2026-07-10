@@ -30,22 +30,37 @@
 >
 > 每题附「期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问」，答案键经事实核查阶段修正。
 
-## 快速开始（Claude Code）
+## 快速开始
 
-1. **装一次**（把技能同步到 `~/.claude/skills/resume-grill`，改完技能后重跑即可）：
-   ```powershell
-   ./scripts/deploy.ps1
-   ```
-2. **放简历**：把 PDF 丢进 `workspace/inbox/`。
-3. **说一句**：对 Claude 说「用 resume-grill 处理 inbox 里的简历」。
+**1. 装一次**——一条命令，跨平台，无需 PowerShell：
+```
+python scripts/install.py
+```
+自动装进检测到的 agent（Claude Code / Codex …）。改完技能后重跑一次即可。
 
-产物落在 `workspace/output/<slug>/`。打开 `_qa_cards.html` 阅读/自测、打印 `_scorecard.html`（A4）现场打分、`_guide.md` 深挖。`<slug>` 建议 `<YYYYMMDD>_<批次名>`。
+**2. 用**——装完新开一个会话，把简历 PDF **直接拖进对话**，说一句「拷打这份简历」即可（多份就都拖进来）。Agent 会自动把文件纳入工作区、跑完流水线，并**直接回给你三件套的本地链接**，不用翻文件夹。
+
+产物在 `workspace/output/<slug>/`：`_qa_cards.html`（阅读/自测）、`_scorecard.html`（A4 打印现场打分）、`_guide.md`（深挖）。
+
+## 装到哪个 agent（Codex / Claude Code / 其它）
+
+`SKILL.md` 是跨 agent 通用标准，同一个技能目录在多种 agent 里都能直接识别、按描述模糊触发。`install.py` 默认装进所有检测到的 agent，也可指定：
+
+| 命令 | 目标 |
+| --- | --- |
+| `python scripts/install.py` | 自动：所有检测到的 agent |
+| `python scripts/install.py --claude` | `~/.claude/skills/resume-grill`（Claude Code / Claude.ai / Agent SDK） |
+| `python scripts/install.py --codex` | `~/.codex/skills/resume-grill`（Codex CLI） |
+| `python scripts/install.py --all` | 上述全部 |
+| `python scripts/install.py --target <dir>` | 任意 agent 的 skills 目录 |
+
+装完在该 agent 里新开会话，凭描述模糊触发（「拷打这份简历」等）。不支持 skills 的框架：走下面的纯脚本三步。
 
 ## 多语言
 
 产物语言默认自动判定，与简历一致——中文简历出中文、英文简历出英文，连评分卡与卡片的界面文案也随之本地化。想强制某种语言：让 Claude「用英文输出」，或纯脚本加 `--lang en`（值为 `zh`/`en`/ISO 码/`auto`）。界面壳内置中英两套；指定其它语言时正文用该语言、界面文案回退英文（新增一门语言只需给 `scripts/render.py` 的 `LABELS` 加一条目）。
 
-## 不用 Claude Code？（任意模型 / 纯脚本）
+## 纯脚本 / 任意框架（无 skills 支持时）
 
 分析逻辑与 Claude Code 的 Workflow 运行时解耦，纯脚本三步即可，产物结构完全一致：
 
@@ -68,7 +83,7 @@ resume-grill/
     analyze.js                 Claude Code 原生多智能体 Workflow 引擎
     analyze_portable.py        运行无关的参考编排（可接任意模型）+ --single 回退
     render.py                  payload.json → 三件套（零依赖、含界面文案 i18n）
-    deploy.ps1                 把技能同步到 ~/.claude/skills/resume-grill
+    install.py                 跨平台安装到各 agent 的 skills 目录（Claude Code / Codex …）
   templates/                   qa_cards / scorecard 的自包含 HTML 模板
   reference/
     pipeline-spec.md           运行无关的流水线契约（阶段/提示/JSON schema/输出语言）
