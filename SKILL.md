@@ -46,11 +46,9 @@ python "SK/scripts/extract_pdf.py" "WS/inbox/<resume1.pdf>" "WS/inbox/<resume2.p
     "title": "对抗性技术面试 · <批次名>",
     "subtitle": "建议提问 → 期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问",
     "date": "<YYYY-MM-DD，从环境取当前日期，勿用 Date.now()>",
-    "by": "J.C.",
     "lang": "auto",
     "links": [
-      {"label":"▤ 现场评分卡","href":"<slug>_scorecard.html"},
-      {"label":"▤ 完整指南(md)","href":"<slug>_guide.md"}
+      {"label":"▤ 现场评分卡","href":"<slug>_scorecard.html"}
     ],
     "footer": "题号与评分卡 ★ 一一对应。诚实降级应视为强信号。"
   },
@@ -60,7 +58,8 @@ python "SK/scripts/extract_pdf.py" "WS/inbox/<resume1.pdf>" "WS/inbox/<resume2.p
   ]
 }
 ```
-`resume` 用**相对文件名**（与三件套同目录）；含空格用 `%20`，中文/`【】` 可保留。匿名交付时置 `resume:null`。
+`resume` 用**相对文件名**（与三件套同目录）；含空格用 `%20`，中文/`【】` 可保留。**尽量别置 null**：把简历 PDF 复制进产物目录并填这里，评分卡与攻防卡片就会给出「原始简历」内链，方便与题目一一对应；仅在需匿名交付时才 `resume:null`。
+`meta.links` **只放评分卡**，不要放 `_guide.md`（指南是给面试官深挖的 md，不适合作为交付页内链）。交付页署名统一显示项目名 `resume-grill`，不放个人作者名，故 `meta` 无需 `by`。
 
 **输出语言**：`meta.lang` 控制全部产物语言。缺省 `"auto"`（或省略）时按简历正文自动判定，使产物语言与输入一致（中文简历出中文、英文简历出英文）；也可显式设 `"zh"`/`"en"`/ISO 码，或按用户要求设定。工作流据此写作模型内容，`render.py` 据同一 `lang` 本地化界面文案（zh/en 全套，其余语言回退英文界面壳、内容仍为该语言）。`title`/`subtitle`/`footer`/`links[].label` 等你自定义的文案也应写成目标语言（省略则用本地化默认值）。
 

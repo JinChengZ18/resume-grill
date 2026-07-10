@@ -8,8 +8,12 @@
   .page{width:210mm;min-height:297mm;margin:6mm auto;padding:11mm 12mm;background:#fff;
     box-shadow:0 1px 6px rgba(0,0,0,.18);}
   h1{font-size:13.5pt;margin:0 0 1mm;color:var(--accent);letter-spacing:.2px;}
-  .meta{font-size:8.3pt;color:var(--soft);margin:0 0 2mm;display:flex;gap:5mm;flex-wrap:wrap;}
+  .rlink{font-size:8pt;font-weight:600;color:var(--accent);text-decoration:none;
+    border:0.6pt solid var(--accent);border-radius:2px;padding:0 1.6mm;margin-left:2mm;white-space:nowrap;}
+  .rlink:hover{background:var(--tint);}
+  .meta{font-size:8.3pt;color:var(--soft);margin:0 0 2mm;display:flex;gap:5mm;flex-wrap:wrap;align-items:center;}
   .meta b{color:var(--ink);font-weight:600;}
+  .brand{margin-left:auto;font-weight:600;color:var(--accent);opacity:.85;letter-spacing:.2px;}
   .ruler{font-size:8.5pt;background:var(--tint);border-left:2.5pt solid var(--accent);
     padding:1.6mm 2.5mm;margin:0 0 2.5mm;border-radius:0 2px 2px 0;}
   .legend{font-size:7.8pt;color:var(--soft);margin:0 0 1.5mm;}
@@ -19,51 +23,68 @@
     text-align:center;border:0.5pt solid var(--accent);border-bottom:1.2pt solid var(--accent);}
   th.q{text-align:left;padding-left:2mm;}
   td{border:0.4pt solid var(--line);padding:1.5mm 2mm;vertical-align:top;}
-  td.s{text-align:center;vertical-align:middle;}
+  td.s{text-align:center;vertical-align:middle;cursor:pointer;}
+  td.s:hover .box{border-color:var(--accent);}
+  td.s.on .box{background:var(--accent);border-color:var(--accent);}
   .qn{font-weight:600;font-size:8.9pt;}
   .qn .num{color:var(--accent);}
   .cue{font-size:7.7pt;color:var(--soft);line-height:1.32;margin-top:.6mm;}
   .cue .g{color:#1c6b1c;font-weight:600;} .cue .b{color:#a12222;font-weight:600;}
   .note{margin-top:1.4mm;border-bottom:0.4pt dotted #aaa;height:3.4mm;}
-  .box{display:inline-block;width:3.6mm;height:3.6mm;border:0.8pt solid #333;border-radius:1px;}
+  .box{display:inline-block;width:3.6mm;height:3.6mm;border:0.8pt solid #333;border-radius:1px;vertical-align:middle;}
   tr.behav td{background:#fafbfc;}
   .verdict{margin-top:3mm;border:0.6pt solid var(--accent);border-radius:3px;padding:2mm 2.5mm;
     font-size:8.6pt;display:flex;justify-content:space-between;align-items:center;gap:4mm;flex-wrap:wrap;}
   .verdict .opts b{color:var(--accent);}
+  .vopt{cursor:pointer;white-space:nowrap;}
+  .vopt.on b{text-decoration:underline;}
+  .vopt.on .box{background:var(--accent);border-color:var(--accent);}
   .sign{font-size:8pt;color:var(--soft);}
+  .sign .tally{font-weight:700;color:var(--ink);}
   .sign .u{display:inline-block;width:26mm;border-bottom:0.5pt solid #888;height:3mm;vertical-align:bottom;}
+  .toolbar{position:fixed;top:9px;right:12px;z-index:60;display:flex;gap:6px;align-items:center;}
+  .toolbar .hint{font-size:8pt;color:var(--soft);background:#fff;border:1px solid var(--line);
+    border-radius:5px;padding:4px 8px;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .toolbar button{font:600 9pt/1 "Segoe UI",Arial,sans-serif;padding:6px 11px;border:1px solid var(--accent);
+    background:#fff;color:var(--accent);border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+  .toolbar button:hover{background:var(--tint);}
   @media print{
     body{background:#fff;}
+    .noprint{display:none !important;}
     .page{margin:0;box-shadow:none;width:auto;min-height:auto;padding:9mm 10mm;}
     .page + .page{page-break-before:always;}
     @page{size:A4;margin:0;}
   }
 </style>
+<div id="bar" class="toolbar noprint"></div>
 <div id="root"></div>
 <script>
 const PAYLOAD = /*__PAYLOAD__*/{};
 const L = /*__LABELS__*/{};
+const BRAND = "resume-grill";
 const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const box = '<span class="box"></span>';
 const meta = PAYLOAD.meta||{};
 const cands = PAYLOAD.candidates||{};
 
 function strongCue(c){ return (c.pass||[]).slice(0,2).join(L.list_sep); }
-function row(num, title, strong, tell, behav){
-  return `<tr class="${behav?'behav':''}">
+function row(cid, num, title, strong, tell, behav){
+  const key = cid + "|" + num;
+  return `<tr class="${behav?'behav':''}" data-key="${esc(key)}">
     <td><div class="qn"><span class="num">${esc(num)}</span> ${esc(title)}</div>
       <div class="cue"><span class="g">${esc(L.col_strong)}</span> ${esc(strong)}&nbsp;&nbsp;<span class="b">${esc(L.col_tell)}</span> ${esc(tell)}</div>
       <div class="note"></div></td>
-    <td class="s">${box}</td><td class="s">${box}</td><td class="s">${box}</td></tr>`;
+    <td class="s" data-lvl="strong">${box}</td><td class="s" data-lvl="mid">${box}</td><td class="s" data-lvl="tell">${box}</td></tr>`;
 }
 function page(id, d){
   const o = d.opener||{};
   let rows = "";
-  if(o.title) rows += row("0.", o.title.replace(/[（(].*/,"").trim(), o.expect, o.tell, true);
-  (d.cards||[]).forEach(c=> rows += row("★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false));
-  return `<div class="page">
-    <h1>${esc(L.scorecard_h1)} · ${esc(d.name)}</h1>
-    <div class="meta"><span>${esc(L.date)} <b>${esc(meta.date||"")}</b></span><span>${esc(L.interviewer)} ______</span><span>${esc(L.prep_by)} ${esc(meta.by||"J.C.")}</span></div>
+  if(o.title) rows += row(id, "0.", o.title.replace(/[（(].*/,"").trim(), o.expect, o.tell, true);
+  (d.cards||[]).forEach(c=> rows += row(id, "★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false));
+  const rlink = d.resume ? `<a class="rlink" href="${esc(d.resume)}">${esc(L.resume_link)}</a>` : "";
+  return `<div class="page" data-cid="${esc(id)}">
+    <h1>${esc(L.scorecard_h1)} · ${esc(d.name)}${rlink}</h1>
+    <div class="meta"><span>${esc(L.date)} <b>${esc(meta.date||"")}</b></span><span>${esc(L.interviewer)} ______</span><span class="brand">${esc(BRAND)}</span></div>
     ${d.ruler?`<div class="ruler"><b>${esc(L.ruler_h)}${esc(L.colon)}</b>${esc(d.ruler)}</div>`:""}
     <div class="legend">${esc(L.legend)}</div>
     <table><colgroup><col><col class="c-s"><col class="c-s"><col class="c-s"></colgroup>
@@ -71,11 +92,51 @@ function page(id, d){
       ${rows}
     </table>
     <div class="verdict">
-      <span class="opts">${esc(L.verdict_label)}${esc(L.colon)}<b>${esc(L.advance)}</b> ${box}&nbsp;&nbsp;<b>${esc(L.hold)}</b> ${box}&nbsp;&nbsp;<b>${esc(L.reject)}</b> ${box}</span>
-      <span class="sign">${esc(L.count_label)} ___ / ___ / ___&nbsp;&nbsp;${esc(L.sign_label)} <span class="u"></span></span>
+      <span class="opts">${esc(L.verdict_label)}${esc(L.colon)}<span class="vopt" data-cid="${esc(id)}" data-verdict="advance"><b>${esc(L.advance)}</b> ${box}</span>&nbsp;&nbsp;<span class="vopt" data-cid="${esc(id)}" data-verdict="hold"><b>${esc(L.hold)}</b> ${box}</span>&nbsp;&nbsp;<span class="vopt" data-cid="${esc(id)}" data-verdict="reject"><b>${esc(L.reject)}</b> ${box}</span></span>
+      <span class="sign">${esc(L.count_label)} <span class="tally">0 / 0 / 0</span>&nbsp;&nbsp;${esc(L.sign_label)} <span class="u"></span></span>
     </div>
   </div>`;
 }
+
 document.title = (meta.title ? meta.title + " · " : "") + L.scorecard_suffix;
+document.getElementById("bar").innerHTML =
+  `<span class="hint">${esc(L.score_hint)}</span>` +
+  `<button id="printBtn">${esc(L.print_btn)}</button>` +
+  `<button id="resetBtn">${esc(L.reset_btn)}</button>`;
 document.getElementById("root").innerHTML = Object.keys(cands).map(id=>page(id, cands[id])).join("");
+
+// ---- interactive, localStorage-backed scoring (persists per document) ----
+const STORE = "rg-scorecard:" + location.pathname;
+let state = {};
+try{ state = JSON.parse(localStorage.getItem(STORE) || "{}"); }catch(e){}
+state.scores = state.scores || {}; state.verdicts = state.verdicts || {};
+function persist(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
+function apply(){
+  document.querySelectorAll("tr[data-key]").forEach(tr=>{
+    const sel = state.scores[tr.dataset.key];
+    tr.querySelectorAll("td.s").forEach(td=> td.classList.toggle("on", td.dataset.lvl===sel));
+  });
+  document.querySelectorAll(".vopt").forEach(v=>
+    v.classList.toggle("on", state.verdicts[v.dataset.cid]===v.dataset.verdict));
+  document.querySelectorAll(".page").forEach(pg=>{
+    const c = {strong:0, mid:0, tell:0};
+    pg.querySelectorAll("tr[data-key]").forEach(tr=>{ const s=state.scores[tr.dataset.key]; if(s in c) c[s]++; });
+    const t = pg.querySelector(".tally"); if(t) t.textContent = c.strong+" / "+c.mid+" / "+c.tell;
+  });
+}
+document.addEventListener("click", e=>{
+  const td = e.target.closest("td.s");
+  if(td){ const k = td.closest("tr[data-key]").dataset.key;
+    state.scores[k] = state.scores[k]===td.dataset.lvl ? undefined : td.dataset.lvl;
+    if(!state.scores[k]) delete state.scores[k];
+    persist(); apply(); return; }
+  const v = e.target.closest(".vopt");
+  if(v){ const cid = v.dataset.cid;
+    state.verdicts[cid] = state.verdicts[cid]===v.dataset.verdict ? undefined : v.dataset.verdict;
+    if(!state.verdicts[cid]) delete state.verdicts[cid];
+    persist(); apply(); return; }
+});
+document.getElementById("printBtn").addEventListener("click", ()=>window.print());
+document.getElementById("resetBtn").addEventListener("click", ()=>{ state = {scores:{}, verdicts:{}}; persist(); apply(); });
+apply();
 </script>

@@ -3,16 +3,11 @@
   "title": "对抗性技术面试 · Agent 开发工程师（示例）",
   "subtitle": "建议提问 → 期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问",
   "date": "2026-07-10",
-  "by": "J.C.",
   "lang": "zh",
   "links": [
    {
     "label": "▤ 现场评分卡",
     "href": "agent_engineer_demo_scorecard.html"
-   },
-   {
-    "label": "▤ 完整指南(md)",
-    "href": "agent_engineer_demo_guide.md"
    }
   ],
   "footer": "题号与评分卡 ★ 一一对应。诚实降级应视为强信号。"

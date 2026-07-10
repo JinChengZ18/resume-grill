@@ -107,6 +107,7 @@
     background:var(--accent-soft);padding:0 3px;border-radius:3px}
   .hide{display:none}
   footer{font-size:12px;color:var(--soft);text-align:center;margin-top:24px}
+  footer .brand{margin-top:4px;font-weight:600;color:var(--accent);opacity:.8;letter-spacing:.3px}
 </style>
 
 <header class="top"><div class="inner">
@@ -188,7 +189,8 @@ function renderCand(d){
 const sections = document.getElementById("sections");
 sections.innerHTML = ids.map((id,i)=>
   `<section data-sec="${esc(id)}" class="${i===0?'':'hide'}">${renderCand(cands[id])}</section>`).join("");
-document.getElementById("foot").textContent = meta.footer || L.footer_default;
+document.getElementById("foot").innerHTML =
+  `<div>${esc(meta.footer || L.footer_default)}</div><div class="brand">resume-grill</div>`;
 
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));

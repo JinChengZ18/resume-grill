@@ -36,6 +36,7 @@ import json, sys, os, io, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TMPL = os.path.join(os.path.dirname(HERE), "templates")
+BRAND = "resume-grill"   # delivered pages carry the project name, not an author name
 
 # ---- interface-chrome strings, keyed by language ----
 # Bare noun phrases; punctuation (colon/sep) is applied at the use site so both
@@ -72,6 +73,7 @@ LABELS = {
         "col_q": "题目与判分线索", "col_strong": "强", "col_mid": "中", "col_tell": "露馅",
         "verdict_label": "综合结论", "advance": "进入下一轮", "hold": "待定", "reject": "淘汰",
         "count_label": "强/中/露馅 计数", "sign_label": "签名",
+        "print_btn": "🖨 打印", "reset_btn": "↺ 重置本页", "score_hint": "点格子打分，自动记忆",
     },
     "en": {
         "colon": ": ", "sep": " · ", "list_sep": "; ",
@@ -104,6 +106,7 @@ LABELS = {
         "col_q": "Question & scoring cues", "col_strong": "Strong", "col_mid": "Mid", "col_tell": "Tell",
         "verdict_label": "Verdict", "advance": "Advance", "hold": "Hold", "reject": "Reject",
         "count_label": "Strong/Mid/Tell count", "sign_label": "Signature",
+        "print_btn": "🖨 Print", "reset_btn": "↺ Reset page", "score_hint": "click a cell to score — saved automatically",
     },
 }
 
@@ -155,7 +158,7 @@ def md_guide(payload, L):
     out = []
     out.append(f"# {m.get('title', L['guide_title'])}\n")
     if m.get("subtitle"): out.append(f"> {m['subtitle']}")
-    if m.get("date"):     out.append(f"> {L['date']}{co}{m['date']}{sep}{L['prep_by']}{co}{m.get('by','J.C.')}")
+    if m.get("date"):     out.append(f"> {L['date']}{co}{m['date']}{sep}{BRAND}")
     out.append(f"> {L['guide_lead']}\n")
     for cid, d in payload.get("candidates", {}).items():
         out.append(f"---\n\n# {d.get('name', cid)}\n")
