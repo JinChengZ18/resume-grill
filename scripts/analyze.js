@@ -9,12 +9,38 @@ export const meta = {
   ],
 }
 
-// args = { meta:{title,subtitle,date,by,links,footer,lang}, lang?, candidates:[{id,label,role_hint,resume,resume_text}] , nCore? }
+// args = { meta:{title,subtitle,date,by,links,footer,lang,minutes}, lang?, minutes?, candidates:[{id,label,role_hint,resume,resume_text}] , nCore? }
 // lang: 'zh' | 'en' | any ISO code | 'auto'（缺省）。auto 时按简历正文自动判定，使产物语言与输入一致。
+// minutes: 面试时长（分钟，缺省 60）。时长决定核心题数量与拷问深度：短则少而聚焦、长则多而细。
 // Tolerate args arriving as a JSON string (some launch paths stringify it).
 const A = (typeof args === 'string' ? JSON.parse(args) : args) || {}
 const CANDS = A.candidates || []
-const NCORE = A.nCore || 6
+
+// ---- interview duration → how many core questions, and how deep to dig ----
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+const TIER = { quick:{opener:4,buffer:5}, standard:{opener:5,buffer:7}, deep:{opener:6,buffer:9} }
+function planFor(minutes){
+  const m = clamp(Number(minutes) || 60, 10, 240)
+  const depth = m < 40 ? 'quick' : (m >= 85 ? 'deep' : 'standard')
+  const { opener, buffer } = TIER[depth]
+  const perQ = 8                                  // 60min → 5 + 6×8 + 7 → nCore 6（沿用既有默认）
+  const core = Math.max(m - opener - buffer, perQ)
+  const nCore = clamp(Math.round(core / perQ), 2, 12)
+  // floor so opener + nCore×perQuestion + buffer never overruns the slot
+  return { minutes: m, opener, buffer, depth, nCore, perQuestion: Math.max(4, Math.floor(core / nCore)) }
+}
+const PLAN = planFor(A.minutes || (A.meta && A.meta.minutes) || 60)
+const NCORE = A.nCore || PLAN.nCore              // explicit nCore still wins
+
+const DEPTH = {
+  quick: { rungs:1, good:'4-5', pass:'2-3', probes:'4-6', domains:'3-4',
+    note:'时间紧：题目更聚焦，直取能一击验伪的关键点，不求穷尽；暖场阶梯只留 1 级，答案键写精不写多。' },
+  standard: { rungs:2, good:'5-8', pass:'3-5', probes:'10-14', domains:'4-6',
+    note:'常规时长：每题 2 级暖场阶梯 + 硬核验伪，答案键覆盖机制/阈值/取舍。' },
+  deep: { rungs:2, good:'7-10', pass:'4-6', probes:'14-18', domains:'6-8',
+    note:'时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。' },
+}[PLAN.depth]
+const PACING = `本场面试约 ${PLAN.minutes} 分钟：开场约 ${PLAN.opener} 分钟，${NCORE} 道核心题每题约 ${PLAN.perQuestion} 分钟，留约 ${PLAN.buffer} 分钟收尾。${DEPTH.note}`
 
 // ---- output language: explicit override wins, else auto-detect from résumé text ----
 function detectLang(text){
@@ -34,10 +60,11 @@ const LANG = (() => {
 })()
 
 const BANNED = '交付、再生、天然、免费、回连、让渡、封顶、能量账、省下、补上、旋钮、喂、健壮、落地'
+// 简历语言可能与输出语言不同：引用简历措辞时必须译成输出语言，绝不照抄原文字符。
 function directive(lang){
-  if (lang === 'zh') return `全部用简体中文输出；散文遵循中英文之间不加多余空格、中文用全角标点；不要出现这些词：${BANNED}。`
-  if (lang === 'en') return `Write ALL output — every field, question, and answer key — in natural, direct English technical prose.`
-  return `Write ALL output — every field, question, level label, and answer key — in the language with ISO code "${lang}" (the résumé's own language). Keep it natural and idiomatic.`
+  if (lang === 'zh') return `全部用简体中文输出；散文遵循中英文之间不加多余空格、中文用全角标点；不要出现这些词：${BANNED}。简历若为外文，引用其措辞时先译成中文再引用（通用技术名词可保留英文原词）。`
+  if (lang === 'en') return `Write ALL output — every field, question, level label, and answer key — in natural, direct English technical prose. The résumé itself may be written in another language: when you cite its wording to ground a strength or a red flag, TRANSLATE the cited phrase into English. Never reproduce the original characters. Your output must contain NO CJK characters at all — not in quotes, not in parentheses, not as examples. Write e.g. "participated in", never the original word.`
+  return `Write ALL output — every field, question, level label, and answer key — in the language with ISO code "${lang}". The résumé may be written in a different language: translate any phrase you cite from it into that language, and never reproduce the résumé's original script. Keep it natural and idiomatic.`
 }
 const LANGNOTE = `【输出语言】${directive(LANG)}`
 
@@ -56,7 +83,7 @@ const TRIAGE = {
     }, required:['title','questions','expect','tell'], description:'开场态度/事实题（时间线/可展示性/ownership核对）'},
     domains:{type:'array', items:{type:'object', additionalProperties:false, properties:{
       key:{type:'string'}, focus:{type:'string', description:'该域最该拷问的实现细节/失败模式清单'}
-    }, required:['key','focus']}, description:'4-6个最值得对抗性拷问的技术域，须贴合本简历的真实项目'}
+    }, required:['key','focus']}, description:`${DEPTH.domains}个最值得对抗性拷问的技术域，须贴合本简历的真实项目`}
   }, required:['profile','ruler','strengths','flags','opener','domains']
 }
 const PROBE = {
@@ -74,10 +101,12 @@ const CARD = {
     anchor:{type:'string', description:'本题挂靠的简历项目/宣称（从简历出发的锚点，如「TraceFix 多Agent」「NL2SQL 实习」）'},
     ladder:{type:'array', items:{type:'object', additionalProperties:false, properties:{
       level:{type:'string', description:'L1 项目切入 或 L2 设计决策'}, q:{type:'string'} }, required:['level','q']},
-      description:'由浅入深的提问阶梯（恰好2级，作为硬核题的暖场引子）：L1=从该简历项目切入的概览/general 问题，让候选人先自述、暴露信息与切入点；L2=关键设计决策/为什么这么选。ask 本身即 L3 硬核验伪题。'},
+      description: DEPTH.rungs === 1
+        ? '暖场阶梯恰好1级（时间紧，省去泛泛的项目概览）：直接问该简历项目的关键设计决策/为什么这么选。ask 本身即 L3 硬核验伪题。'
+        : '由浅入深的提问阶梯（恰好2级，作为硬核题的暖场引子）：L1=从该简历项目切入的概览/general 问题，让候选人先自述、暴露信息与切入点；L2=关键设计决策/为什么这么选。ask 本身即 L3 硬核验伪题。'},
     ask:{type:'string', description:'L3 建议提问（硬核验伪）：完整、具体、能戳穿话术'},
-    good:{type:'array', items:{type:'string'}, description:'期望的优质回答，5-8个分点，技术准确、含取舍/阈值/机制'},
-    pass:{type:'array', items:{type:'string'}, description:'及格线：必须听到的关键点，3-5条'},
+    good:{type:'array', items:{type:'string'}, description:`期望的优质回答，${DEPTH.good}个分点，技术准确、含取舍/阈值/机制`},
+    pass:{type:'array', items:{type:'string'}, description:`及格线：必须听到的关键点，${DEPTH.pass}条`},
     tell:{type:'string', description:'典型露馅'}, probe:{type:'string', description:'逼到底层的追问'} },
   required:['n','title','anchor','ladder','ask','good','pass','tell','probe']
 }
@@ -86,7 +115,7 @@ const AUTHOR = {
     cards:{type:'array', items:CARD, description:`恰好${NCORE}张核心验伪题卡，题号Q1..Q${NCORE}，选最能一击验伪的`},
     probes:{type:'array', items:{type:'object', additionalProperties:false, properties:{
       tag:{type:'string', description:'行首主题标签，如 RAG/可观测性'}, q:{type:'string'} }, required:['tag','q']},
-      description:'补充探针（无标准答案），去重后按主题标签排列'}
+      description:`补充探针（无标准答案）${DEPTH.probes}条，去重后按主题标签排列`}
   }, required:['cards','probes']
 }
 const VERIFY = { type:'object', additionalProperties:false, properties:{
@@ -99,7 +128,7 @@ async function analyzeOne(c){
   const resume = `候选人 ${c.label||c.id}｜岗位线索：${c.role_hint||'（未指定）'}\n简历正文：\n---\n${c.resume_text||''}\n---`
 
   // 1) Triage
-  const tri = await agent(`${ROLE}\n\n${resume}\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、关键红旗（注水多就多列、干净就少列，不硬凑）、一组开场态度/事实题（时间线/可展示性/ownership），以及4-6个最值得对抗性拷问的技术域（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。\n\n${LANGNOTE}`,
+  const tri = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、关键红旗（注水多就多列、干净就少列，不硬凑）、一组开场态度/事实题（时间线/可展示性/ownership，控制在约${PLAN.opener}分钟内问完），以及${DEPTH.domains}个最值得对抗性拷问的技术域（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。\n\n${LANGNOTE}`,
     { label:`triage:${c.id}`, phase:'Triage', schema:TRIAGE, effort:'high' })
   if(!tri) return null
 
@@ -110,7 +139,10 @@ async function analyzeOne(c){
   ))).filter(Boolean)
 
   // 3) Author kill questions + answer keys
-  const authored = await agent(`${ROLE}\n\n${resume}\n\n以下是分域拷问的问题库（JSON）：\n${JSON.stringify({triage:{flags:tri.flags,domains:tri.domains}, probes}, null, 1)}\n\n作为首席面试官，收敛出恰好${NCORE}道"核心验伪题"（题号Q1..Q${NCORE}）——最能区分"真做过"与"只会写简历"、且无法靠背术语蒙混的题。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（5-8个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的3-5点）、典型露馅、追问。另把其余有价值的问题去重整理为"补充探针"（每条带主题标签）。\n\n${LANGNOTE}`,
+  const ladderSpec = DEPTH.rungs === 1
+    ? `②时间紧，暖场阶梯（ladder）只给恰好1级：直接问该简历项目的关键设计决策/为什么这么选，省去泛泛的项目概览`
+    : `②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选`
+  const authored = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n以下是分域拷问的问题库（JSON）：\n${JSON.stringify({triage:{flags:tri.flags,domains:tri.domains}, probes}, null, 1)}\n\n作为首席面试官，按上面的时长与深度要求，收敛出恰好${NCORE}道"核心验伪题"（题号Q1..Q${NCORE}）——最能区分"真做过"与"只会写简历"、且无法靠背术语蒙混的题；每题现场约${PLAN.perQuestion}分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；${ladderSpec}；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（${DEPTH.good}个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的${DEPTH.pass}点）、典型露馅、追问。另把其余有价值的问题去重整理为${DEPTH.probes}条"补充探针"（每条带主题标签）。\n\n${LANGNOTE}`,
     { label:`author:${c.id}`, phase:'Author', schema:AUTHOR, effort:'high' })
   if(!authored) return null
 
@@ -138,4 +170,4 @@ const results = (await parallel(CANDS.map(c => () => analyzeOne(c)))).filter(Boo
 
 const candidates = {}
 for(const r of results) candidates[r.id] = r.cand
-return { meta: { ...(A.meta || {}), lang: LANG }, candidates }
+return { meta: { ...(A.meta || {}), lang: LANG, plan: { ...PLAN, nCore: NCORE } }, candidates }

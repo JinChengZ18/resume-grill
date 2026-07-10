@@ -28,6 +28,7 @@
   td.s.on .box{background:var(--accent);border-color:var(--accent);}
   .qn{font-weight:600;font-size:8.9pt;}
   .qn .num{color:var(--accent);}
+  .qn .tmin{float:right;font-weight:600;font-size:7.6pt;color:var(--soft);margin-left:2mm;}
   .cue{font-size:7.7pt;color:var(--soft);line-height:1.32;margin-top:.6mm;}
   .cue .g{color:#1c6b1c;font-weight:600;} .cue .b{color:#a12222;font-weight:600;}
   .note{margin-top:1.4mm;border-bottom:0.4pt dotted #aaa;height:3.4mm;}
@@ -66,12 +67,14 @@ const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
 const box = '<span class="box"></span>';
 const meta = PAYLOAD.meta||{};
 const cands = PAYLOAD.candidates||{};
+const plan = meta.plan || null;   // {minutes,opener,buffer,nCore,perQuestion,depth}
 
 function strongCue(c){ return (c.pass||[]).slice(0,2).join(L.list_sep); }
-function row(cid, num, title, strong, tell, behav){
+function row(cid, num, title, strong, tell, behav, mins){
   const key = cid + "|" + num;
+  const tmin = mins ? `<span class="tmin">≈${mins}′</span>` : "";
   return `<tr class="${behav?'behav':''}" data-key="${esc(key)}">
-    <td><div class="qn"><span class="num">${esc(num)}</span> ${esc(title)}</div>
+    <td><div class="qn">${tmin}<span class="num">${esc(num)}</span> ${esc(title)}</div>
       <div class="cue"><span class="g">${esc(L.col_strong)}</span> ${esc(strong)}&nbsp;&nbsp;<span class="b">${esc(L.col_tell)}</span> ${esc(tell)}</div>
       <div class="note"></div></td>
     <td class="s" data-lvl="strong">${box}</td><td class="s" data-lvl="mid">${box}</td><td class="s" data-lvl="tell">${box}</td></tr>`;
@@ -79,12 +82,13 @@ function row(cid, num, title, strong, tell, behav){
 function page(id, d){
   const o = d.opener||{};
   let rows = "";
-  if(o.title) rows += row(id, "0.", o.title.replace(/[（(].*/,"").trim(), o.expect, o.tell, true);
-  (d.cards||[]).forEach(c=> rows += row(id, "★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false));
+  if(o.title) rows += row(id, "0.", o.title.replace(/[（(].*/,"").trim(), o.expect, o.tell, true, plan && plan.opener);
+  (d.cards||[]).forEach(c=> rows += row(id, "★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false, plan && plan.perQuestion));
   const rlink = d.resume ? `<a class="rlink" href="${esc(d.resume)}">${esc(L.resume_link)}</a>` : "";
+  const dur = plan ? `<span>${esc(L.duration)} <b>${esc(plan.minutes)} ${esc(L.min_unit)}</b></span>` : "";
   return `<div class="page" data-cid="${esc(id)}">
     <h1>${esc(L.scorecard_h1)} · ${esc(d.name)}${rlink}</h1>
-    <div class="meta"><span>${esc(L.date)} <b>${esc(meta.date||"")}</b></span><span>${esc(L.interviewer)} ______</span><span class="brand">${esc(BRAND)}</span></div>
+    <div class="meta"><span>${esc(L.date)} <b>${esc(meta.date||"")}</b></span>${dur}<span>${esc(L.interviewer)} ______</span><span class="brand">${esc(BRAND)}</span></div>
     ${d.ruler?`<div class="ruler"><b>${esc(L.ruler_h)}${esc(L.colon)}</b>${esc(d.ruler)}</div>`:""}
     <div class="legend">${esc(L.legend)}</div>
     <table><colgroup><col><col class="c-s"><col class="c-s"><col class="c-s"></colgroup>

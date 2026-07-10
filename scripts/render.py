@@ -74,6 +74,8 @@ LABELS = {
         "verdict_label": "综合结论", "advance": "进入下一轮", "hold": "待定", "reject": "淘汰",
         "count_label": "强/中/露馅 计数", "sign_label": "签名",
         "print_btn": "🖨 打印", "reset_btn": "↺ 重置本页", "score_hint": "点格子打分，自动记忆",
+        "duration": "时长", "min_unit": "分钟", "q_unit": "题",
+        "opener_word": "开场", "wrap_word": "收尾",
     },
     "en": {
         "colon": ": ", "sep": " · ", "list_sep": "; ",
@@ -107,6 +109,8 @@ LABELS = {
         "verdict_label": "Verdict", "advance": "Advance", "hold": "Hold", "reject": "Reject",
         "count_label": "Strong/Mid/Tell count", "sign_label": "Signature",
         "print_btn": "🖨 Print", "reset_btn": "↺ Reset page", "score_hint": "click a cell to score — saved automatically",
+        "duration": "Duration", "min_unit": "min", "q_unit": "",
+        "opener_word": "Opener", "wrap_word": "Wrap-up",
     },
 }
 
@@ -152,6 +156,15 @@ def inject(tmpl_name, payload, title, L):
     return t
 
 
+def pacing_line(L, plan):
+    """一句话时间预算：时长｜开场 + N题 × 每题 + 收尾。"""
+    co, sep = L["colon"], L["sep"]
+    n, pq = plan.get("nCore"), plan.get("perQuestion")
+    return (f"{L['duration']}{co}{plan.get('minutes')} {L['min_unit']}{sep}"
+            f"{L['opener_word']} {plan.get('opener')}′ + {n}{L['q_unit']} × {pq}′"
+            f" + {L['wrap_word']} {plan.get('buffer')}′")
+
+
 def md_guide(payload, L):
     m = payload.get("meta", {})
     co, sep = L["colon"], L["sep"]
@@ -159,6 +172,7 @@ def md_guide(payload, L):
     out.append(f"# {m.get('title', L['guide_title'])}\n")
     if m.get("subtitle"): out.append(f"> {m['subtitle']}")
     if m.get("date"):     out.append(f"> {L['date']}{co}{m['date']}{sep}{BRAND}")
+    if m.get("plan"):     out.append(f"> {pacing_line(L, m['plan'])}")
     out.append(f"> {L['guide_lead']}\n")
     for cid, d in payload.get("candidates", {}).items():
         out.append(f"---\n\n# {d.get('name', cid)}\n")

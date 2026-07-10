@@ -10,7 +10,16 @@
     "href": "agent_engineer_demo_scorecard.html"
    }
   ],
-  "footer": "题号与评分卡 ★ 一一对应。诚实降级应视为强信号。"
+  "footer": "题号与评分卡 ★ 一一对应。诚实降级应视为强信号。",
+  "minutes": 60,
+  "plan": {
+   "minutes": 60,
+   "opener": 5,
+   "buffer": 7,
+   "depth": "standard",
+   "nCore": 6,
+   "perQuestion": 8
+  }
  },
  "candidates": {
   "A": {

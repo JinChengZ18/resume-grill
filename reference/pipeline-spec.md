@@ -47,17 +47,42 @@ resumes.json (extract_pdf.py 或你的抽取器)
 
 各阶段的 user 提示（下文）为**指令语**，可保持中文；模型据 ROLE 末尾的 `directive(lang)` 决定**产物语言**。原生 `analyze.js`（无独立 system 位）改为把该指令以「【输出语言】…」追加到每个阶段 user 提示末尾，效果等同。
 
+## 面试时长（题量与深度）
+
+现实中各家面试时长不一：时间长则问得更细、题目更多；时间短则只能抓要害。一个 `minutes`（缺省 60）贯穿全流程：
+
+1. **推导 plan**（两个参考实现共用同一套公式）：
+   - `depth` = `minutes < 40 → quick`；`minutes >= 85 → deep`；否则 `standard`。
+   - `(opener, buffer)` 按档位取 `quick(4,5)`／`standard(5,7)`／`deep(6,9)` 分钟。
+   - `core = max(minutes - opener - buffer, 8)`；`nCore = clamp(round(core/8), 2, 12)`；`perQuestion = max(4, floor(core/nCore))`——用 floor 保证 `opener + nCore×perQuestion + buffer` 不超出时长。
+   - 坑：Python 内置 `round()` 是银行家舍入，须换成四舍五入才与 JS `Math.round` 一致（见 `_round_half_up`），否则两实现在 `minutes=32` 处分叉。
+2. **档位决定深度**：
+
+   | depth | 阶梯级数 | good 分点 | pass 条数 | 补充探针 | 技术域 |
+   | --- | --- | --- | --- | --- | --- |
+   | quick | 1（省去项目概览，直取设计决策） | 4-5 | 2-3 | 4-6 | 3-4 |
+   | standard | 2（L1 项目切入 + L2 设计决策） | 5-8 | 3-5 | 10-14 | 4-6 |
+   | deep | 2 | 7-10 | 4-6 | 14-18 | 6-8 |
+
+3. **注入提示**：把「本场面试约 N 分钟：开场约 …，X 道核心题每题约 …，留约 … 分钟收尾」+ 档位说明拼进 Triage 与 Author 的 user 提示；schema 里 `domains`/`ladder`/`good`/`pass`/`probes` 的描述也按档位插值。
+4. **落盘与渲染**：`plan` 写入 `payload.meta.plan`；`render.py` 据此在指南顶部给一行时间预算，在评分卡显示总时长与每题 `≈N′` 预算。
+
+`nCore` 可显式覆盖（`args.nCore` / `--ncore`），覆盖后 `plan.nCore` 同步为该值。
+
 ## 输出语言（多语言支持）
 
 产物语言与输入一致，靠一个贯穿全流程的 `lang`：
 
 1. **判定**：显式 `args.lang` / `meta.lang`（非 `auto`）优先；否则按简历正文自动判定——按汉字占字母比例，含相当比例汉字判 `zh`，否则 `en`（两个参考实现用同一启发式）。
 2. **注入**：把 `directive(lang)` 追加进 system 提示（`analyze_portable.py`）或每个阶段 user 提示末尾（`analyze.js`）。`directive`：
-   - `zh` → 「全部用简体中文输出；中英文免多余空格、中文全角标点；禁用词表（同上）。」
-   - `en` → 「Write ALL output … in natural, direct English technical prose.」
-   - 其它 ISO 码 → 「Write ALL output … in the language with ISO code "<lang>" (the résumé's own language).」
+   - `zh` → 「全部用简体中文输出；中英文免多余空格、中文全角标点；禁用词表（同上）。简历若为外文，引用其措辞时先译成中文（通用技术名词可留英文）。」
+   - `en` → 「Write ALL output … in natural, direct English technical prose. …TRANSLATE any phrase cited from the résumé; never reproduce the original characters; the output must contain NO CJK characters at all.」
+   - 其它 ISO 码 → 「Write ALL output … in the language with ISO code "<lang>". …translate any phrase you cite from the résumé; never reproduce its original script.」
 3. **落盘**：`lang` 写入 `payload.meta.lang`。
 4. **渲染**：`render.py` 按 `meta.lang` 从 `LABELS` 取界面文案（zh/en 全套；缺失语言回退英文界面壳，正文仍为该语言）；`meta.lang` 缺省时按 payload 内容再嗅探一次。**新增一门语言 = 给 `LABELS` 加一条目**（键集须与既有语言一致）。
+5. **校验**：`scripts/check_lang.py payload.json` 逐字段扫描——产物语言非 CJK 时不得出现任何中日韩字符（`resume`/`href` 等文件名字段豁免）。有泄漏就重写该字段再重渲。
+
+**跨语言引用是本流水线最容易破的地方**：简历为中文而产物为英文时，模型倾向于把简历原句直接嵌进英文散文（`anchor`、`flags`、`strengths` 尤甚）。`directive` 明令翻译，`check_lang.py` 做确定性兜底。
 
 指令语（各阶段 user 提示、schema 字段描述）可保持中文，不影响产物语言——产物语言只由 `directive(lang)` 决定。
 
