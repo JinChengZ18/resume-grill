@@ -32,6 +32,8 @@ adversarial-interview/
 
 **在 Claude Code 里**：把简历 PDF 放进 `workspace/inbox/`，对 Claude 说「用 adversarial-interview 技能处理 inbox 里的简历」。技能按 `SKILL.md` 执行：抽取文本 → 跑 `scripts/analyze.js` 工作流 → `render.py` 渲染到 `workspace/output/<slug>/`。
 
+> Claude Code 从 `~/.claude/skills/adversarial-interview` 加载技能。本仓库是**源**，用 `scripts/deploy.ps1` 把技能文件同步到该目录（改完技能后重跑一次即可）。
+
 **在其它 agent 系统 / 纯脚本里**（运行无关，见 `reference/pipeline-spec.md`）：
 
 ```bash
