@@ -22,6 +22,9 @@
   th{font-size:8pt;font-weight:700;color:var(--accent);background:var(--tint);padding:1.3mm 1mm;
     text-align:center;border:0.5pt solid var(--accent);border-bottom:1.2pt solid var(--accent);}
   th.q{text-align:left;padding-left:2mm;}
+  /* ultra 档动辄 20+ 题，一页 A4 装不下：打印时不许把一行劈成两半，表头每页重复 */
+  thead{display:table-header-group;}
+  tr{break-inside:avoid;page-break-inside:avoid;}
   td{border:0.4pt solid var(--line);padding:1.5mm 2mm;vertical-align:top;}
   td.s{text-align:center;vertical-align:middle;cursor:pointer;}
   td.s:hover .box{border-color:var(--accent);}
@@ -35,7 +38,8 @@
   .box{display:inline-block;width:3.6mm;height:3.6mm;border:0.8pt solid #333;border-radius:1px;vertical-align:middle;}
   tr.behav td{background:#fafbfc;}
   .verdict{margin-top:3mm;border:0.6pt solid var(--accent);border-radius:3px;padding:2mm 2.5mm;
-    font-size:8.6pt;display:flex;justify-content:space-between;align-items:center;gap:4mm;flex-wrap:wrap;}
+    font-size:8.6pt;display:flex;justify-content:space-between;align-items:center;gap:4mm;flex-wrap:wrap;
+    break-inside:avoid;page-break-inside:avoid;}
   .verdict .opts b{color:var(--accent);}
   .vopt{cursor:pointer;white-space:nowrap;}
   .vopt.on b{text-decoration:underline;}
@@ -94,8 +98,8 @@ function page(id, d){
     ${d.ruler?`<div class="ruler"><b>${esc(L.ruler_h)}${esc(L.colon)}</b>${esc(d.ruler)}</div>`:""}
     <div class="legend">${esc(L.legend)}</div>
     <table><colgroup><col><col class="c-s"><col class="c-s"><col class="c-s"></colgroup>
-      <tr><th class="q">${esc(L.col_q)}</th><th>${esc(L.col_strong)}</th><th>${esc(L.col_mid)}</th><th>${esc(L.col_tell)}</th></tr>
-      ${rows}
+      <thead><tr><th class="q">${esc(L.col_q)}</th><th>${esc(L.col_strong)}</th><th>${esc(L.col_mid)}</th><th>${esc(L.col_tell)}</th></tr></thead>
+      <tbody>${rows}</tbody>
     </table>
     <div class="verdict">
       <span class="opts">${esc(L.verdict_label)}${esc(L.colon)}<span class="vopt" data-cid="${esc(id)}" data-verdict="advance"><b>${esc(L.advance)}</b> ${box}</span>&nbsp;&nbsp;<span class="vopt" data-cid="${esc(id)}" data-verdict="hold"><b>${esc(L.hold)}</b> ${box}</span>&nbsp;&nbsp;<span class="vopt" data-cid="${esc(id)}" data-verdict="reject"><b>${esc(L.reject)}</b> ${box}</span></span>
