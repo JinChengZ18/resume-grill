@@ -17,11 +17,29 @@ const A = (typeof args === 'string' ? JSON.parse(args) : args) || {}
 const CANDS = A.candidates || []
 
 // ---- interview duration → how many core questions, and how deep to dig ----
+// depth 档位由 minutes 推导；也可用 meta.depth 显式指定。'ultra' 是自测模式：
+// 不限时、不设题数上限，穷尽简历里每一处可能被追问的疑点（供候选人面试前自我排查）。
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const TIER = { quick:{opener:4,buffer:5}, standard:{opener:5,buffer:7}, deep:{opener:6,buffer:9} }
-function planFor(minutes){
+const FLAGS_NORMAL = '注水多就多列、简历干净就少列（通常3-6条），不硬凑'
+const DEPTHS = {
+  quick: { rungs:1, good:'4-5', pass:'2-3', probes:'4-6', domains:'3-4', flags:FLAGS_NORMAL,
+    note:'时间紧：题目更聚焦，直取能一击验伪的关键点，不求穷尽；暖场阶梯只留 1 级，答案键写精不写多。' },
+  standard: { rungs:2, good:'5-8', pass:'3-5', probes:'10-14', domains:'4-6', flags:FLAGS_NORMAL,
+    note:'常规时长：每题 2 级暖场阶梯 + 硬核验伪，答案键覆盖机制/阈值/取舍。' },
+  deep: { rungs:2, good:'7-10', pass:'4-6', probes:'14-18', domains:'6-8', flags:'注水多就多列（通常4-8条），不硬凑',
+    note:'时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。' },
+  ultra: { rungs:2, good:'6-10', pass:'3-6', probes:'20-30', domains:'8-12',
+    flags:'穷尽简历中所有真实存在的疑点，不设条数上限；宁多勿漏，但绝不编造',
+    note:'自我排查模式（供候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。' },
+}
+function planFor(minutes, depthOverride){
+  const forced = String(depthOverride || '').toLowerCase()
+  const hasForced = Object.prototype.hasOwnProperty.call(DEPTHS, forced)
+  if (hasForced && forced === 'ultra')             // 自测模式：不限时、题数由疑点数量决定
+    return { minutes:null, opener:null, buffer:null, depth:'ultra', nCore:null, perQuestion:null }
   const m = clamp(Number(minutes) || 60, 10, 240)
-  const depth = m < 40 ? 'quick' : (m >= 85 ? 'deep' : 'standard')
+  const depth = hasForced ? forced : (m < 40 ? 'quick' : (m >= 85 ? 'deep' : 'standard'))
   const { opener, buffer } = TIER[depth]
   const perQ = 8                                  // 60min → 5 + 6×8 + 7 → nCore 6（沿用既有默认）
   const core = Math.max(m - opener - buffer, perQ)
@@ -29,18 +47,16 @@ function planFor(minutes){
   // floor so opener + nCore×perQuestion + buffer never overruns the slot
   return { minutes: m, opener, buffer, depth, nCore, perQuestion: Math.max(4, Math.floor(core / nCore)) }
 }
-const PLAN = planFor(A.minutes || (A.meta && A.meta.minutes) || 60)
-const NCORE = A.nCore || PLAN.nCore              // explicit nCore still wins
+const PLAN = planFor(A.minutes || (A.meta && A.meta.minutes), A.depth || (A.meta && A.meta.depth))
+const ULTRA = PLAN.depth === 'ultra'
+const NCORE = A.nCore || PLAN.nCore || 0         // explicit nCore wins; 0 = 由疑点数量决定（ultra）
+const DEPTH = DEPTHS[PLAN.depth]
 
-const DEPTH = {
-  quick: { rungs:1, good:'4-5', pass:'2-3', probes:'4-6', domains:'3-4',
-    note:'时间紧：题目更聚焦，直取能一击验伪的关键点，不求穷尽；暖场阶梯只留 1 级，答案键写精不写多。' },
-  standard: { rungs:2, good:'5-8', pass:'3-5', probes:'10-14', domains:'4-6',
-    note:'常规时长：每题 2 级暖场阶梯 + 硬核验伪，答案键覆盖机制/阈值/取舍。' },
-  deep: { rungs:2, good:'7-10', pass:'4-6', probes:'14-18', domains:'6-8',
-    note:'时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。' },
-}[PLAN.depth]
-const PACING = `本场面试约 ${PLAN.minutes} 分钟：开场约 ${PLAN.opener} 分钟，${NCORE} 道核心题每题约 ${PLAN.perQuestion} 分钟，留约 ${PLAN.buffer} 分钟收尾。${DEPTH.note}`
+// ultra 必须逐项覆盖的疑点清单——这是"穷尽"的可执行定义
+const ULTRA_CHECKLIST = '必须逐项覆盖：①每一条关键红旗；②每一个没有严谨基线的量化宣称（"提升X%""节省Y%"）；③每一处 ownership 模糊（"参与/负责/协助"到底自己做了什么）；④每一个只出现在技能栏、却在项目里找不到佐证的技术名词；⑤每一段时间线重叠或经历性质存疑（在校/兼职/实习 vs 全职）；⑥每一个被包装成"系统/框架/平台"的课程或短期项目。'
+const PACING = ULTRA
+  ? `本次不是限时面试，而是【面试前自我排查】：不设时间盒、不设题数上限。${DEPTH.note}`
+  : `本场面试约 ${PLAN.minutes} 分钟：开场约 ${PLAN.opener} 分钟，${NCORE} 道核心题每题约 ${PLAN.perQuestion} 分钟，留约 ${PLAN.buffer} 分钟收尾。${DEPTH.note}`
 
 // ---- output language: explicit override wins, else auto-detect from résumé text ----
 function detectLang(text){
@@ -76,7 +92,7 @@ const TRIAGE = {
     profile:{type:'string', description:'3-4句画像+整体可信度判断（真本事约几成、包装约几成）；均衡如实，既不美化也不刻意贬低'},
     ruler:{type:'string', description:'该用什么标尺衡量（应届/初级/中级；点出关键事实如真实全职月数）'},
     strengths:{type:'array', items:{type:'string'}, description:'真实、可验证的强项/亮点：直接引用简历依据+为何算加分（真实生产经历、扎实底层细节、诚实降级、稀缺/对口技能栈等）；有几条写几条（约2-5条），确实乏善可陈就少列或说明，不硬凑、不与红旗强行对称'},
-    flags:{type:'array', items:{type:'string'}, description:'关键红旗，直接引用可疑话术+为何可疑；注水多就多列、简历干净就少列（通常3-6条），不硬凑'},
+    flags:{type:'array', items:{type:'string'}, description:`关键红旗，直接引用可疑话术+为何可疑；${DEPTH.flags}`},
     opener:{type:'object', additionalProperties:false, properties:{
       title:{type:'string'}, questions:{type:'array', items:{type:'string'}},
       expect:{type:'string', description:'期望的行为（强信号）'}, tell:{type:'string', description:'露馅信号'}
@@ -112,7 +128,9 @@ const CARD = {
 }
 const AUTHOR = {
   type:'object', additionalProperties:false, properties:{
-    cards:{type:'array', items:CARD, description:`恰好${NCORE}张核心验伪题卡，题号Q1..Q${NCORE}，选最能一击验伪的`},
+    cards:{type:'array', items:CARD, description: ULTRA
+      ? '覆盖简历中每一处疑点的核心题卡：题数不固定（通常12-24张，宁多勿漏，但不得为凑数编造），按 Q1、Q2… 依次编号'
+      : `恰好${NCORE}张核心验伪题卡，题号Q1..Q${NCORE}，选最能一击验伪的`},
     probes:{type:'array', items:{type:'object', additionalProperties:false, properties:{
       tag:{type:'string', description:'行首主题标签，如 RAG/可观测性'}, q:{type:'string'} }, required:['tag','q']},
       description:`补充探针（无标准答案）${DEPTH.probes}条，去重后按主题标签排列`}
@@ -128,7 +146,10 @@ async function analyzeOne(c){
   const resume = `候选人 ${c.label||c.id}｜岗位线索：${c.role_hint||'（未指定）'}\n简历正文：\n---\n${c.resume_text||''}\n---`
 
   // 1) Triage
-  const tri = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、关键红旗（注水多就多列、干净就少列，不硬凑）、一组开场态度/事实题（时间线/可展示性/ownership，控制在约${PLAN.opener}分钟内问完），以及${DEPTH.domains}个最值得对抗性拷问的技术域（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。\n\n${LANGNOTE}`,
+  const openerSpec = ULTRA ? '一组开场态度/事实题（时间线/可展示性/ownership）'
+    : `一组开场态度/事实题（时间线/可展示性/ownership，控制在约${PLAN.opener}分钟内问完）`
+  const flagSpec = ULTRA ? `关键红旗——${DEPTH.flags}。${ULTRA_CHECKLIST}` : '关键红旗（注水多就多列、干净就少列，不硬凑）'
+  const tri = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、${flagSpec}、${openerSpec}，以及${DEPTH.domains}个最值得对抗性拷问的技术域（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。\n\n${LANGNOTE}`,
     { label:`triage:${c.id}`, phase:'Triage', schema:TRIAGE, effort:'high' })
   if(!tri) return null
 
@@ -142,7 +163,10 @@ async function analyzeOne(c){
   const ladderSpec = DEPTH.rungs === 1
     ? `②时间紧，暖场阶梯（ladder）只给恰好1级：直接问该简历项目的关键设计决策/为什么这么选，省去泛泛的项目概览`
     : `②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选`
-  const authored = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n以下是分域拷问的问题库（JSON）：\n${JSON.stringify({triage:{flags:tri.flags,domains:tri.domains}, probes}, null, 1)}\n\n作为首席面试官，按上面的时长与深度要求，收敛出恰好${NCORE}道"核心验伪题"（题号Q1..Q${NCORE}）——最能区分"真做过"与"只会写简历"、且无法靠背术语蒙混的题；每题现场约${PLAN.perQuestion}分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；${ladderSpec}；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（${DEPTH.good}个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的${DEPTH.pass}点）、典型露馅、追问。另把其余有价值的问题去重整理为${DEPTH.probes}条"补充探针"（每条带主题标签）。\n\n${LANGNOTE}`,
+  const missionSpec = ULTRA
+    ? `作为首席面试官，为候选人做【面试前自我排查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，都变成一道"核心验伪题"，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；但只针对简历里真实存在的疑点，不得为凑数编造。${ULTRA_CHECKLIST}逐个疑点检查一遍，确认没有遗漏再收笔`
+    : `作为首席面试官，按上面的时长与深度要求，收敛出恰好${NCORE}道"核心验伪题"（题号Q1..Q${NCORE}）——最能区分"真做过"与"只会写简历"、且无法靠背术语蒙混的题；每题现场约${PLAN.perQuestion}分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称`
+  const authored = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n以下是分域拷问的问题库（JSON）：\n${JSON.stringify({triage:{flags:tri.flags,domains:tri.domains}, probes}, null, 1)}\n\n${missionSpec}。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；${ladderSpec}；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（${DEPTH.good}个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的${DEPTH.pass}点）、典型露馅、追问。另把其余有价值的问题去重整理为${DEPTH.probes}条"补充探针"（每条带主题标签）。\n\n${LANGNOTE}`,
     { label:`author:${c.id}`, phase:'Author', schema:AUTHOR, effort:'high' })
   if(!authored) return null
 
@@ -170,4 +194,4 @@ const results = (await parallel(CANDS.map(c => () => analyzeOne(c)))).filter(Boo
 
 const candidates = {}
 for(const r of results) candidates[r.id] = r.cand
-return { meta: { ...(A.meta || {}), lang: LANG, plan: { ...PLAN, nCore: NCORE } }, candidates }
+return { meta: { ...(A.meta || {}), lang: LANG, plan: { ...PLAN, nCore: NCORE || null } }, candidates }

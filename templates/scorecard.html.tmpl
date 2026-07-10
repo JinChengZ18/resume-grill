@@ -85,7 +85,9 @@ function page(id, d){
   if(o.title) rows += row(id, "0.", o.title.replace(/[（(].*/,"").trim(), o.expect, o.tell, true, plan && plan.opener);
   (d.cards||[]).forEach(c=> rows += row(id, "★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false, plan && plan.perQuestion));
   const rlink = d.resume ? `<a class="rlink" href="${esc(d.resume)}">${esc(L.resume_link)}</a>` : "";
-  const dur = plan ? `<span>${esc(L.duration)} <b>${esc(plan.minutes)} ${esc(L.min_unit)}</b></span>` : "";
+  const dur = !plan ? ""
+    : plan.minutes ? `<span>${esc(L.duration)} <b>${esc(plan.minutes)} ${esc(L.min_unit)}</b></span>`
+    : `<span><b>${esc(L.selfcheck_mode)}</b></span>`;   // ultra：不限时
   return `<div class="page" data-cid="${esc(id)}">
     <h1>${esc(L.scorecard_h1)} · ${esc(d.name)}${rlink}</h1>
     <div class="meta"><span>${esc(L.date)} <b>${esc(meta.date||"")}</b></span>${dur}<span>${esc(L.interviewer)} ______</span><span class="brand">${esc(BRAND)}</span></div>

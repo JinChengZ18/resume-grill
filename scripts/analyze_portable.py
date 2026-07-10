@@ -19,9 +19,13 @@ analyze_portable.py — 运行无关的分析编排（不依赖 Claude Code 的 
   缺省 --lang auto：按简历正文自动判定（中文简历出中文、英文简历出英文），使产物语言与输入一致。
   也可显式指定 --lang zh|en|<ISO 码>（写进 payload.meta.lang，render.py 据此本地化界面文案）。
 
-面试时长:
+面试时长与深度档位:
   --minutes N（缺省 60）决定核心题数量与拷问深度：30 分钟 → 少而聚焦（阶梯 1 级、答案键写精）；
   60 分钟 → 6 道常规；90+ 分钟 → 更多题、更细的答案键与更多技术域。--ncore 可显式覆盖题数。
+  --depth quick|standard|deep|ultra 显式指定档位（覆盖 --minutes 推导）。
+  ultra = 自测模式（供候选人面试前自查）：不限时、不设题数上限，穷尽简历中每一处真实存在的疑点
+  （通常 12-24 题），但不得为凑数编造。例：
+    python analyze_portable.py --resumes resumes.json --out payload.json --depth ultra
 
 接入模型（三选一）:
   1) 环境变量 RG_LLM_PROVIDER=openai    + OPENAI_API_KEY   (+ RG_LLM_MODEL, 默认 gpt-4.1)
@@ -80,14 +84,30 @@ def role_for(lang):
 
 
 # ---- 面试时长 → 核心题数量与拷问深度（与 analyze.js 同一套公式） ----
+# depth 由 minutes 推导，也可显式指定。'ultra' 是自测模式：不限时、不设题数上限，
+# 穷尽简历里每一处可能被追问的疑点（供候选人面试前自我排查）。
+FLAGS_NORMAL = "注水多就多列、简历干净就少列（通常3-6条），不硬凑"
 DEPTHS = {
-    "quick": {"rungs": 1, "good": "4-5", "pass": "2-3", "probes": "4-6", "domains": "3-4",
+    "quick": {"rungs": 1, "good": "4-5", "pass": "2-3", "probes": "4-6", "domains": "3-4", "flags": FLAGS_NORMAL,
               "note": "时间紧：题目更聚焦，直取能一击验伪的关键点，不求穷尽；暖场阶梯只留 1 级，答案键写精不写多。"},
-    "standard": {"rungs": 2, "good": "5-8", "pass": "3-5", "probes": "10-14", "domains": "4-6",
+    "standard": {"rungs": 2, "good": "5-8", "pass": "3-5", "probes": "10-14", "domains": "4-6", "flags": FLAGS_NORMAL,
                  "note": "常规时长：每题 2 级暖场阶梯 + 硬核验伪，答案键覆盖机制/阈值/取舍。"},
     "deep": {"rungs": 2, "good": "7-10", "pass": "4-6", "probes": "14-18", "domains": "6-8",
+             "flags": "注水多就多列（通常4-8条），不硬凑",
              "note": "时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。"},
+    "ultra": {"rungs": 2, "good": "6-10", "pass": "3-6", "probes": "20-30", "domains": "8-12",
+              "flags": "穷尽简历中所有真实存在的疑点，不设条数上限；宁多勿漏，但绝不编造",
+              "note": "自我排查模式（供候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、"
+                      "被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。"},
 }
+
+# ultra 必须逐项覆盖的疑点清单——这是「穷尽」的可执行定义
+ULTRA_CHECKLIST = (
+    "必须逐项覆盖：①每一条关键红旗；②每一个没有严谨基线的量化宣称（“提升X%”“节省Y%”）；"
+    "③每一处 ownership 模糊（“参与/负责/协助”到底自己做了什么）；④每一个只出现在技能栏、"
+    "却在项目里找不到佐证的技术名词；⑤每一段时间线重叠或经历性质存疑（在校/兼职/实习 vs 全职）；"
+    "⑥每一个被包装成“系统/框架/平台”的课程或短期项目。"
+)
 
 
 def _round_half_up(x):
@@ -98,9 +118,13 @@ def _round_half_up(x):
 TIER = {"quick": (4, 5), "standard": (5, 7), "deep": (6, 9)}   # (opener, buffer) 分钟
 
 
-def plan_for(minutes):
+def plan_for(minutes, depth_override=None):
+    forced = str(depth_override or "").lower()
+    if forced == "ultra":                    # 自测模式：不限时、题数由疑点数量决定
+        return {"minutes": None, "opener": None, "buffer": None, "depth": "ultra",
+                "nCore": None, "perQuestion": None}
     m = max(10, min(240, int(minutes or 60)))
-    depth = "quick" if m < 40 else ("deep" if m >= 85 else "standard")
+    depth = forced if forced in TIER else ("quick" if m < 40 else ("deep" if m >= 85 else "standard"))
     opener, buffer = TIER[depth]
     per_q = 8                                # 60min → 5 + 6×8 + 7 → nCore 6（沿用既有默认）
     core = max(m - opener - buffer, per_q)
@@ -111,9 +135,11 @@ def plan_for(minutes):
 
 
 def pacing_text(plan, ncore):
+    note = DEPTHS[plan["depth"]]["note"]
+    if plan["depth"] == "ultra":
+        return "本次不是限时面试，而是【面试前自我排查】：不设时间盒、不设题数上限。" + note
     return ("本场面试约 %d 分钟：开场约 %d 分钟，%d 道核心题每题约 %d 分钟，留约 %d 分钟收尾。%s"
-            % (plan["minutes"], plan["opener"], ncore, plan["perQuestion"], plan["buffer"],
-               DEPTHS[plan["depth"]]["note"]))
+            % (plan["minutes"], plan["opener"], ncore, plan["perQuestion"], plan["buffer"], note))
 
 # ---- schemas (镜像 analyze.js / pipeline-spec.md) ----
 TRIAGE = {
@@ -226,12 +252,17 @@ def resume_block(c):
             % (c.get("label") or c.get("id"), c.get("role_hint") or "（未指定）", c.get("resume_text") or ""))
 
 def p_triage(rb, plan, dep, ncore):
+    ultra = plan["depth"] == "ultra"
+    flag_spec = ("关键红旗——%s。%s" % (dep["flags"], ULTRA_CHECKLIST)) if ultra \
+        else "关键红旗（注水多就多列、干净就少列，不硬凑）"
+    opener_spec = "一组开场态度/事实题（时间线/可展示性/ownership）" if ultra \
+        else ("一组开场态度/事实题（时间线/可展示性/ownership，控制在约%d分钟内问完）" % plan["opener"])
     return (rb + "\n\n" + pacing_text(plan, ncore) +
             "\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、"
-            "真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、关键红旗（注水多就多列、干净就少列，不硬凑）、"
-            "一组开场态度/事实题（时间线/可展示性/ownership，控制在约%d分钟内问完），以及%s个最值得对抗性拷问的技术域"
+            "真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、" + flag_spec + "、" + opener_spec +
+            "，以及%s个最值得对抗性拷问的技术域"
             "（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。"
-            % (plan["opener"], dep["domains"]))
+            % dep["domains"])
 
 def p_probe(rb, d):
     return (rb + "\n\n只聚焦这一个技术域做对抗性拷问：【%s】\n重点覆盖：%s\n"
@@ -246,29 +277,44 @@ def _ladder_spec(dep):
             "（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选")
 
 
+def _mission_spec(n, plan, dep):
+    if plan["depth"] == "ultra":
+        return ("作为首席面试官，为候选人做【面试前自我排查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，"
+                "都变成一道“核心验伪题”，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；"
+                "但只针对简历里真实存在的疑点，不得为凑数编造。" + ULTRA_CHECKLIST + "逐个疑点检查一遍，确认没有遗漏再收笔")
+    return ("作为首席面试官，按上面的时长与深度要求，收敛出恰好%d道“核心验伪题”（题号Q1..Q%d）——最能区分“真做过”"
+            "与“只会写简历”、且无法靠背术语蒙混的题；每题现场约%d分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称"
+            % (n, n, plan["perQuestion"]))
+
+
 def p_author(rb, tri, probes, n, plan, dep):
     bank = json.dumps({"triage": {"flags": tri.get("flags"), "domains": tri.get("domains")}, "probes": probes},
                       ensure_ascii=False, indent=1)
     return (rb + "\n\n" + pacing_text(plan, n) + "\n\n以下是分域拷问的问题库（JSON）：\n" + bank +
-            "\n\n作为首席面试官，按上面的时长与深度要求，收敛出恰好%d道“核心验伪题”（题号Q1..Q%d）——最能区分“真做过”"
-            "与“只会写简历”、且无法靠背术语蒙混的题；每题现场约%d分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称。"
-            "每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；%s；ask 则落到实现层、"
+            "\n\n" + _mission_spec(n, plan, dep) +
+            "。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；%s；ask 则落到实现层、"
             "无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（%s个分点、技术准确、含机制/阈值/取舍）、"
             "及格线（必须听到的%s点）、典型露馅、追问。另把其余有价值的问题去重整理为%s条“补充探针”（每条带主题标签）。"
-            % (n, n, plan["perQuestion"], _ladder_spec(dep), dep["good"], dep["pass"], dep["probes"]))
+            % (_ladder_spec(dep), dep["good"], dep["pass"], dep["probes"]))
 
 
 def p_single(rb, n, plan, dep):
     ladder = ("恰好1级暖场阶梯（ladder：关键设计决策）" if dep["rungs"] == 1
               else "2级暖场阶梯（ladder：L1 项目切入/general、L2 设计决策）")
+    if plan["depth"] == "ultra":
+        quota = ("关键红旗（%s）、开场态度/事实题、以及覆盖简历每一处疑点的核心验伪题"
+                 "（题数不固定，通常12-24道，宁多勿漏但不得编造，按 Q1、Q2… 编号）。%s" % (dep["flags"], ULTRA_CHECKLIST))
+    else:
+        quota = ("关键红旗（不硬凑）、开场态度/事实题、以及恰好%d道核心验伪题（每题现场约%d分钟）。"
+                 % (n, plan["perQuestion"]))
     return (rb + "\n\n" + pacing_text(plan, n) +
             "\n\n任务：一次性完成面试前研判与核心题设计，直接给出："
-            "画像+可信度（均衡如实）、标尺、真实强项/亮点（乏善可陈不硬凑）、关键红旗（不硬凑）、"
-            "开场态度/事实题、以及恰好%d道核心验伪题（每题现场约%d分钟）。每道核心题：挂靠简历项目（anchor）+%s"
+            "画像+可信度（均衡如实）、标尺、真实强项/亮点（乏善可陈不硬凑）、" + quota +
+            "每道核心题：挂靠简历项目（anchor）+%s"
             "+ ask（L3 硬核验伪）+ 期望优质回答（%s分点）+ 及格线（%s条）+ 典型露馅 + 追问。"
             "再给%s条补充探针（每条带主题标签）。"
             "既戳穿注水也如实肯定真本事，不强求优缺点对称。"
-            % (n, plan["perQuestion"], ladder, dep["good"], dep["pass"], dep["probes"]))
+            % (ladder, dep["good"], dep["pass"], dep["probes"]))
 
 def p_verify(cards):
     return ("你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，对下面这份面试“标准答案(answer key)”做对抗式事实核查。"
@@ -360,6 +406,8 @@ def main():
                     help="输出语言 zh|en|<ISO>|auto（缺省 auto：按简历正文自动判定，使产物语言与输入一致）")
     ap.add_argument("--minutes", type=int, default=60,
                     help="面试时长（分钟，缺省 60）：决定核心题数量与拷问深度，短则少而聚焦、长则多而细")
+    ap.add_argument("--depth", default="", choices=["", "quick", "standard", "deep", "ultra"],
+                    help="显式指定深度档位（覆盖 --minutes 推导）。ultra=自测模式：不限时、穷尽简历所有疑点")
     ap.add_argument("--single", action="store_true", help="单调回退：一次调用产出全部")
     ap.add_argument("--ncore", type=int, default=0, help="显式指定核心题数量（覆盖 --minutes 推导出的数量）")
     a = ap.parse_args()
@@ -381,9 +429,9 @@ def main():
     if items is not None:
         cands = build_candidates_from_resumes(items, lang)
 
-    plan = plan_for(meta.get("minutes") or a.minutes)
-    ncore = a.ncore or plan["nCore"]          # explicit --ncore wins
-    plan["nCore"] = ncore
+    plan = plan_for(meta.get("minutes") or a.minutes, a.depth or meta.get("depth"))
+    ncore = a.ncore or plan["nCore"] or 0     # explicit --ncore wins; 0 = 由疑点数量决定（ultra）
+    plan["nCore"] = ncore or None
 
     meta.setdefault("title", a.title or DEFAULT_TITLE.get(lang, DEFAULT_TITLE["en"]))
     if a.date:
@@ -391,10 +439,11 @@ def main():
     meta["lang"] = lang
     meta["plan"] = plan
 
+    scope = "ultra/self-check, exhaustive" if plan["depth"] == "ultra" \
+        else "%dmin, %d questions, %s" % (plan["minutes"], ncore, plan["depth"])
     out = {}
     for c in cands:
-        sys.stderr.write("analyzing %s (lang=%s, %dmin, %d questions, %s) ...\n"
-                         % (c.get("label") or c.get("id"), lang, plan["minutes"], ncore, plan["depth"]))
+        sys.stderr.write("analyzing %s (lang=%s, %s) ...\n" % (c.get("label") or c.get("id"), lang, scope))
         r = analyze_one(c, ncore, a.single, lang, plan)
         out[r["id"]] = r["cand"]
 

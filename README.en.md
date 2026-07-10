@@ -62,6 +62,20 @@ Output language is detected by default and follows the resume: Chinese resumes p
 
 
 
+## Interview Length & Self-Check Mode
+
+Interviews vary in length: a long slot lets you probe more questions in finer detail, a short one only allows hitting the essentials. Just tell it the length ("a 30-minute phone screen", "a 90-minute onsite"); it defaults to 60 minutes.
+
+| Length | Core questions | What changes |
+| --- | --- | --- |
+| 30 min | 3 (≈7′ each) | Warm-up ladder drops to 1 rung; answer keys stay tight |
+| 60 min | 6 (≈8′) | Default |
+| 90 min | 9 (≈8′) | More bullets per answer key, follow-ups press a layer deeper, more domains |
+
+**Self-check mode (ultra) — for candidates auditing their own resume.** Say "help me self-check" or "what will I get asked", and it drops the time box and the question cap, digging out every point in the resume that an interviewer could challenge: every red flag, every percentage without a baseline, every vague "participated in / responsible for" ownership claim, every technology listed under skills but absent from the projects, every overlapping timeline, every coursework project dressed up as a "system". Typically 12-24 questions, erring on the side of more — but only for doubts that genuinely exist in the resume; it will not invent them. Work through the fold-away answers on the Q&A cards and patch the holes before the interview.
+
+
+
 ## Scripts / Any Framework
 
 The analysis logic is decoupled from Claude Code's Workflow runtime. You can run the same pipeline with three script commands and get the same output structure:
