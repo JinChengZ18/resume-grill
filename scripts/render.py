@@ -76,8 +76,8 @@ LABELS = {
         "print_btn": "🖨 打印", "reset_btn": "↺ 重置本页", "score_hint": "点格子打分，自动记忆",
         "duration": "时长", "min_unit": "分钟", "q_unit": "题",
         "opener_word": "开场", "wrap_word": "收尾",
-        "selfcheck_mode": "自测模式 · 不限时",
-        "selfcheck_lead": "自测模式 · 不限时｜逐一覆盖简历中的全部疑点，供面试前自我排查",
+        "audit_mode": "全面审查 · 不限时",
+        "audit_lead": "全面审查 · 不限时｜逐一覆盖简历中的全部疑点（亦可用于面试前自我排查）",
     },
     "en": {
         "colon": ": ", "sep": " · ", "list_sep": "; ",
@@ -113,8 +113,8 @@ LABELS = {
         "print_btn": "🖨 Print", "reset_btn": "↺ Reset page", "score_hint": "click a cell to score — saved automatically",
         "duration": "Duration", "min_unit": "min", "q_unit": "",
         "opener_word": "Opener", "wrap_word": "Wrap-up",
-        "selfcheck_mode": "Self-check · untimed",
-        "selfcheck_lead": "Self-check · untimed — covers every doubt in the résumé, for pre-interview self-audit",
+        "audit_mode": "Full audit · untimed",
+        "audit_lead": "Full audit · untimed — covers every doubt in the résumé (also for pre-interview self-check)",
     },
 }
 
@@ -178,7 +178,7 @@ def md_guide(payload, L):
     if m.get("date"):     out.append(f"> {L['date']}{co}{m['date']}{sep}{BRAND}")
     plan = m.get("plan") or {}
     if plan.get("depth") == "ultra":
-        out.append(f"> {L['selfcheck_lead']}")
+        out.append(f"> {L['audit_lead']}")
     elif plan.get("minutes") and plan.get("nCore") and plan.get("perQuestion"):
         out.append(f"> {pacing_line(L, plan)}")
     out.append(f"> {L['guide_lead']}\n")

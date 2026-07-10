@@ -53,7 +53,7 @@ resumes.json (extract_pdf.py 或你的抽取器)
 
 1. **推导 plan**（两个参考实现共用同一套公式）：
    - `depth` 优先取显式的 `meta.depth`／`--depth`（`quick`/`standard`/`deep`/`ultra`）；否则由时长推导：`minutes < 40 → quick`；`minutes >= 85 → deep`；否则 `standard`。
-   - `depth == 'ultra'` 直接返回 `{minutes:null, opener:null, buffer:null, nCore:null, perQuestion:null}`——自测模式不限时、不设题数上限（见下）。
+   - `depth == 'ultra'` 直接返回 `{minutes:null, opener:null, buffer:null, nCore:null, perQuestion:null}`——全面审查模式不限时、不设题数上限（见下）。
    - 其余档位：`(opener, buffer)` 取 `quick(4,5)`／`standard(5,7)`／`deep(6,9)` 分钟；`core = max(minutes - opener - buffer, 8)`；`nCore = clamp(round(core/8), 2, 12)`；`perQuestion = max(4, floor(core/nCore))`——用 floor 保证 `opener + nCore×perQuestion + buffer` 不超出时长。
    - 坑：Python 内置 `round()` 是银行家舍入，须换成四舍五入才与 JS `Math.round` 一致（见 `_round_half_up`），否则两实现在 `minutes=32` 处分叉。
 2. **档位决定深度**：
@@ -65,9 +65,9 @@ resumes.json (extract_pdf.py 或你的抽取器)
    | deep | 由时长推导 | 2 | 7-10 | 4-6 | 14-18 | 6-8 | 4-8 条，不硬凑 |
    | ultra | **不固定（通常 12-24）** | 2 | 6-10 | 3-6 | 20-30 | 8-12 | **穷尽所有真实疑点，不设上限** |
 
-3. **ultra = 自我排查模式**（供候选人面试前自查）：不设时间盒与题数上限，把简历里每一处可能被追问的疑点都变成一道题。「穷尽」的可执行定义是一份必须逐项覆盖的清单——①每条关键红旗；②每个无严谨基线的量化宣称；③每处 ownership 模糊（「参与/负责/协助」）；④每个只出现在技能栏却无项目佐证的术语；⑤每段时间线重叠或经历性质存疑；⑥每个被包装成「系统/框架/平台」的课程项目。硬约束：**宁多勿漏，但只针对真实存在的疑点，不得为凑数编造**（与 ROLE 的「不硬凑」一致）。该清单同时注入 Triage（穷尽红旗）与 Author（穷尽题目）。
+3. **ultra = 全面审查模式**（面试官深挖 / 候选人面试前自查，同一件事的两种立场）：不设时间盒与题数上限，把简历里每一处可能被追问的疑点都变成一道题。切换判据是「用户要不要穷尽」，而非谁在用。「穷尽」的可执行定义是一份必须逐项覆盖的清单——①每条关键红旗；②每个无严谨基线的量化宣称；③每处 ownership 模糊（「参与/负责/协助」）；④每个只出现在技能栏却无项目佐证的术语；⑤每段时间线重叠或经历性质存疑；⑥每个被包装成「系统/框架/平台」的课程项目。硬约束：**宁多勿漏，但只针对真实存在的疑点，不得为凑数编造**（与 ROLE 的「不硬凑」一致）。该清单同时注入 Triage（穷尽红旗）与 Author（穷尽题目）。
 4. **注入提示**：非 ultra 拼「本场面试约 N 分钟：开场约 …，X 道核心题每题约 …，留约 … 分钟收尾」；ultra 拼「不是限时面试，而是面试前自我排查：不设时间盒、不设题数上限」。两者都附档位说明；schema 里 `flags`/`domains`/`ladder`/`good`/`pass`/`probes`/`cards` 的描述按档位插值（ultra 的 `cards` 描述改为「题数不固定、按 Q1、Q2… 依次编号」）。
-5. **落盘与渲染**：`plan` 写入 `payload.meta.plan`；`render.py` 据此在指南顶部给一行时间预算、在评分卡显示总时长与每题 `≈N′` 预算。ultra 的 `minutes`/`perQuestion` 为 `null`，渲染层据此改标「自测模式 · 不限时」并省去每题时间徽标。
+5. **落盘与渲染**：`plan` 写入 `payload.meta.plan`；`render.py` 据此在指南顶部给一行时间预算、在评分卡显示总时长与每题 `≈N′` 预算。ultra 的 `minutes`/`perQuestion` 为 `null`，渲染层据此改标「全面审查 · 不限时」并省去每题时间徽标。
 
 `nCore` 可显式覆盖（`args.nCore` / `--ncore`），覆盖后 `plan.nCore` 同步为该值；ultra 下 `nCore` 为 `null`（题数由疑点数量决定）。
 

@@ -6,9 +6,9 @@ An Agent Skill for grilling resumes: feed it one or more resume PDFs and it prod
 
 > This repository includes a **fully anonymized** demo resume for a fictional candidate, "Zhang San", applying for an Agent / AI Infra role with 2 years of experience. See the generated kit: [guide](examples/agent_engineer_demo/agent_engineer_demo_guide.md), [scorecard](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html), and [Q&A cards](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html). Open the HTML files in a browser.
 
-![ScreenShot_2026-07-10_140009_829](./DEMO/ScreenShot_2026-07-10_140009_829.png)
+![ScreenShot_en1](./DEMO/ScreenShot_en1.png)
 
-![ScreenShot_2026-07-10_135650_973](./DEMO/ScreenShot_2026-07-10_135650_973.png)
+![ScreenShot_en2](./DEMO/ScreenShot_en2.png)
 
 
 
@@ -62,7 +62,7 @@ Output language is detected by default and follows the resume: Chinese resumes p
 
 
 
-## Interview Length & Self-Check Mode
+## Interview Length & Full-Audit Mode
 
 Interviews vary in length: a long slot lets you probe more questions in finer detail, a short one only allows hitting the essentials. Just tell it the length ("a 30-minute phone screen", "a 90-minute onsite"); it defaults to 60 minutes.
 
@@ -72,7 +72,7 @@ Interviews vary in length: a long slot lets you probe more questions in finer de
 | 60 min | 6 (≈8′) | Default |
 | 90 min | 9 (≈8′) | More bullets per answer key, follow-ups press a layer deeper, more domains |
 
-**Self-check mode (ultra) — for candidates auditing their own resume.** Say "help me self-check" or "what will I get asked", and it drops the time box and the question cap, digging out every point in the resume that an interviewer could challenge: every red flag, every percentage without a baseline, every vague "participated in / responsible for" ownership claim, every technology listed under skills but absent from the projects, every overlapping timeline, every coursework project dressed up as a "system". Typically 12-24 questions, erring on the side of more — but only for doubts that genuinely exist in the resume; it will not invent them. Work through the fold-away answers on the Q&A cards and patch the holes before the interview.
+**Full-audit mode (ultra).** Say "do a full review of this resume", "audit it thoroughly", "find every weak point", or "what will I get asked", and it drops the time box and the question cap, digging out every point in the resume that an interviewer could challenge: every red flag, every percentage without a baseline, every vague "participated in / responsible for" ownership claim, every technology listed under skills but absent from the projects, every overlapping timeline, every coursework project dressed up as a "system". Typically 12-24 questions, erring on the side of more — but only for doubts that genuinely exist in the resume; it will not invent them. Interviewers use it to dig deep; candidates work through the fold-away answers on the Q&A cards and patch the holes before the interview. The switch is decided by whether you want exhaustive coverage, not by who is asking.
 
 
 

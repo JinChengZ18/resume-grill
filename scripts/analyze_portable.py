@@ -23,8 +23,8 @@ analyze_portable.py — 运行无关的分析编排（不依赖 Claude Code 的 
   --minutes N（缺省 60）决定核心题数量与拷问深度：30 分钟 → 少而聚焦（阶梯 1 级、答案键写精）；
   60 分钟 → 6 道常规；90+ 分钟 → 更多题、更细的答案键与更多技术域。--ncore 可显式覆盖题数。
   --depth quick|standard|deep|ultra 显式指定档位（覆盖 --minutes 推导）。
-  ultra = 自测模式（供候选人面试前自查）：不限时、不设题数上限，穷尽简历中每一处真实存在的疑点
-  （通常 12-24 题），但不得为凑数编造。例：
+  ultra = 全面审查模式（面试官逐条深挖 / 候选人面试前自查）：不限时、不设题数上限，
+  穷尽简历中每一处真实存在的疑点（通常 12-24 题），但不得为凑数编造。例：
     python analyze_portable.py --resumes resumes.json --out payload.json --depth ultra
 
 接入模型（三选一）:
@@ -84,8 +84,8 @@ def role_for(lang):
 
 
 # ---- 面试时长 → 核心题数量与拷问深度（与 analyze.js 同一套公式） ----
-# depth 由 minutes 推导，也可显式指定。'ultra' 是自测模式：不限时、不设题数上限，
-# 穷尽简历里每一处可能被追问的疑点（供候选人面试前自我排查）。
+# depth 由 minutes 推导，也可显式指定。'ultra' 是全面审查模式：不限时、不设题数上限，
+# 穷尽简历里每一处可能被追问的疑点（面试官深挖 / 候选人面试前自查）。
 FLAGS_NORMAL = "注水多就多列、简历干净就少列（通常3-6条），不硬凑"
 DEPTHS = {
     "quick": {"rungs": 1, "good": "4-5", "pass": "2-3", "probes": "4-6", "domains": "3-4", "flags": FLAGS_NORMAL,
@@ -97,7 +97,7 @@ DEPTHS = {
              "note": "时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。"},
     "ultra": {"rungs": 2, "good": "6-10", "pass": "3-6", "probes": "20-30", "domains": "8-12",
               "flags": "穷尽简历中所有真实存在的疑点，不设条数上限；宁多勿漏，但绝不编造",
-              "note": "自我排查模式（供候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、"
+              "note": "全面审查模式（面试官逐条深挖 / 候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、"
                       "被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。"},
 }
 
@@ -120,7 +120,7 @@ TIER = {"quick": (4, 5), "standard": (5, 7), "deep": (6, 9)}   # (opener, buffer
 
 def plan_for(minutes, depth_override=None):
     forced = str(depth_override or "").lower()
-    if forced == "ultra":                    # 自测模式：不限时、题数由疑点数量决定
+    if forced == "ultra":                    # 全面审查：不限时、题数由疑点数量决定
         return {"minutes": None, "opener": None, "buffer": None, "depth": "ultra",
                 "nCore": None, "perQuestion": None}
     m = max(10, min(240, int(minutes or 60)))
@@ -137,7 +137,7 @@ def plan_for(minutes, depth_override=None):
 def pacing_text(plan, ncore):
     note = DEPTHS[plan["depth"]]["note"]
     if plan["depth"] == "ultra":
-        return "本次不是限时面试，而是【面试前自我排查】：不设时间盒、不设题数上限。" + note
+        return "本次不是限时面试，而是对这份简历做【全面审查】：不设时间盒、不设题数上限，穷尽其中所有疑点。" + note
     return ("本场面试约 %d 分钟：开场约 %d 分钟，%d 道核心题每题约 %d 分钟，留约 %d 分钟收尾。%s"
             % (plan["minutes"], plan["opener"], ncore, plan["perQuestion"], plan["buffer"], note))
 
@@ -279,7 +279,7 @@ def _ladder_spec(dep):
 
 def _mission_spec(n, plan, dep):
     if plan["depth"] == "ultra":
-        return ("作为首席面试官，为候选人做【面试前自我排查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，"
+        return ("作为首席面试官，对这份简历做【全面审查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，"
                 "都变成一道“核心验伪题”，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；"
                 "但只针对简历里真实存在的疑点，不得为凑数编造。" + ULTRA_CHECKLIST + "逐个疑点检查一遍，确认没有遗漏再收笔")
     return ("作为首席面试官，按上面的时长与深度要求，收敛出恰好%d道“核心验伪题”（题号Q1..Q%d）——最能区分“真做过”"
@@ -407,7 +407,7 @@ def main():
     ap.add_argument("--minutes", type=int, default=60,
                     help="面试时长（分钟，缺省 60）：决定核心题数量与拷问深度，短则少而聚焦、长则多而细")
     ap.add_argument("--depth", default="", choices=["", "quick", "standard", "deep", "ultra"],
-                    help="显式指定深度档位（覆盖 --minutes 推导）。ultra=自测模式：不限时、穷尽简历所有疑点")
+                    help="显式指定深度档位（覆盖 --minutes 推导）。ultra=全面审查：不限时、穷尽简历所有疑点")
     ap.add_argument("--single", action="store_true", help="单调回退：一次调用产出全部")
     ap.add_argument("--ncore", type=int, default=0, help="显式指定核心题数量（覆盖 --minutes 推导出的数量）")
     a = ap.parse_args()

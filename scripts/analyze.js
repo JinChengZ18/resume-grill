@@ -17,8 +17,8 @@ const A = (typeof args === 'string' ? JSON.parse(args) : args) || {}
 const CANDS = A.candidates || []
 
 // ---- interview duration → how many core questions, and how deep to dig ----
-// depth 档位由 minutes 推导；也可用 meta.depth 显式指定。'ultra' 是自测模式：
-// 不限时、不设题数上限，穷尽简历里每一处可能被追问的疑点（供候选人面试前自我排查）。
+// depth 档位由 minutes 推导；也可用 meta.depth 显式指定。'ultra' 是全面审查模式：
+// 不限时、不设题数上限，穷尽简历里每一处可能被追问的疑点（面试官深挖 / 候选人面试前自查）。
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const TIER = { quick:{opener:4,buffer:5}, standard:{opener:5,buffer:7}, deep:{opener:6,buffer:9} }
 const FLAGS_NORMAL = '注水多就多列、简历干净就少列（通常3-6条），不硬凑'
@@ -31,12 +31,12 @@ const DEPTHS = {
     note:'时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。' },
   ultra: { rungs:2, good:'6-10', pass:'3-6', probes:'20-30', domains:'8-12',
     flags:'穷尽简历中所有真实存在的疑点，不设条数上限；宁多勿漏，但绝不编造',
-    note:'自我排查模式（供候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。' },
+    note:'全面审查模式（面试官逐条深挖 / 候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。' },
 }
 function planFor(minutes, depthOverride){
   const forced = String(depthOverride || '').toLowerCase()
   const hasForced = Object.prototype.hasOwnProperty.call(DEPTHS, forced)
-  if (hasForced && forced === 'ultra')             // 自测模式：不限时、题数由疑点数量决定
+  if (hasForced && forced === 'ultra')             // 全面审查：不限时、题数由疑点数量决定
     return { minutes:null, opener:null, buffer:null, depth:'ultra', nCore:null, perQuestion:null }
   const m = clamp(Number(minutes) || 60, 10, 240)
   const depth = hasForced ? forced : (m < 40 ? 'quick' : (m >= 85 ? 'deep' : 'standard'))
@@ -55,7 +55,7 @@ const DEPTH = DEPTHS[PLAN.depth]
 // ultra 必须逐项覆盖的疑点清单——这是"穷尽"的可执行定义
 const ULTRA_CHECKLIST = '必须逐项覆盖：①每一条关键红旗；②每一个没有严谨基线的量化宣称（"提升X%""节省Y%"）；③每一处 ownership 模糊（"参与/负责/协助"到底自己做了什么）；④每一个只出现在技能栏、却在项目里找不到佐证的技术名词；⑤每一段时间线重叠或经历性质存疑（在校/兼职/实习 vs 全职）；⑥每一个被包装成"系统/框架/平台"的课程或短期项目。'
 const PACING = ULTRA
-  ? `本次不是限时面试，而是【面试前自我排查】：不设时间盒、不设题数上限。${DEPTH.note}`
+  ? `本次不是限时面试，而是对这份简历做【全面审查】：不设时间盒、不设题数上限，穷尽其中所有疑点。${DEPTH.note}`
   : `本场面试约 ${PLAN.minutes} 分钟：开场约 ${PLAN.opener} 分钟，${NCORE} 道核心题每题约 ${PLAN.perQuestion} 分钟，留约 ${PLAN.buffer} 分钟收尾。${DEPTH.note}`
 
 // ---- output language: explicit override wins, else auto-detect from résumé text ----
@@ -164,7 +164,7 @@ async function analyzeOne(c){
     ? `②时间紧，暖场阶梯（ladder）只给恰好1级：直接问该简历项目的关键设计决策/为什么这么选，省去泛泛的项目概览`
     : `②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选`
   const missionSpec = ULTRA
-    ? `作为首席面试官，为候选人做【面试前自我排查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，都变成一道"核心验伪题"，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；但只针对简历里真实存在的疑点，不得为凑数编造。${ULTRA_CHECKLIST}逐个疑点检查一遍，确认没有遗漏再收笔`
+    ? `作为首席面试官，对这份简历做【全面审查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，都变成一道"核心验伪题"，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；但只针对简历里真实存在的疑点，不得为凑数编造。${ULTRA_CHECKLIST}逐个疑点检查一遍，确认没有遗漏再收笔`
     : `作为首席面试官，按上面的时长与深度要求，收敛出恰好${NCORE}道"核心验伪题"（题号Q1..Q${NCORE}）——最能区分"真做过"与"只会写简历"、且无法靠背术语蒙混的题；每题现场约${PLAN.perQuestion}分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称`
   const authored = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n以下是分域拷问的问题库（JSON）：\n${JSON.stringify({triage:{flags:tri.flags,domains:tri.domains}, probes}, null, 1)}\n\n${missionSpec}。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；${ladderSpec}；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（${DEPTH.good}个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的${DEPTH.pass}点）、典型露馅、追问。另把其余有价值的问题去重整理为${DEPTH.probes}条"补充探针"（每条带主题标签）。\n\n${LANGNOTE}`,
     { label:`author:${c.id}`, phase:'Author', schema:AUTHOR, effort:'high' })
