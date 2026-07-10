@@ -1,0 +1,20 @@
+# 工作区数据：简历 PII 与生成产物一律不入库（发布时不泄露候选人隐私）
+workspace/**
+!workspace/
+!workspace/README.md
+!workspace/inbox/
+!workspace/inbox/.gitkeep
+!workspace/output/
+!workspace/output/.gitkeep
+
+# 安全兜底：任何位置的简历/中间产物都不入库
+*.pdf
+resumes.json
+payload.json
+
+# Python / 编辑器 / 系统
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+Thumbs.db

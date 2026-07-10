@@ -1,0 +1,206 @@
+<meta charset="utf-8">
+<title>__TITLE__</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#1c2430; --soft:#5b6675; --line:#e2e7ee;
+    --accent:#2b4a7a; --accent-soft:#eef2f8;
+    --good:#1f7a3d; --good-bg:#eef7f0; --good-line:#bfe0c8;
+    --pass:#0f6ea3; --pass-bg:#eef6fb; --pass-line:#bfe0f0;
+    --tell:#a52424; --tell-bg:#fbeeee; --tell-line:#efc9c9;
+    --probe:#6a3fb0; --probe-bg:#f3eefb; --probe-line:#dbc9f0;
+    --ask-bg:#fbfaf4; --ask-line:#e8e0c4;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#12161c; --card:#1b212a; --ink:#e6ebf2; --soft:#9aa6b4; --line:#2b333e;
+      --accent:#7fa8e0; --accent-soft:#22303f;
+      --good:#7fce97; --good-bg:#17281c; --good-line:#2c4a34;
+      --pass:#78c2ea; --pass-bg:#152530; --pass-line:#294559;
+      --tell:#ef9a9a; --tell-bg:#2a1818; --tell-line:#523030;
+      --probe:#c3a3ef; --probe-bg:#221a30; --probe-line:#3f2f57;
+      --ask-bg:#211f16; --ask-line:#463f27;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+    line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 16px 60px}
+  header.top{position:sticky;top:0;z-index:20;background:var(--bg);
+    border-bottom:1px solid var(--line);padding:14px 16px 0;margin:0 -16px 8px}
+  header.top .inner{max-width:920px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 2px;color:var(--accent)}
+  .sub{font-size:12.5px;color:var(--soft);margin:0 0 10px}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .tab{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    padding:6px 14px;border-radius:20px;font-size:13.5px;cursor:pointer;font-weight:600}
+  .tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--soft);
+    padding:6px 12px;border-radius:20px;font-size:12.5px;cursor:pointer}
+  .btn:hover{color:var(--ink)}
+  .links{margin-left:auto;display:flex;gap:14px;font-size:12.5px}
+  .links a{color:var(--accent);text-decoration:none}
+  .links a:hover{text-decoration:underline}
+  .profile{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin:14px 0}
+  .profile h2{font-size:16px;margin:0 0 6px;color:var(--accent)}
+  .rlink{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;
+    border:1px solid var(--accent);border-radius:14px;padding:2px 9px;margin-left:8px;white-space:nowrap}
+  .rlink:hover{background:var(--accent-soft)}
+  .profile p{margin:0 0 8px;font-size:14px}
+  .ruler{font-size:13px;background:var(--accent-soft);border-left:3px solid var(--accent);
+    padding:8px 12px;border-radius:0 6px 6px 0;color:var(--ink)}
+  .flags{margin:10px 0 0;padding-left:0;list-style:none;font-size:13.3px}
+  .flags li{position:relative;padding:4px 0 4px 20px;border-top:1px dashed var(--line)}
+  .flags li:before{content:"\25B2";position:absolute;left:0;top:4px;color:var(--tell);font-size:10px}
+  .strengths{margin:10px 0 0;padding-left:0;list-style:none;font-size:13.3px}
+  .strengths li{position:relative;padding:4px 0 4px 20px;border-top:1px dashed var(--line)}
+  .strengths li:before{content:"\2605";position:absolute;left:0;top:4px;color:var(--good);font-size:10px}
+  .stitle{font-size:11.5px;font-weight:700;letter-spacing:.3px;margin:12px 0 0}
+  .stitle.s-good{color:var(--good)} .stitle.s-flag{color:var(--tell)}
+  .anchor{display:inline-block;font-weight:600;font-size:11px;color:var(--soft);background:var(--accent-soft);
+    border:1px solid var(--line);border-radius:10px;padding:1px 8px;margin-left:8px;vertical-align:2px;white-space:nowrap}
+  .ladder{margin:0 16px 10px}
+  .rung{font-size:13px;color:var(--ink);padding:6px 10px;margin:0 0 5px;background:var(--accent-soft);
+    border:1px solid var(--line);border-radius:7px}
+  .rung .lv{display:inline-block;font-weight:700;color:var(--accent);font-size:10.5px;margin-right:6px;letter-spacing:.3px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    margin:14px 0;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card-h{display:flex;gap:10px;align-items:flex-start;padding:13px 16px 6px}
+  .badge{flex:none;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;
+    padding:2px 9px;border-radius:7px;margin-top:2px}
+  .badge.behav{background:var(--soft)}
+  .card-h h3{margin:0;font-size:15.5px;line-height:1.4}
+  .ask{margin:0 16px 12px;padding:10px 12px;background:var(--ask-bg);
+    border:1px solid var(--ask-line);border-radius:8px;font-size:14px}
+  .ask .k{display:inline-block;font-weight:700;color:var(--accent);font-size:11.5px;
+    letter-spacing:.3px;margin-right:6px;vertical-align:1px}
+  details.ans{margin:0 16px 14px}
+  details.ans>summary{cursor:pointer;list-style:none;font-size:12.5px;color:var(--soft);
+    padding:5px 0;user-select:none;font-weight:600}
+  details.ans>summary::-webkit-details-marker{display:none}
+  details.ans>summary:before{content:"\25B8 ";color:var(--accent)}
+  details.ans[open]>summary:before{content:"\25BE "}
+  .blk{border:1px solid;border-radius:8px;padding:9px 12px;margin:8px 0;font-size:13.6px}
+  .blk .bt{font-weight:700;font-size:11.5px;letter-spacing:.3px;margin-bottom:4px}
+  .blk ul{margin:4px 0 0;padding-left:18px}
+  .blk li{margin:3px 0}
+  .blk p{margin:2px 0 0}
+  .good{background:var(--good-bg);border-color:var(--good-line)} .good .bt{color:var(--good)}
+  .pass{background:var(--pass-bg);border-color:var(--pass-line)} .pass .bt{color:var(--pass)}
+  .pass li{list-style:none;position:relative;padding-left:18px} .pass li:before{content:"\2713";position:absolute;left:0;color:var(--pass);font-weight:700}
+  .tell{background:var(--tell-bg);border-color:var(--tell-line)} .tell .bt{color:var(--tell)}
+  .probe{background:var(--probe-bg);border-color:var(--probe-line)} .probe .bt{color:var(--probe)}
+  .behav-note{font-size:13.3px;margin:0 16px 14px}
+  .behav-note b{color:var(--accent)}
+  .probes{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0;padding:6px 16px 12px}
+  .probes>summary{cursor:pointer;font-weight:700;color:var(--accent);font-size:14px;padding:8px 0;list-style:none}
+  .probes>summary::-webkit-details-marker{display:none}
+  .probes>summary:before{content:"\25B8 "}
+  .probes[open]>summary:before{content:"\25BE "}
+  .probes ul{margin:2px 0 0;padding-left:18px;font-size:13.3px}
+  .probes li{margin:5px 0}
+  .probes .pt{display:inline-block;font-weight:700;color:var(--probe);font-size:11px;
+    background:var(--probe-bg);border:1px solid var(--probe-line);border-radius:5px;padding:0 5px;margin-right:5px}
+  code,.mono{font-family:"Cascadia Code",Consolas,monospace;font-size:.92em;
+    background:var(--accent-soft);padding:0 3px;border-radius:3px}
+  .hide{display:none}
+  footer{font-size:12px;color:var(--soft);text-align:center;margin-top:24px}
+</style>
+
+<header class="top"><div class="inner">
+  <h1 id="h1"></h1>
+  <div class="sub" id="sub"></div>
+  <div class="bar" id="bar">
+    <span id="tabs"></span>
+    <button class="btn" id="toggleAll">收起全部答案（自测）</button>
+    <span class="links" id="links"></span>
+  </div>
+</div></header>
+
+<div class="wrap">
+  <div id="sections"></div>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const PAYLOAD = /*__PAYLOAD__*/{};
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const fmt = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+const meta = PAYLOAD.meta||{};
+const cands = PAYLOAD.candidates||{};
+const ids = Object.keys(cands);
+
+document.getElementById("h1").textContent = meta.title || "提问-回答攻防卡片";
+document.getElementById("sub").textContent = meta.subtitle || "对抗性技术面试 · 建议提问 → 期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问";
+document.title = meta.title || document.title;
+
+// tabs
+document.getElementById("tabs").innerHTML = ids.map((id,i)=>
+  `<button class="tab ${i===0?'on':''}" data-c="${esc(id)}">${esc(cands[id].name||id)}</button>`).join(" ");
+// external local links
+document.getElementById("links").innerHTML = (meta.links||[])
+  .map(l=>`<a href="${esc(l.href)}">${esc(l.label)}</a>`).join("");
+
+function renderCard(c){
+  const li = a => (a||[]).map(x=>`<li>${fmt(x)}</li>`).join("");
+  const ladder = (c.ladder||[]).map(s=>`<div class="rung"><span class="lv">${esc(s.level)}</span>${fmt(s.q)}</div>`).join("");
+  const ladderBlock = (c.ladder||[]).length ? `<div class="ladder">${ladder}</div>` : "";
+  const anchor = c.anchor ? `<span class="anchor">${esc(c.anchor)}</span>` : "";
+  return `<article class="card">
+    <div class="card-h"><span class="badge">${esc(c.n)}</span><h3>${esc(c.title)}${anchor}</h3></div>
+    ${ladderBlock}
+    <div class="ask"><span class="k">建议提问 · L3 硬核验伪</span>${fmt(c.ask)}</div>
+    <details class="ans" open>
+      <summary>参考答案与判分要点</summary>
+      <div class="blk good"><div class="bt">期望的优质回答</div><ul>${li(c.good)}</ul></div>
+      <div class="blk pass"><div class="bt">及格线 · 必须听到</div><ul>${li(c.pass)}</ul></div>
+      <div class="blk tell"><div class="bt">典型露馅</div><p>${fmt(c.tell)}</p></div>
+      <div class="blk probe"><div class="bt">追问</div><p>${fmt(c.probe)}</p></div>
+    </details>
+  </article>`;
+}
+function renderCand(d){
+  const rlink = d.resume ? `<a class="rlink" href="${esc(d.resume)}">📄 原始简历 PDF</a>` : "";
+  const flags = (d.flags||[]).map(f=>`<li>${fmt(f)}</li>`).join("");
+  const strengths = (d.strengths||[]).map(s=>`<li>${fmt(s)}</li>`).join("");
+  const o = d.opener||{};
+  const oq = (o.questions||[]).map(q=>`<li>${fmt(q)}</li>`).join("");
+  const opener = o.title ? `<article class="card">
+    <div class="card-h"><span class="badge behav">开场</span><h3>${esc(o.title)}</h3></div>
+    <div class="ask"><ul style="margin:0;padding-left:18px">${oq}</ul></div>
+    <div class="behav-note"><b>期望的行为：</b>${fmt(o.expect)}<br><b>露馅：</b>${fmt(o.tell)}</div>
+  </article>` : "";
+  const cards = (d.cards||[]).map(renderCard).join("");
+  const probes = (d.probes||[]).map(p=>`<li><span class="pt">${esc(p.tag)}</span>${fmt(p.q)}</li>`).join("");
+  const probesBlock = (d.probes||[]).length ? `<details class="probes"><summary>补充探针（${d.probes.length} 条 · 无标准答案，答顺后继续加压）</summary><ul>${probes}</ul></details>` : "";
+  return `<div class="profile">
+      <h2>${esc(d.name)}${rlink}</h2>
+      <p>${fmt(d.profile)}</p>
+      ${d.ruler?`<div class="ruler">${fmt(d.ruler)}</div>`:""}
+      ${(d.strengths||[]).length?`<div class="stitle s-good">★ 亮点 · 真实强项</div><ul class="strengths">${strengths}</ul>`:""}
+      ${(d.flags||[]).length?`<div class="stitle s-flag">▲ 关键红旗</div><ul class="flags">${flags}</ul>`:""}
+    </div>${opener}${cards}${probesBlock}`;
+}
+
+const sections = document.getElementById("sections");
+sections.innerHTML = ids.map((id,i)=>
+  `<section data-sec="${esc(id)}" class="${i===0?'':'hide'}">${renderCand(cands[id])}</section>`).join("");
+document.getElementById("foot").textContent = meta.footer || "诚实降级（承认课程demo/没上生产/gold自标）应视为强信号，不扣分。";
+
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on");
+  const c=t.dataset.c;
+  document.querySelectorAll("[data-sec]").forEach(s=>s.classList.toggle("hide", s.dataset.sec!==c));
+  window.scrollTo({top:0});
+}));
+const tgl = document.getElementById("toggleAll");
+let open = true;
+tgl.addEventListener("click",()=>{
+  open=!open;
+  document.querySelectorAll("details.ans").forEach(d=>d.open=open);
+  tgl.textContent = open ? "收起全部答案（自测）" : "展开全部答案";
+});
+</script>

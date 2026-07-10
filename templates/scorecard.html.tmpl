@@ -1,0 +1,79 @@
+<meta charset="utf-8">
+<title>__TITLE__ · 现场评分卡</title>
+<style>
+  :root{ --ink:#1a1a1a; --line:#bcbcbc; --soft:#666; --accent:#2b4a7a; --tint:#eef2f8; }
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  html,body{margin:0;padding:0;color:var(--ink);
+    font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif; background:#eceef1;}
+  .page{width:210mm;min-height:297mm;margin:6mm auto;padding:11mm 12mm;background:#fff;
+    box-shadow:0 1px 6px rgba(0,0,0,.18);}
+  h1{font-size:13.5pt;margin:0 0 1mm;color:var(--accent);letter-spacing:.2px;}
+  .meta{font-size:8.3pt;color:var(--soft);margin:0 0 2mm;display:flex;gap:5mm;flex-wrap:wrap;}
+  .meta b{color:var(--ink);font-weight:600;}
+  .ruler{font-size:8.5pt;background:var(--tint);border-left:2.5pt solid var(--accent);
+    padding:1.6mm 2.5mm;margin:0 0 2.5mm;border-radius:0 2px 2px 0;}
+  .legend{font-size:7.8pt;color:var(--soft);margin:0 0 1.5mm;}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  col.c-s{width:13mm;}
+  th{font-size:8pt;font-weight:700;color:var(--accent);background:var(--tint);padding:1.3mm 1mm;
+    text-align:center;border:0.5pt solid var(--accent);border-bottom:1.2pt solid var(--accent);}
+  th.q{text-align:left;padding-left:2mm;}
+  td{border:0.4pt solid var(--line);padding:1.5mm 2mm;vertical-align:top;}
+  td.s{text-align:center;vertical-align:middle;}
+  .qn{font-weight:600;font-size:8.9pt;}
+  .qn .num{color:var(--accent);}
+  .cue{font-size:7.7pt;color:var(--soft);line-height:1.32;margin-top:.6mm;}
+  .cue .g{color:#1c6b1c;font-weight:600;} .cue .b{color:#a12222;font-weight:600;}
+  .note{margin-top:1.4mm;border-bottom:0.4pt dotted #aaa;height:3.4mm;}
+  .box{display:inline-block;width:3.6mm;height:3.6mm;border:0.8pt solid #333;border-radius:1px;}
+  tr.behav td{background:#fafbfc;}
+  .verdict{margin-top:3mm;border:0.6pt solid var(--accent);border-radius:3px;padding:2mm 2.5mm;
+    font-size:8.6pt;display:flex;justify-content:space-between;align-items:center;gap:4mm;flex-wrap:wrap;}
+  .verdict .opts b{color:var(--accent);}
+  .sign{font-size:8pt;color:var(--soft);}
+  .sign .u{display:inline-block;width:26mm;border-bottom:0.5pt solid #888;height:3mm;vertical-align:bottom;}
+  @media print{
+    body{background:#fff;}
+    .page{margin:0;box-shadow:none;width:auto;min-height:auto;padding:9mm 10mm;}
+    .page + .page{page-break-before:always;}
+    @page{size:A4;margin:0;}
+  }
+</style>
+<div id="root"></div>
+<script>
+const PAYLOAD = /*__PAYLOAD__*/{};
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const box = '<span class="box"></span>';
+const meta = PAYLOAD.meta||{};
+const cands = PAYLOAD.candidates||{};
+
+function strongCue(c){ return (c.pass||[]).slice(0,2).join("；"); }
+function row(num, title, strong, tell, behav){
+  return `<tr class="${behav?'behav':''}">
+    <td><div class="qn"><span class="num">${esc(num)}</span> ${esc(title)}</div>
+      <div class="cue"><span class="g">强</span> ${esc(strong)}　<span class="b">露馅</span> ${esc(tell)}</div>
+      <div class="note"></div></td>
+    <td class="s">${box}</td><td class="s">${box}</td><td class="s">${box}</td></tr>`;
+}
+function page(id, d){
+  const o = d.opener||{};
+  let rows = "";
+  if(o.title) rows += row("0.", o.title.replace(/（.*/,"").trim(), o.expect, o.tell, true);
+  (d.cards||[]).forEach(c=> rows += row("★"+String(c.n).replace(/[^0-9]/g,""), c.title, strongCue(c), c.tell, false));
+  return `<div class="page">
+    <h1>现场技术面试评分卡 · ${esc(d.name)}</h1>
+    <div class="meta"><span>日期 <b>${esc(meta.date||"")}</b></span><span>面试官 ______</span><span>整理 ${esc(meta.by||"J.C.")}</span></div>
+    ${d.ruler?`<div class="ruler"><b>标尺：</b>${esc(d.ruler)}</div>`:""}
+    <div class="legend">打分：<b>强</b>=命中及格线、到实现层；<b>中</b>=方向对但缺细节/只答一半；<b>露馅</b>=停在术语层或明显错误。★为核心验伪题（对应攻防卡片 Q1–Q6）。</div>
+    <table><colgroup><col><col class="c-s"><col class="c-s"><col class="c-s"></colgroup>
+      <tr><th class="q">题目与判分线索</th><th>强</th><th>中</th><th>露馅</th></tr>
+      ${rows}
+    </table>
+    <div class="verdict">
+      <span class="opts">综合结论：<b>进入下一轮</b> ${box}　<b>待定</b> ${box}　<b>淘汰</b> ${box}</span>
+      <span class="sign">强/中/露馅 计数 ___ / ___ / ___　签名 <span class="u"></span></span>
+    </div>
+  </div>`;
+}
+document.getElementById("root").innerHTML = Object.keys(cands).map(id=>page(id, cands[id])).join("");
+</script>
