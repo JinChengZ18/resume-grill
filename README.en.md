@@ -6,10 +6,6 @@ An Agent Skill for grilling resumes: feed it one or more resume PDFs and it prod
 
 > This repository includes a **fully anonymized** demo resume for a fictional candidate, "Zhang San", applying for an Agent / AI Infra role with 2 years of experience. See the generated kit: [guide](examples/agent_engineer_demo/agent_engineer_demo_guide.md), [scorecard](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html), and [Q&A cards](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html). Open the HTML files in a browser.
 
-![ScreenShot_en1](./DEMO/ScreenShot_en1.png)
-
-![ScreenShot_en2](./DEMO/ScreenShot_en2.png)
-
 
 
 ## Quick Start
@@ -37,6 +33,10 @@ The three files are written to the same directory, link to each other with local
 - **Q&A cards** `<slug>_qa_cards.html` - candidate tabs, one-click answer folding for self-testing, colored sections for strengths, red flags, and layered probes, plus links back to each candidate's original resume PDF.
 
 The engine is an adaptive multi-stage workflow: read the resume, triage the profile, strengths, red flags, and technical domains to probe, generate domain-specific grilling questions, converge on project-grounded layered verification questions with answer keys, then fact-check and revise. It works for arbitrary roles and resumes without hand-writing a new question set for every candidate.
+
+![ScreenShot_en1](./DEMO/ScreenShot_en1.png)
+
+![ScreenShot_en2](./DEMO/ScreenShot_en2.png)
 
 
 
