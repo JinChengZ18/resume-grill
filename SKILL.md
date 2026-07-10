@@ -1,6 +1,6 @@
 ---
 name: resume-grill
-description: 从简历 PDF 生成一整套对抗性技术面试材料——先分域拷问、再产出「完整指南(md，含真实亮点与关键红旗、从简历项目起手的 L1→L3 分层提问) + 现场评分卡(html, A4可打印) + 提问-回答攻防卡片(html, 可折叠自测)」，答案键经事实核查。产物语言自动匹配简历/输入语言（中文简历出中文、英文简历出英文，亦可显式指定）。当用户想根据一份或多份简历准备/复盘技术面试、生成面试题库、评分卡、攻防卡片，或批量处理积压简历时使用。触发词：对抗性面试、简历面试题、面试卡片、面试评分卡、interview scorecard、resume interview questions、把简历做成面试题。
+description: 从简历 PDF 生成一整套对抗性技术面试材料——先分域拷问、再产出「完整指南(md，含真实亮点与关键红旗、从简历项目起手的 L1→L3 分层提问) + 现场评分卡(html, A4可打印) + 提问-回答攻防卡片(html, 可折叠自测)」，答案键经事实核查。产物语言自动匹配简历/输入语言（中文简历出中文、英文简历出英文，亦可显式指定）。当用户想根据一份或多份简历准备/复盘技术面试、生成面试题库、评分卡、攻防卡片，或批量处理积压简历时使用；用户直接上传/拖入/粘贴简历文件时也应触发（先把文件纳入 workspace/inbox/ 再处理）。触发词（含口语化说法）：拷打这份简历、拷打简历、锤一锤这个候选人、狠狠面试他、这份简历能问什么、帮我面这个人、把简历做成面试题、生成面试题/评分卡/攻防卡片、对抗性面试、简历面试题、interview scorecard、grill this resume、resume interview questions。
 ---
 
 # 对抗性技术面试材料生成
@@ -14,17 +14,30 @@ description: 从简历 PDF 生成一整套对抗性技术面试材料——先�
 引擎是一个自适应多智能体工作流：读简历 → 判研（画像/强项/红旗/该拷问的技术域）→ 分域拷问 → 收敛出挂靠简历项目、分层提问的核心验伪题并写答案键 → 事实核查并修正。对任意岗位/简历都适用，无需为每份简历重写题目。评价均衡如实：戳穿注水的同时如实肯定真本事，不强求优缺点对称、很强/很弱都不硬凑。
 
 ## 何时用
-用户给了简历（PDF/文本）并想要面试题、判分标准、评分卡或攻防卡片；或想把积压的多份简历批量转成面试材料。
+用户给了简历（PDF/文本）并想要面试题、判分标准、评分卡或攻防卡片；或想把积压的多份简历批量转成面试材料。**用户在对话里上传/拖入/附上简历文件、或只丢来一句「拷打这份简历」时也算**——按下面「第 0 步」自动把文件纳入本地工作区再处理，不必要求用户手动放文件。
 
 ## 运行流程（照此执行）
 
-设技能目录为 `SK = <本 SKILL.md 所在目录>`。
+设技能目录为 `SK = <本 SKILL.md 所在目录>`，工作区为 `WS = SK/workspace`（约定见 `WS/README.md`）。
+
+**0. 纳入输入文件**（用户上传/附件/给路径时）
+用户上传或引用的 PDF 往往落在对话临时目录或仓库外。先把它们**复制**进 `WS/inbox/`（缺失则建目录），后续都对 inbox 内的副本操作，不改动/不删除用户原文件：
+```
+python - <<'PY'
+import os, shutil, unicodedata
+inbox = os.path.join("SK","workspace","inbox"); os.makedirs(inbox, exist_ok=True)
+for src in [ "<用户上传/给出的每个 PDF 绝对路径>" ]:
+    dst = os.path.join(inbox, unicodedata.normalize("NFC", os.path.basename(src)))
+    shutil.copy2(src, dst); print("ingested ->", dst)
+PY
+```
+用户直接粘贴简历纯文本（无文件）时跳过本步，第 1 步改为把文本写进 `resumes.json`（结构 `[{"file":"<名>","text":"<正文>"}]`）。已在 `WS/inbox/` 里的文件直接用。
 
 **1. 抽取简历文本**
 ```
-python "SK/scripts/extract_pdf.py" "<resume1.pdf>" "<resume2.pdf>" --out "<work>/resumes.json"
+python "SK/scripts/extract_pdf.py" "WS/inbox/<resume1.pdf>" "WS/inbox/<resume2.pdf>" --out "<work>/resumes.json"
 ```
-若某份 PDF 抽出为空（扫描件/图片版），改用 Read 工具的 PDF 分页渲染/OCR 取文本。
+`extract_pdf.py` 已做 NFKC 规整（修复 pypdf 常见的部首字/连字乱码）。若某份 PDF 抽出为空（扫描件/图片版），改用 Read 工具的 PDF 分页渲染/OCR 取文本。
 
 **2. 组织工作流输入**（用 Read 看过 `resumes.json` 后，构造 `args`）：
 ```json

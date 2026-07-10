@@ -14,6 +14,22 @@
 
 引擎是一个自适应多阶段工作流：读简历 → 判研（画像/强项/红旗/待拷问技术域）→ 分域拷问 → 收敛出挂靠简历项目、分层提问的核心验伪题并写答案键 → 事实核查并修正。对任意岗位/简历都适用，无需为每份简历重写题目。
 
+## 看看效果
+
+`examples/agent_engineer_demo/` 是一份**完全脱敏**的示例简历（虚构「张三」，某 Agent / AI Infra 岗，2 年经验）跑出的真实三件套——[指南](examples/agent_engineer_demo/agent_engineer_demo_guide.md)、[评分卡](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html)、[攻防卡片](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html)（html 用浏览器打开）。它戳中的点，例如：
+
+> **关键红旗**：「Agent 开发工程师（2 年）」注水——真实全职工程仅一段约 8 个月，其余两段都落在硕士就读窗口内（兼职/暑期实习）；「2 年」是把在校经历拼进去凑的。
+>
+> **技能栈与项目对不上**：技能列了 Redis、ClickHouse，但三个项目实际出现的库是 PostgreSQL、InfluxDB——是真在生产用过还是「了解过」需当场戳穿。
+
+核心验伪题从简历项目起手、分层加压，例如围绕其 LLM 网关经历：
+
+> **L1 项目切入** → 一个请求从进入网关到返回上游响应经过哪些环节，哪几块是你写的？
+> **L2 设计决策** → 用户级限流你限的是 QPS 还是 Token 预算？计数落在 Redis 还是 Postgres？
+> **L3 硬核验伪** → 流式转发下 Token Usage 怎么算准并计费（OpenAI 流默认不带 usage、客户端中途断连、非兼容 provider 不给 usage 各怎么处理）？成本怎么按请求当时价格算、不被后来的调价追溯改写？
+>
+> 每题附「期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问」，答案键经事实核查阶段修正。
+
 ## 快速开始（Claude Code）
 
 1. **装一次**（把技能同步到 `~/.claude/skills/resume-grill`，改完技能后重跑即可）：
@@ -63,7 +79,7 @@ resume-grill/
 
 ## 隐私
 
-简历属敏感个人信息。`workspace/`（含真实简历与生成产物）已在 `.gitignore` 中排除，`*.pdf` 另有全局兜底忽略——发布时不会入库。分享示例前请先脱敏。
+简历属敏感个人信息。`workspace/`（含简历与生成产物）已在 `.gitignore` 中排除，`*.pdf` 另有全局兜底忽略——发布时不会入库。分享示例前请先脱敏。
 
 ## 许可与署名
 

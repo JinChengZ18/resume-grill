@@ -13,7 +13,7 @@ Usage:
 Requires pypdf (already present in this environment). If a PDF is image-only,
 extraction may be empty — fall back to the Read tool's PDF page rendering / OCR.
 """
-import sys, json, io, os
+import sys, json, io, os, unicodedata
 
 def extract(path):
     import pypdf
@@ -21,7 +21,9 @@ def extract(path):
     parts = []
     for p in r.pages:
         parts.append(p.extract_text() or "")
-    return "\n".join(parts).strip()
+    # NFKC repairs common pypdf artifacts: Kangxi-radical glyphs (⼤→大, ⼯→工),
+    # ligatures (ﬂ→fl, so InﬂuxDB→InfluxDB), and full/half-width normalization.
+    return unicodedata.normalize("NFKC", "\n".join(parts)).strip()
 
 def main():
     args = [a for a in sys.argv[1:]]
