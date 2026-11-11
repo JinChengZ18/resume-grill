@@ -28,7 +28,7 @@
     line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
   .wrap{max-width:920px;margin:0 auto;padding:0 16px 60px}
   header.top{position:sticky;top:0;z-index:20;background:var(--bg);
-    border-bottom:1px solid var(--line);padding:14px 16px 0;margin:0 -16px 8px}
+    border-bottom:1px solid var(--line);padding:14px 16px 0;margin:0 0 8px}
   header.top .inner{max-width:920px;margin:0 auto}
   h1{font-size:19px;margin:0 0 2px;color:var(--accent)}
   .sub{font-size:12.5px;color:var(--soft);margin:0 0 10px}
@@ -60,7 +60,7 @@
   .stitle{font-size:11.5px;font-weight:700;letter-spacing:.3px;margin:12px 0 0}
   .stitle.s-good{color:var(--good)} .stitle.s-flag{color:var(--tell)}
   .anchor{display:inline-block;font-weight:600;font-size:11px;color:var(--soft);background:var(--accent-soft);
-    border:1px solid var(--line);border-radius:10px;padding:1px 8px;margin-left:8px;vertical-align:2px;white-space:nowrap}
+    border:1px solid var(--line);border-radius:10px;padding:1px 8px;margin-left:8px;vertical-align:2px;white-space:normal;overflow-wrap:anywhere}
   .ladder{margin:0 16px 10px}
   .rung{font-size:13px;color:var(--ink);padding:6px 10px;margin:0 0 5px;background:var(--accent-soft);
     border:1px solid var(--line);border-radius:7px}
@@ -71,7 +71,15 @@
   .badge{flex:none;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;
     padding:2px 9px;border-radius:7px;margin-top:2px}
   .badge.behav{background:var(--soft)}
-  .card-h h3{margin:0;font-size:15.5px;line-height:1.4}
+  .card-h h3{margin:0;font-size:15.5px;line-height:1.4;min-width:0}
+  .paired-answer{margin:10px 0 4px;padding:8px 12px;background:var(--good-bg);border:1px solid var(--good-line);border-radius:6px;font-size:14px}
+  .paired-answer summary{cursor:pointer;color:var(--good);font-weight:600}
+  .paired-answer p{margin:8px 0 2px;color:var(--ink)}
+  .theme-probe,.theme-followups{margin:0 16px 14px}
+  .theme-followups h4{margin:6px 0;color:var(--probe)}
+  .theme-followup{padding:8px 12px;border-left:3px solid var(--probe);background:var(--probe-bg);border-radius:6px;margin:8px 0}
+  .theme-followup p{margin:6px 0}
+  .theme-followup .when{font-size:12px;color:var(--soft)}
   .ask{margin:0 16px 12px;padding:10px 12px;background:var(--ask-bg);
     border:1px solid var(--ask-line);border-radius:8px;font-size:14px}
   .ask .k{display:inline-block;font-weight:700;color:var(--accent);font-size:11.5px;
@@ -145,21 +153,27 @@ document.getElementById("tabs").innerHTML = ids.map((id,i)=>
 document.getElementById("links").innerHTML = (meta.links||[])
   .map(l=>`<a href="${esc(l.href)}">${esc(l.label)}</a>`).join("");
 
+function pairedAnswer(answer){
+  return answer ? `<details class="paired-answer" open><summary>${esc(L.sample_answer)}</summary><p>${fmt(answer)}</p></details>` : "";
+}
 function renderCard(c){
   const li = a => (a||[]).map(x=>`<li>${fmt(x)}</li>`).join("");
-  const ladder = (c.ladder||[]).map(s=>`<div class="rung"><span class="lv">${esc(s.level)}</span>${fmt(s.q)}</div>`).join("");
+  const ladder = (c.ladder||[]).map(s=>`<div class="rung"><span class="lv">${esc(s.level)}</span>${fmt(s.q)}${pairedAnswer(s.answer)}</div>`).join("");
   const ladderBlock = (c.ladder||[]).length ? `<div class="ladder">${ladder}</div>` : "";
   const anchor = c.anchor ? `<span class="anchor">${esc(c.anchor)}</span>` : "";
-  return `<article class="card">
+  const paired = (c.ladder||[]).every(s=>s.answer) && c.ask_answer;
+  const followups = (c.followups||[]).map(f=>`<div class="theme-followup"><p class="when">${esc(f.when||"")}</p><p>${fmt(f.q)}</p>${pairedAnswer(f.answer)}</div>`).join("");
+  return `<article class="card" data-question="${esc(c.n)}">
     <div class="card-h"><span class="badge">${esc(c.n)}</span><h3>${esc(c.title)}${anchor}</h3></div>
     ${ladderBlock}
-    <div class="ask"><span class="k">${esc(L.ask_k)}</span>${fmt(c.ask)}</div>
+    <div class="ask"><span class="k">${esc(L.ask_k)}</span>${fmt(c.ask)}${pairedAnswer(c.ask_answer)}</div>
+    ${c.probe?`<div class="blk probe theme-probe"><div class="bt">${esc(L.probe_h)}</div><p>${fmt(c.probe)}</p>${pairedAnswer(c.probe_answer)}</div>`:""}
+    ${followups?`<section class="theme-followups"><h4>${esc(L.followups_h)}</h4>${followups}</section>`:""}
     <details class="ans" open>
       <summary>${esc(L.ans_summary)}</summary>
-      <div class="blk good"><div class="bt">${esc(L.good_h)}</div><ul>${li(c.good)}</ul></div>
+      ${paired?"":`<div class="blk good"><div class="bt">${esc(L.good_h)}</div><ul>${li(c.good)}</ul></div>`}
       <div class="blk pass"><div class="bt">${esc(L.pass_bt)}</div><ul>${li(c.pass)}</ul></div>
       <div class="blk tell"><div class="bt">${esc(L.tell_h)}</div><p>${fmt(c.tell)}</p></div>
-      <div class="blk probe"><div class="bt">${esc(L.probe_h)}</div><p>${fmt(c.probe)}</p></div>
     </details>
   </article>`;
 }
@@ -175,7 +189,7 @@ function renderCand(d){
     <div class="behav-note"><b>${esc(L.opener_expect)}${esc(L.colon)}</b>${fmt(o.expect)}<br><b>${esc(L.opener_tell)}${esc(L.colon)}</b>${fmt(o.tell)}</div>
   </article>` : "";
   const cards = (d.cards||[]).map(renderCard).join("");
-  const probes = (d.probes||[]).map(p=>`<li><span class="pt">${esc(p.tag)}</span>${fmt(p.q)}</li>`).join("");
+  const probes = (d.probes||[]).map(p=>`<li><span class="pt">${esc(p.tag)}</span>${fmt(p.q)}${pairedAnswer(p.answer)}</li>`).join("");
   const probesBlock = (d.probes||[]).length ? `<details class="probes"><summary>${esc(L.probes_pre)}${d.probes.length}${esc(L.probes_post)}</summary><ul>${probes}</ul></details>` : "";
   return `<div class="profile">
       <h2>${esc(d.name)}${rlink}</h2>
@@ -204,7 +218,7 @@ let open = true;
 tgl.textContent = L.collapse_all;
 tgl.addEventListener("click",()=>{
   open=!open;
-  document.querySelectorAll("details.ans").forEach(d=>d.open=open);
+  document.querySelectorAll("details.ans, details.paired-answer").forEach(d=>d.open=open);
   tgl.textContent = open ? L.collapse_all : L.expand_all;
 });
 </script>

@@ -44,35 +44,36 @@ BRAND = "resume-grill"   # delivered pages carry the project name, not an author
 LABELS = {
     "zh": {
         "colon": "：", "sep": "｜", "list_sep": "；",
+        "sample_answer": "示范回答", "followups_h": "本主题延伸讨论", "when": "选问时机",
         "guide_title": "对抗性技术面试指南",
         "date": "日期", "prep_by": "整理", "interviewer": "面试官",
-        "guide_lead": "每题：建议提问 → 期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问。题号与评分卡 ★ 一一对应。",
+        "guide_lead": "每题：建议提问 → 期望的优质回答（分点）；追问留在本主题，判分提示单列。题号与评分卡 ★ 一一对应。",
         "profile_h": "画像与可信度", "ruler_h": "标尺",
-        "strengths_plain": "亮点 · 真实强项", "flags_plain": "关键红旗",
-        "opener_expect": "期望的行为", "opener_tell": "露馅",
+        "strengths_plain": "亮点 · 真实强项", "flags_plain": "待确认事项",
+        "opener_expect": "期望的行为", "opener_tell": "待深入",
         "core_h": "核心验伪题（含答案键；题号对应评分卡 ★）",
         "anchor_h": "挂靠简历项目",
         "ladder_h": "提问阶梯（由浅入深，从简历项目起手）",
-        "l3_label": "L3 硬核验伪", "ask_label": "建议提问",
+        "l3_label": "L3 情境讨论", "ask_label": "建议提问",
         "good_h": "期望的优质回答", "pass_h": "及格线（必须听到）",
-        "tell_h": "典型露馅", "probe_h": "追问",
-        "probes_h": "补充探针（无标准答案，答顺后继续加压）",
+        "tell_h": "需进一步了解", "probe_h": "追问",
+        "probes_h": "合作安排与材料确认",
         # qa_cards
         "doc_title": "提问-回答攻防卡片",
-        "sub_default": "对抗性技术面试 · 建议提问 → 期望的优质回答（分点）→ 及格线 → 典型露馅 → 追问",
+        "sub_default": "对抗性技术面试 · 建议提问 → 期望的优质回答（分点）；追问留在本主题，判分提示单列",
         "collapse_all": "收起全部答案（自测）", "expand_all": "展开全部答案",
-        "ask_k": "建议提问 · L3 硬核验伪", "ans_summary": "参考答案与判分要点",
+        "ask_k": "建议提问 · L3 情境讨论", "ans_summary": "面试官判分提示",
         "pass_bt": "及格线 · 必须听到",
-        "strengths_title": "★ 亮点 · 真实强项", "flags_title": "▲ 关键红旗",
-        "opener_badge": "开场", "resume_link": "📄 原始简历 PDF",
-        "probes_pre": "补充探针（", "probes_post": " 条 · 无标准答案，答顺后继续加压）",
+        "strengths_title": "★ 亮点 · 真实强项", "flags_title": "▲ 待确认事项",
+        "opener_badge": "开场", "resume_link": "📄 原始简历",
+        "probes_pre": "独立事项（", "probes_post": " 条 · 按需确认）",
         "footer_default": "诚实降级（承认课程demo/没上生产/gold自标）应视为强信号，不扣分。",
         # scorecard
         "scorecard_suffix": "现场评分卡", "scorecard_h1": "现场技术面试评分卡",
-        "legend": "打分：强=命中及格线、到实现层；中=方向对但缺细节/只答一半；露馅=停在术语层或明显错误。★为核心验伪题（对应攻防卡片）。",
-        "col_q": "题目与判分线索", "col_strong": "强", "col_mid": "中", "col_tell": "露馅",
+        "legend": "打分：强=命中及格线、到实现层；中=方向对但缺细节/只答一半；待深入=停在术语层或明显错误。★为核心验伪题（对应攻防卡片）。",
+        "col_q": "题目与判分线索", "col_strong": "强", "col_mid": "中", "col_tell": "待深入",
         "verdict_label": "综合结论", "advance": "进入下一轮", "hold": "待定", "reject": "淘汰",
-        "count_label": "强/中/露馅 计数", "sign_label": "签名",
+        "count_label": "强/中/待深入 计数", "sign_label": "签名",
         "print_btn": "🖨 打印", "reset_btn": "↺ 重置本页", "score_hint": "点格子打分，自动记忆",
         "duration": "时长", "min_unit": "分钟", "q_unit": "题",
         "opener_word": "开场", "wrap_word": "收尾",
@@ -81,28 +82,29 @@ LABELS = {
     },
     "en": {
         "colon": ": ", "sep": " · ", "list_sep": "; ",
+        "sample_answer": "Sample response", "followups_h": "Follow-ups in this theme", "when": "When to ask",
         "guide_title": "Adversarial Technical Interview Guide",
         "date": "Date", "prep_by": "Prepared by", "interviewer": "Interviewer",
         "guide_lead": "Each question: suggested prompt → strong answer (bulleted) → pass bar → common tell → follow-up. Question numbers map one-to-one to the scorecard ★s.",
         "profile_h": "Profile & Credibility", "ruler_h": "Yardstick",
         "strengths_plain": "Highlights · Genuine Strengths", "flags_plain": "Key Red Flags",
         "opener_expect": "What good looks like", "opener_tell": "Tell",
-        "core_h": "Core Kill Questions (with answer keys; numbers map to the scorecard ★s)",
+        "core_h": "Interview themes (numbers map to the scorecard)",
         "anchor_h": "Anchored to résumé project",
         "ladder_h": "Question ladder (shallow → deep, starting from the résumé project)",
         "l3_label": "L3 hard probe", "ask_label": "Suggested prompt",
         "good_h": "Strong answer", "pass_h": "Pass bar (must hear)",
         "tell_h": "Common tell", "probe_h": "Follow-up",
-        "probes_h": "Extra probes (no fixed answer; press further if they cruise)",
+        "probes_h": "Working arrangements and material checks",
         # qa_cards
         "doc_title": "Q&A Attack-Defense Cards",
         "sub_default": "Adversarial technical interview · prompt → strong answer → pass bar → tell → follow-up",
         "collapse_all": "Collapse all answers (self-test)", "expand_all": "Expand all answers",
-        "ask_k": "Suggested prompt · L3 hard probe", "ans_summary": "Answer key & scoring cues",
+        "ask_k": "Suggested prompt · L3 hard probe", "ans_summary": "Interviewer scoring cues",
         "pass_bt": "Pass bar · must hear",
         "strengths_title": "★ Highlights · Genuine Strengths", "flags_title": "▲ Key Red Flags",
-        "opener_badge": "Opener", "resume_link": "📄 Original résumé PDF",
-        "probes_pre": "Extra probes (", "probes_post": " · no fixed answer; press further if they cruise)",
+        "opener_badge": "Opener", "resume_link": "📄 Original résumé",
+        "probes_pre": "Separate items (", "probes_post": " · ask when relevant)",
         "footer_default": "Honest self-downgrade (admitting “coursework demo / never shipped / self-labeled gold”) is a strong signal — do not penalize it.",
         # scorecard
         "scorecard_suffix": "Live Scorecard", "scorecard_h1": "Live Technical Interview Scorecard",
@@ -209,18 +211,34 @@ def md_guide(payload, L):
                 out.append(f"**{L['ladder_h']}**\n")
                 for step in c["ladder"]:
                     out.append(f"- *{step.get('level','')}*{co}{step.get('q','')}")
+                    if step.get("answer"):
+                        out.append(f"\n**{L['sample_answer']}**{co}{step['answer']}\n")
                 out.append(f"- *{L['l3_label']}*{co}{c.get('ask','')}\n")
             else:
                 out.append(f"**{L['ask_label']}**{co}{c.get('ask','')}\n")
-            out.append(f"**{L['good_h']}**\n")
-            for g in c.get("good", []): out.append(f"- {g}")
+            if c.get("ask_answer"):
+                out.append(f"**{L['sample_answer']}**{co}{c['ask_answer']}\n")
+            else:
+                out.append(f"**{L['good_h']}**\n")
+                for g in c.get("good", []): out.append(f"- {g}")
+            if c.get("probe"):
+                out.append(f"**{L['probe_h']}**{co}{c['probe']}\n")
+                if c.get("probe_answer"):
+                    out.append(f"**{L['sample_answer']}**{co}{c['probe_answer']}\n")
+            if c.get("followups"):
+                out.append(f"#### {L['followups_h']}\n")
+                for f in c["followups"]:
+                    if f.get("when"): out.append(f"*{L['when']}*{co}{f['when']}\n")
+                    out.append(f"**{L['ask_label']}**{co}{f.get('q','')}\n")
+                    out.append(f"**{L['sample_answer']}**{co}{f.get('answer','')}\n")
             out.append(f"\n**{L['pass_h']}**\n")
             for p in c.get("pass", []): out.append(f"- {p}")
             out.append(f"\n**{L['tell_h']}**{co}{c.get('tell','')}\n")
-            out.append(f"**{L['probe_h']}**{co}{c.get('probe','')}\n")
         if d.get("probes"):
             out.append(f"## {L['probes_h']}\n")
-            for p in d["probes"]: out.append(f"- **{p.get('tag','')}**{co}{p.get('q','')}")
+            for p in d["probes"]:
+                out.append(f"- **{p.get('tag','')}**{co}{p.get('q','')}")
+                if p.get("answer"): out.append(f"\n**{L['sample_answer']}**{co}{p['answer']}\n")
             out.append("")
     return "\n".join(out) + "\n"
 

@@ -39,15 +39,7 @@ NCORE_DEFAULT = 6
 BANNED = "交付、再生、天然、免费、回连、让渡、封顶、能量账、省下、补上、旋钮、喂、健壮、落地"
 
 # 面试官人设（语言中立；输出语言由 directive() 追加进 system 提示决定）
-ROLE_BASE = (
-    "你是一线科技公司的资深技术面试官，风格严苛、对简历注水极度敏感。你深知简历常见把戏："
-    "大量“参与”其实贡献极小；百分比指标（“节省65%”“提升28%”）常无严谨基线；课程/短期项目包装成“系统”；"
-    "术语背后是调库还是真懂原理需要戳穿。提问必须具体、扎进底层实现（数据结构/阈值/失败模式/评估口径/为何这么选），"
-    "能区分“真做过”与“只会写在简历上”。同时你也是公正的评估者：在戳穿注水的同时，如实识别候选人真实、可验证的强项与亮点"
-    "——扎实的技术深度、真实的 ownership、诚实的自我降级都算加分项。不为对抗而对抗：候选人确实强就大方肯定，"
-    "确实弱也不硬挑刺、不为凑数编造红旗；据实评价，不强求优缺点对称、不面面俱到。"
-)
-
+ROLE_BASE = '你是公正而有技术判断力的资深面试官。根据岗位与经历选择评价层次：研究及高级岗位优先讨论研究意义、机制、替代路线、取舍、证据与适用边界；工程岗位围绕真实任务的设计判断与结果。具体上下文不等于操作盘问，不能用命令、参数或指标核对取代主要问题。问题礼貌、开放、可讨论，不设套、不预设注水、动机或人格结论；材料差异是待澄清信息。HR评价仅作有来源的转述，转成合作预期的中性问题。肯定有依据的强项，诚实限定已知范围是正面信号；合理替代路线同样得分。避免空泛套话与人为二分，允许第三条路线及任务依赖的答案。每问的示范回答须可以直接口述，回答该问并说明理由；示范不是候选人真实经历，不编造其贡献、实验、数值或承诺。需要实例时明确标为假设示例，不用占位符绕过核心推理。good/pass只写面试官判分依据，与示范回答分离。所有技术追问就近归入原主题的probe或followups，不在文末堆放技术题；probes仅用于独立合作安排或材料确认。'
 
 def detect_lang(text):
     """按简历正文粗判输出语言：含相当比例汉字 → zh，否则 en。"""
@@ -86,29 +78,10 @@ def role_for(lang):
 # ---- 面试时长 → 核心题数量与拷问深度（与 analyze.js 同一套公式） ----
 # depth 由 minutes 推导，也可显式指定。'ultra' 是全面审查模式：不限时、不设题数上限，
 # 穷尽简历里每一处可能被追问的疑点（面试官深挖 / 候选人面试前自查）。
-FLAGS_NORMAL = "注水多就多列、简历干净就少列（通常3-6条），不硬凑"
-DEPTHS = {
-    "quick": {"rungs": 1, "good": "4-5", "pass": "2-3", "probes": "4-6", "domains": "3-4", "flags": FLAGS_NORMAL,
-              "note": "时间紧：题目更聚焦，直取能一击验伪的关键点，不求穷尽；暖场阶梯只留 1 级，答案键写精不写多。"},
-    "standard": {"rungs": 2, "good": "5-8", "pass": "3-5", "probes": "10-14", "domains": "4-6", "flags": FLAGS_NORMAL,
-                 "note": "常规时长：每题 2 级暖场阶梯 + 硬核验伪，答案键覆盖机制/阈值/取舍。"},
-    "deep": {"rungs": 2, "good": "7-10", "pass": "4-6", "probes": "14-18", "domains": "6-8",
-             "flags": "注水多就多列（通常4-8条），不硬凑",
-             "note": "时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。"},
-    "ultra": {"rungs": 2, "good": "6-10", "pass": "3-6", "probes": "20-30", "domains": "8-12",
-              "flags": "穷尽简历中所有真实存在的疑点，不设条数上限；宁多勿漏，但绝不编造",
-              "note": "全面审查模式（面试官逐条深挖 / 候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、"
-                      "被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。"},
-}
+FLAGS_NORMAL = '只列材料支持的待澄清事项，不推断动机、不凑数量'
+DEPTHS = {'quick': {'rungs': 1, 'good': '4-5', 'pass': '2-3', 'probes': '按需', 'domains': '3-4', 'flags': '只列材料支持的待澄清事项，不推断动机、不凑数量', 'note': '时间紧：聚焦关键判断，保留1级切入与开放推演；技术追问在主题内按需选问。'}, 'standard': {'rungs': 2, 'good': '5-8', 'pass': '3-5', 'probes': '按需', 'domains': '4-6', 'flags': '只列材料支持的待澄清事项，不推断动机、不凑数量', 'note': '常规时长：L1问题与价值、L2路线取舍、ask开放推演；每问给口述示范，判分另列。'}, 'deep': {'rungs': 2, 'good': '7-10', 'pass': '4-6', 'probes': '按需', 'domains': '6-8', 'flags': '只列材料支持的待澄清事项，不推断动机、不凑数量', 'note': '时间充裕：加强竞争解释、机制与证据讨论，不把深度等同于操作细节；追问仍归原主题。'}, 'ultra': {'rungs': 2, 'good': '6-10', 'pass': '3-6', 'probes': '按需', 'domains': '8-12', 'flags': '只列材料支持的待澄清事项，不推断动机、不凑数量', 'note': '全面审查：覆盖重要判断与待澄清事项，按主题合并，不为每个细节独立造题；追问数量不设配额。'}}
 
-# ultra 必须逐项覆盖的疑点清单——这是「穷尽」的可执行定义
-ULTRA_CHECKLIST = (
-    "必须逐项覆盖：①每一条关键红旗；②每一个没有严谨基线的量化宣称（“提升X%”“节省Y%”）；"
-    "③每一处 ownership 模糊（“参与/负责/协助”到底自己做了什么）；④每一个只出现在技能栏、"
-    "却在项目里找不到佐证的技术名词；⑤每一段时间线重叠或经历性质存疑（在校/兼职/实习 vs 全职）；"
-    "⑥每一个被包装成“系统/框架/平台”的课程或短期项目。"
-)
-
+ULTRA_CHECKLIST = '覆盖材料中有依据的重要主张、量化口径、本人贡献、技术能力、时间线与经历性质；按主题整合，普通合作或版本确认独立列出。缺少证明不等于虚构，重叠经历不自动构成矛盾。'
 
 def _round_half_up(x):
     """匹配 JS Math.round（正数四舍五入）；Python 内置 round() 是银行家舍入，会与 analyze.js 分叉。"""
@@ -142,70 +115,221 @@ def pacing_text(plan, ncore):
             % (plan["minutes"], plan["opener"], ncore, plan["perQuestion"], plan["buffer"], note))
 
 # ---- schemas (镜像 analyze.js / pipeline-spec.md) ----
-TRIAGE = {
-    "type": "object", "additionalProperties": False,
-    "required": ["profile", "ruler", "strengths", "flags", "opener", "domains"],
-    "properties": {
-        "profile": {"type": "string"}, "ruler": {"type": "string"},
-        "strengths": {"type": "array", "items": {"type": "string"}},
-        "flags": {"type": "array", "items": {"type": "string"}},
-        "opener": {"type": "object", "additionalProperties": False,
-                   "required": ["title", "questions", "expect", "tell"],
-                   "properties": {"title": {"type": "string"},
-                                  "questions": {"type": "array", "items": {"type": "string"}},
-                                  "expect": {"type": "string"}, "tell": {"type": "string"}}},
-        "domains": {"type": "array", "items": {"type": "object", "additionalProperties": False,
-                    "required": ["key", "focus"],
-                    "properties": {"key": {"type": "string"}, "focus": {"type": "string"}}}},
-    },
-}
-PROBE = {
-    "type": "object", "additionalProperties": False, "required": ["domain", "questions"],
-    "properties": {"domain": {"type": "string"},
-        "questions": {"type": "array", "items": {"type": "object", "additionalProperties": False,
-            "required": ["q", "probes", "strong", "tell"],
-            "properties": {"q": {"type": "string"}, "probes": {"type": "string"},
-                           "strong": {"type": "string"}, "tell": {"type": "string"},
-                           "followup": {"type": "string"}}}}},
-}
-CARD = {
-    "type": "object", "additionalProperties": False,
-    "required": ["n", "title", "anchor", "ladder", "ask", "good", "pass", "tell", "probe"],
-    "properties": {
-        "n": {"type": "string"}, "title": {"type": "string"}, "anchor": {"type": "string"},
-        "ladder": {"type": "array", "items": {"type": "object", "additionalProperties": False,
-                   "required": ["level", "q"],
-                   "properties": {"level": {"type": "string"}, "q": {"type": "string"}}}},
-        "ask": {"type": "string"},
-        "good": {"type": "array", "items": {"type": "string"}},
-        "pass": {"type": "array", "items": {"type": "string"}},
-        "tell": {"type": "string"}, "probe": {"type": "string"}},
-}
-AUTHOR = {
-    "type": "object", "additionalProperties": False, "required": ["cards", "probes"],
-    "properties": {"cards": {"type": "array", "items": CARD},
-        "probes": {"type": "array", "items": {"type": "object", "additionalProperties": False,
-            "required": ["tag", "q"], "properties": {"tag": {"type": "string"}, "q": {"type": "string"}}}}},
-}
-VERIFY = {
-    "type": "object", "additionalProperties": False, "required": ["corrections", "verdict"],
-    "properties": {"corrections": {"type": "array", "items": {"type": "object", "additionalProperties": False,
-        "required": ["n", "severity", "issue", "fix"],
-        "properties": {"n": {"type": "string"},
-                       "severity": {"type": "string", "enum": ["error", "imprecise", "overclaim", "missing"]},
-                       "issue": {"type": "string"}, "fix": {"type": "string"}}}},
-        "verdict": {"type": "string"}},
-}
-REVISE = {"type": "object", "additionalProperties": False, "required": ["cards"],
-          "properties": {"cards": {"type": "array", "items": CARD}}}
-SINGLE = {
-    "type": "object", "additionalProperties": False,
-    "required": ["profile", "ruler", "strengths", "flags", "opener", "cards", "probes"],
-    "properties": {k: TRIAGE["properties"][k] for k in ("profile", "ruler", "strengths", "flags", "opener")},
-}
-SINGLE["properties"]["cards"] = AUTHOR["properties"]["cards"]
-SINGLE["properties"]["probes"] = AUTHOR["properties"]["probes"]
+TRIAGE = {'type': 'object',
+ 'additionalProperties': False,
+ 'required': ['profile', 'ruler', 'strengths', 'flags', 'opener', 'domains'],
+ 'properties': {'profile': {'type': 'string'},
+                'ruler': {'type': 'string'},
+                'strengths': {'type': 'array', 'items': {'type': 'string'}},
+                'flags': {'type': 'array', 'items': {'type': 'string'}},
+                'opener': {'type': 'object',
+                           'additionalProperties': False,
+                           'required': ['title', 'questions', 'expect', 'tell'],
+                           'properties': {'title': {'type': 'string'},
+                                          'questions': {'type': 'array', 'items': {'type': 'string'}},
+                                          'expect': {'type': 'string'},
+                                          'tell': {'type': 'string'}}},
+                'domains': {'type': 'array',
+                            'items': {'type': 'object',
+                                      'additionalProperties': False,
+                                      'required': ['key', 'focus'],
+                                      'properties': {'key': {'type': 'string'},
+                                                     'focus': {'type': 'string'}}}}}}
 
+PROBE = {'type': 'object',
+ 'additionalProperties': False,
+ 'required': ['domain', 'questions'],
+ 'properties': {'domain': {'type': 'string'},
+                'questions': {'type': 'array',
+                              'items': {'type': 'object',
+                                        'additionalProperties': False,
+                                        'required': ['q',
+                                                     'probes',
+                                                     'strong',
+                                                     'tell',
+                                                     'followup',
+                                                     'followup_answer',
+                                                     'when'],
+                                        'properties': {'q': {'type': 'string'},
+                                                       'probes': {'type': 'string'},
+                                                       'strong': {'type': 'string'},
+                                                       'tell': {'type': 'string'},
+                                                       'followup': {'type': 'string'},
+                                                       'followup_answer': {'type': 'string'},
+                                                       'when': {'type': 'string'}}}}}}
+
+CARD = {'type': 'object',
+ 'additionalProperties': False,
+ 'required': ['n',
+              'title',
+              'anchor',
+              'ladder',
+              'ask',
+              'good',
+              'pass',
+              'tell',
+              'probe',
+              'ask_answer',
+              'probe_answer',
+              'followups'],
+ 'properties': {'n': {'type': 'string'},
+                'title': {'type': 'string'},
+                'anchor': {'type': 'string'},
+                'ladder': {'type': 'array',
+                           'items': {'type': 'object',
+                                     'additionalProperties': False,
+                                     'required': ['level', 'q', 'answer'],
+                                     'properties': {'level': {'type': 'string'},
+                                                    'q': {'type': 'string'},
+                                                    'answer': {'type': 'string'}}}},
+                'ask': {'type': 'string'},
+                'good': {'type': 'array', 'items': {'type': 'string'}},
+                'pass': {'type': 'array', 'items': {'type': 'string'}},
+                'tell': {'type': 'string'},
+                'probe': {'type': 'string'},
+                'ask_answer': {'type': 'string'},
+                'probe_answer': {'type': 'string'},
+                'followups': {'type': 'array',
+                              'items': {'type': 'object',
+                                        'additionalProperties': False,
+                                        'required': ['q', 'answer', 'when'],
+                                        'properties': {'q': {'type': 'string'},
+                                                       'answer': {'type': 'string'},
+                                                       'when': {'type': 'string'}}}}}}
+
+AUTHOR = {'type': 'object',
+ 'additionalProperties': False,
+ 'required': ['cards', 'probes'],
+ 'properties': {'cards': {'type': 'array',
+                          'items': {'type': 'object',
+                                    'additionalProperties': False,
+                                    'required': ['n',
+                                                 'title',
+                                                 'anchor',
+                                                 'ladder',
+                                                 'ask',
+                                                 'good',
+                                                 'pass',
+                                                 'tell',
+                                                 'probe',
+                                                 'ask_answer',
+                                                 'probe_answer',
+                                                 'followups'],
+                                    'properties': {'n': {'type': 'string'},
+                                                   'title': {'type': 'string'},
+                                                   'anchor': {'type': 'string'},
+                                                   'ladder': {'type': 'array',
+                                                              'items': {'type': 'object',
+                                                                        'additionalProperties': False,
+                                                                        'required': ['level', 'q', 'answer'],
+                                                                        'properties': {'level': {'type': 'string'},
+                                                                                       'q': {'type': 'string'},
+                                                                                       'answer': {'type': 'string'}}}},
+                                                   'ask': {'type': 'string'},
+                                                   'good': {'type': 'array', 'items': {'type': 'string'}},
+                                                   'pass': {'type': 'array', 'items': {'type': 'string'}},
+                                                   'tell': {'type': 'string'},
+                                                   'probe': {'type': 'string'},
+                                                   'ask_answer': {'type': 'string'},
+                                                   'probe_answer': {'type': 'string'},
+                                                   'followups': {'type': 'array',
+                                                                 'items': {'type': 'object',
+                                                                           'additionalProperties': False,
+                                                                           'required': ['q',
+                                                                                        'answer',
+                                                                                        'when'],
+                                                                           'properties': {'q': {'type': 'string'},
+                                                                                          'answer': {'type': 'string'},
+                                                                                          'when': {'type': 'string'}}}}}}},
+                'probes': {'type': 'array',
+                           'items': {'type': 'object',
+                                     'additionalProperties': False,
+                                     'required': ['tag', 'q', 'answer'],
+                                     'properties': {'tag': {'type': 'string'},
+                                                    'q': {'type': 'string'},
+                                                    'answer': {'type': 'string'}}}}}}
+
+VERIFY = {'type': 'object',
+ 'additionalProperties': False,
+ 'required': ['corrections', 'verdict'],
+ 'properties': {'corrections': {'type': 'array',
+                                'items': {'type': 'object',
+                                          'additionalProperties': False,
+                                          'required': ['n', 'severity', 'issue', 'fix'],
+                                          'properties': {'n': {'type': 'string'},
+                                                         'severity': {'type': 'string',
+                                                                      'enum': ['error',
+                                                                               'imprecise',
+                                                                               'overclaim',
+                                                                               'missing']},
+                                                         'issue': {'type': 'string'},
+                                                         'fix': {'type': 'string'}}}},
+                'verdict': {'type': 'string'}}}
+
+REVISE = AUTHOR
+
+SINGLE = {'type': 'object',
+ 'additionalProperties': False,
+ 'required': ['profile', 'ruler', 'strengths', 'flags', 'opener', 'cards', 'probes'],
+ 'properties': {'profile': {'type': 'string'},
+                'ruler': {'type': 'string'},
+                'strengths': {'type': 'array', 'items': {'type': 'string'}},
+                'flags': {'type': 'array', 'items': {'type': 'string'}},
+                'opener': {'type': 'object',
+                           'additionalProperties': False,
+                           'required': ['title', 'questions', 'expect', 'tell'],
+                           'properties': {'title': {'type': 'string'},
+                                          'questions': {'type': 'array', 'items': {'type': 'string'}},
+                                          'expect': {'type': 'string'},
+                                          'tell': {'type': 'string'}}},
+                'cards': {'type': 'array',
+                          'items': {'type': 'object',
+                                    'additionalProperties': False,
+                                    'required': ['n',
+                                                 'title',
+                                                 'anchor',
+                                                 'ladder',
+                                                 'ask',
+                                                 'good',
+                                                 'pass',
+                                                 'tell',
+                                                 'probe',
+                                                 'ask_answer',
+                                                 'probe_answer',
+                                                 'followups'],
+                                    'properties': {'n': {'type': 'string'},
+                                                   'title': {'type': 'string'},
+                                                   'anchor': {'type': 'string'},
+                                                   'ladder': {'type': 'array',
+                                                              'items': {'type': 'object',
+                                                                        'additionalProperties': False,
+                                                                        'required': ['level', 'q', 'answer'],
+                                                                        'properties': {'level': {'type': 'string'},
+                                                                                       'q': {'type': 'string'},
+                                                                                       'answer': {'type': 'string'}}}},
+                                                   'ask': {'type': 'string'},
+                                                   'good': {'type': 'array', 'items': {'type': 'string'}},
+                                                   'pass': {'type': 'array', 'items': {'type': 'string'}},
+                                                   'tell': {'type': 'string'},
+                                                   'probe': {'type': 'string'},
+                                                   'ask_answer': {'type': 'string'},
+                                                   'probe_answer': {'type': 'string'},
+                                                   'followups': {'type': 'array',
+                                                                 'items': {'type': 'object',
+                                                                           'additionalProperties': False,
+                                                                           'required': ['q',
+                                                                                        'answer',
+                                                                                        'when'],
+                                                                           'properties': {'q': {'type': 'string'},
+                                                                                          'answer': {'type': 'string'},
+                                                                                          'when': {'type': 'string'}}}}}}},
+                'probes': {'type': 'array',
+                           'items': {'type': 'object',
+                                     'additionalProperties': False,
+                                     'required': ['tag', 'q', 'answer'],
+                                     'properties': {'tag': {'type': 'string'},
+                                                    'q': {'type': 'string'},
+                                                    'answer': {'type': 'string'}}}}}}
 
 # ---- pluggable model call ----
 def _load_custom():
@@ -251,81 +375,71 @@ def resume_block(c):
     return ("候选人 %s｜岗位线索：%s\n简历正文：\n---\n%s\n---"
             % (c.get("label") or c.get("id"), c.get("role_hint") or "（未指定）", c.get("resume_text") or ""))
 
+AUTHOR_RULES = (
+    "各题围绕一个具体项目背景和重要判断组织，避免只是把通用问题换上项目名。"
+    "研究及高级岗位由意义与问题进入路线取舍，再用ask讨论开放推演、竞争解释、证据或边界；"
+    "其他岗位匹配其实际设计职责，不能一律降为底层操作核对。每问只推进一个主要判断，不堆砌多个考试点。"
+    "ladder每项给answer，ask给ask_answer，probe给probe_answer；这些都是直接回答对应问题的可口述示范，"
+    "说明观点、理由和边界；good/pass另写判分维度，不能用评分要点冒充逐问回答。"
+    "允许不同研究路线，不把一种示范设成唯一答案。不虚构候选人事实；需要例子则明确标为假设，且完成推理。"
+    "probe是主题主线的顺势追问（可空）；followups只放根据回答选用的额外技术分支，不重复ladder、ask或probe，每项含q、answer、when。"
+    "when说明何时值得选问，followups可为空，不凑数；没有必要的probe时probe与probe_answer都为空串。"
+    "probes仅收录独立合作安排或材料确认，每项tag、q、answer；技术问题不得散落在文末。"
+    "HR转述不能变成事实或人格结论；把相关内容改成中性、可澄清的合作预期问题。"
+)
+VERIFY_RULES = (
+    "独立审核完整面试内容与参考回答。检查问题层次是否匹配岗位，是否有研究意义、机制、替代路线、取舍与论据；"
+    "检查人为二分、暗含结论、设套、不礼貌、空泛套话，以及用操作盘问取代主要判断。"
+    "逐问检查ladder.answer、ask_answer、probe_answer、followups[].answer、probes[].answer是否直接回答对应问题，"
+    "是否技术正确、逻辑成立、边界准确，是否编造候选人经历、数字、贡献或承诺。假设示例应明确标注。"
+    "检查good/pass是否与口述示范分离，是否允许合理替代答案；HR仅作转述。"
+    "检查技术追问是否归属原主题、文末probes是否仅独立合作安排/材料确认。"
+    "只报实质问题；n填题号或字段路径。缺少外部来源时标明待核实，不能声称已完成外部事实确认。"
+)
+
 def p_triage(rb, plan, dep, ncore):
-    ultra = plan["depth"] == "ultra"
-    flag_spec = ("关键红旗——%s。%s" % (dep["flags"], ULTRA_CHECKLIST)) if ultra \
-        else "关键红旗（注水多就多列、干净就少列，不硬凑）"
-    opener_spec = "一组开场态度/事实题（时间线/可展示性/ownership）" if ultra \
-        else ("一组开场态度/事实题（时间线/可展示性/ownership，控制在约%d分钟内问完）" % plan["opener"])
     return (rb + "\n\n" + pacing_text(plan, ncore) +
-            "\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、"
-            "真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、" + flag_spec + "、" + opener_spec +
-            "，以及%s个最值得对抗性拷问的技术域"
-            "（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。"
-            % dep["domains"])
+            "\n通读材料，给出有依据的画像、岗位标尺、强项与待澄清事项，不估算包装比例、不预设嫌疑。"
+            "开场邀请候选人选择参与深入的问题展开；独立安排事项留到收尾。"
+            "提炼贴合项目的主题，每域focus写重要问题、机制、路线选择及证据边界。"
+            "技术域建议数量为" + dep["domains"] + "，不为数量重复主题。" +
+            (ULTRA_CHECKLIST if plan["depth"] == "ultra" else ""))
 
 def p_probe(rb, d):
-    return (rb + "\n\n只聚焦这一个技术域做对抗性拷问：【%s】\n重点覆盖：%s\n"
-            "产出5-8个由浅入深、层层设套的问题（每题：验证什么/真做过怎么答/只堆术语怎么露馅/一个逼底层的追问），"
-            "具体到实现层，不要泛泛而谈。" % (d.get("key", ""), d.get("focus", "")))
+    return (rb + "\n聚焦主题：" + d.get("key", "") + "\n关注：" + d.get("focus", "") +
+            "\n提出由浅入深的问题，数量按需要，不凑配额。先讨论意义、机制和路线取舍，再按需要追问证据。"
+            "q为礼貌的具体问题；probes说明评价目的；strong为可口述示范；tell只写论证缺口；"
+            "followup、followup_answer、when给同主题追问、对应口述示范及选问条件，无必要追问则置空。"
+            "避免设套与预设嫌疑。所有技术问题最终须合并回原主题，不能散落文末。")
 
 def _ladder_spec(dep):
     if dep["rungs"] == 1:
-        return ("②时间紧，暖场阶梯（ladder）只给恰好1级：直接问该简历项目的关键设计决策/为什么这么选，"
-                "省去泛泛的项目概览")
-    return ("②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题"
-            "（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选")
-
+        return "ladder恰好1级，聚焦项目的重要判断或路线取舍，并给本问answer。"
+    return "ladder恰好2级，L1问题与意义、L2路线与取舍，每级分别给answer。"
 
 def _mission_spec(n, plan, dep):
     if plan["depth"] == "ultra":
-        return ("作为首席面试官，对这份简历做【全面审查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，"
-                "都变成一道“核心验伪题”，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；"
-                "但只针对简历里真实存在的疑点，不得为凑数编造。" + ULTRA_CHECKLIST + "逐个疑点检查一遍，确认没有遗漏再收笔")
-    return ("作为首席面试官，按上面的时长与深度要求，收敛出恰好%d道“核心验伪题”（题号Q1..Q%d）——最能区分“真做过”"
-            "与“只会写简历”、且无法靠背术语蒙混的题；每题现场约%d分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称"
-            % (n, n, plan["perQuestion"]))
-
+        return "按主题组织覆盖全部重要主张的核心题，按Q1、Q2编号，不设题数配额。" + ULTRA_CHECKLIST
+    return "组织恰好%d道核心主题题，按Q1..Q%d编号，每题约%d分钟，追问选用。" % (n, n, plan["perQuestion"])
 
 def p_author(rb, tri, probes, n, plan, dep):
-    bank = json.dumps({"triage": {"flags": tri.get("flags"), "domains": tri.get("domains")}, "probes": probes},
-                      ensure_ascii=False, indent=1)
-    return (rb + "\n\n" + pacing_text(plan, n) + "\n\n以下是分域拷问的问题库（JSON）：\n" + bank +
-            "\n\n" + _mission_spec(n, plan, dep) +
-            "。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；%s；ask 则落到实现层、"
-            "无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（%s个分点、技术准确、含机制/阈值/取舍）、"
-            "及格线（必须听到的%s点）、典型露馅、追问。另把其余有价值的问题去重整理为%s条“补充探针”（每条带主题标签）。"
-            % (_ladder_spec(dep), dep["good"], dep["pass"], dep["probes"]))
-
+    bank = json.dumps({"triage": tri, "probes": probes}, ensure_ascii=False, indent=1)
+    return (rb + "\n" + pacing_text(plan, n) + "\n分域材料：\n" + bank + "\n" +
+            _mission_spec(n, plan, dep) + _ladder_spec(dep) + AUTHOR_RULES)
 
 def p_single(rb, n, plan, dep):
-    ladder = ("恰好1级暖场阶梯（ladder：关键设计决策）" if dep["rungs"] == 1
-              else "2级暖场阶梯（ladder：L1 项目切入/general、L2 设计决策）")
-    if plan["depth"] == "ultra":
-        quota = ("关键红旗（%s）、开场态度/事实题、以及覆盖简历每一处疑点的核心验伪题"
-                 "（题数不固定，通常12-24道，宁多勿漏但不得编造，按 Q1、Q2… 编号）。%s" % (dep["flags"], ULTRA_CHECKLIST))
-    else:
-        quota = ("关键红旗（不硬凑）、开场态度/事实题、以及恰好%d道核心验伪题（每题现场约%d分钟）。"
-                 % (n, plan["perQuestion"]))
-    return (rb + "\n\n" + pacing_text(plan, n) +
-            "\n\n任务：一次性完成面试前研判与核心题设计，直接给出："
-            "画像+可信度（均衡如实）、标尺、真实强项/亮点（乏善可陈不硬凑）、" + quota +
-            "每道核心题：挂靠简历项目（anchor）+%s"
-            "+ ask（L3 硬核验伪）+ 期望优质回答（%s分点）+ 及格线（%s条）+ 典型露馅 + 追问。"
-            "再给%s条补充探针（每条带主题标签）。"
-            "既戳穿注水也如实肯定真本事，不强求优缺点对称。"
-            % (ladder, dep["good"], dep["pass"], dep["probes"]))
+    return (p_triage(rb, plan, dep, n) + "\n一次完成画像与核心主题设计。" +
+            _mission_spec(n, plan, dep) + _ladder_spec(dep) + AUTHOR_RULES)
 
-def p_verify(cards):
-    return ("你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，对下面这份面试“标准答案(answer key)”做对抗式事实核查。"
-            "逐条检查 good 与 pass 是否有：技术性错误、不精确、夸大（把课程/理论说成工业标准）、关键遗漏。只报真正的问题，准确的不要报。"
-            "\n\n答案(JSON)：\n" + json.dumps(cards, ensure_ascii=False, indent=1))
+def p_verify(content, rb=""):
+    return VERIFY_RULES + "\n材料供归因核对：\n" + rb + "\n完整内容：\n" + json.dumps(content, ensure_ascii=False, indent=1)
 
-def p_revise(cards, corrections):
-    return ("下面是核心验伪题的答案键(JSON)与事实核查发现的问题(JSON)。请按核查意见修正 good/pass 中的错误/不精确/夸大/遗漏，"
-            "保持题目与结构不变、其余内容不动，返回修正后的完整卡片数组。\n\n卡片：\n"
-            + json.dumps(cards, ensure_ascii=False, indent=1) + "\n\n核查：\n"
-            + json.dumps(corrections, ensure_ascii=False, indent=1))
+def p_revise(content, corrections, rb=""):
+    return ("按审核意见修订受影响的问题、逐问示范与判分，不得只改good/pass而遗留错误问题。"
+            "保持题号和主题归属；必要时将技术尾部题迁回相应followups。返回完整cards与probes。"
+            "未受影响内容保持原意，修改后检查每问回答与题意一致。" + AUTHOR_RULES +
+            "\n原材料：\n" + rb + "\n内容：\n" + json.dumps(content, ensure_ascii=False, indent=1) +
+            "\n审核：\n" + json.dumps(corrections, ensure_ascii=False, indent=1))
 
 
 # ---- orchestration ----
@@ -354,14 +468,15 @@ def analyze_one(c, ncore, single, lang, plan):
     if cards:
         try:
             ver = call_llm(
-                "你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，做对抗式事实核查。\n\n【输出语言】"
+                ROLE_BASE + "\n\n【输出语言】"
                 + directive(lang),
-                p_verify(cards), VERIFY)
+                p_verify({"cards": cards, "probes": probes}, rb), VERIFY)
             factcheck = ver.get("verdict")
             if ver.get("corrections"):
-                rev = call_llm(role, p_revise(cards, ver["corrections"]), REVISE)
+                rev = call_llm(role, p_revise({"cards": cards, "probes": probes}, ver["corrections"], rb), REVISE)
                 if rev.get("cards"):
                     cards = rev["cards"]
+                    probes = rev["probes"]
         except Exception as e:
             sys.stderr.write("verify skipped: %s\n" % e)
     return {"id": c.get("id"), "cand": {

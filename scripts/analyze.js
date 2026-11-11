@@ -1,11 +1,11 @@
 export const meta = {
   name: 'resume-grill-analyze',
-  description: 'From resume text, produce a per-candidate adversarial interview payload (profile, red flags, opener, 6 answer-keyed kill questions, supplementary probes), fact-checked. Output language follows the résumé (or an explicit lang override).',
+  description: 'From resume text, produce a per-candidate adversarial interview payload (profile, red flags, opener, role-appropriate topic questions with per-question spoken examples and nested follow-ups), fact-checked. Output language follows the résumé (or an explicit lang override).',
   phases: [
     { title: 'Triage', detail: 'read each resume → profile, red flags, probe-worthy domains' },
-    { title: 'Probe', detail: 'one interrogator per domain' },
-    { title: 'Author', detail: 'pick ~6 kill questions and write bulleted answer keys' },
-    { title: 'Verify', detail: 'fact-check answer keys, apply corrections' },
+    { title: 'Probe', detail: 'one reviewer per topic' },
+    { title: 'Author', detail: 'organize topic questions, spoken examples and separate grading criteria' },
+    { title: 'Verify', detail: 'review question logic and every answer, apply corrections' },
   ],
 }
 
@@ -21,17 +21,44 @@ const CANDS = A.candidates || []
 // 不限时、不设题数上限，穷尽简历里每一处可能被追问的疑点（面试官深挖 / 候选人面试前自查）。
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const TIER = { quick:{opener:4,buffer:5}, standard:{opener:5,buffer:7}, deep:{opener:6,buffer:9} }
-const FLAGS_NORMAL = '注水多就多列、简历干净就少列（通常3-6条），不硬凑'
+const FLAGS_NORMAL = "只列材料支持的待澄清事项，不推断动机、不凑数量"
 const DEPTHS = {
-  quick: { rungs:1, good:'4-5', pass:'2-3', probes:'4-6', domains:'3-4', flags:FLAGS_NORMAL,
-    note:'时间紧：题目更聚焦，直取能一击验伪的关键点，不求穷尽；暖场阶梯只留 1 级，答案键写精不写多。' },
-  standard: { rungs:2, good:'5-8', pass:'3-5', probes:'10-14', domains:'4-6', flags:FLAGS_NORMAL,
-    note:'常规时长：每题 2 级暖场阶梯 + 硬核验伪，答案键覆盖机制/阈值/取舍。' },
-  deep: { rungs:2, good:'7-10', pass:'4-6', probes:'14-18', domains:'6-8', flags:'注水多就多列（通常4-8条），不硬凑',
-    note:'时间充裕：问得更细——答案键给更多机制/阈值/取舍分点，追问要能再往下压一层，覆盖更多技术域。' },
-  ultra: { rungs:2, good:'6-10', pass:'3-6', probes:'20-30', domains:'8-12',
-    flags:'穷尽简历中所有真实存在的疑点，不设条数上限；宁多勿漏，但绝不编造',
-    note:'全面审查模式（面试官逐条深挖 / 候选人面试前自查）：不设时间盒、不设题数上限，把简历里每一处可能被追问、被质疑、被要求举证的地方都挖出来。宁多勿漏——但只针对简历里真实存在的疑点，绝不编造。' },
+  "quick": {
+    "rungs": 1,
+    "good": "4-5",
+    "pass": "2-3",
+    "probes": "按需",
+    "domains": "3-4",
+    "flags": "只列材料支持的待澄清事项，不推断动机、不凑数量",
+    "note": "时间紧：聚焦关键判断，保留1级切入与开放推演；技术追问在主题内按需选问。"
+  },
+  "standard": {
+    "rungs": 2,
+    "good": "5-8",
+    "pass": "3-5",
+    "probes": "按需",
+    "domains": "4-6",
+    "flags": "只列材料支持的待澄清事项，不推断动机、不凑数量",
+    "note": "常规时长：L1问题与价值、L2路线取舍、ask开放推演；每问给口述示范，判分另列。"
+  },
+  "deep": {
+    "rungs": 2,
+    "good": "7-10",
+    "pass": "4-6",
+    "probes": "按需",
+    "domains": "6-8",
+    "flags": "只列材料支持的待澄清事项，不推断动机、不凑数量",
+    "note": "时间充裕：加强竞争解释、机制与证据讨论，不把深度等同于操作细节；追问仍归原主题。"
+  },
+  "ultra": {
+    "rungs": 2,
+    "good": "6-10",
+    "pass": "3-6",
+    "probes": "按需",
+    "domains": "8-12",
+    "flags": "只列材料支持的待澄清事项，不推断动机、不凑数量",
+    "note": "全面审查：覆盖重要判断与待澄清事项，按主题合并，不为每个细节独立造题；追问数量不设配额。"
+  }
 }
 function planFor(minutes, depthOverride){
   const forced = String(depthOverride || '').toLowerCase()
@@ -53,7 +80,7 @@ const NCORE = A.nCore || PLAN.nCore || 0         // explicit nCore wins; 0 = 由
 const DEPTH = DEPTHS[PLAN.depth]
 
 // ultra 必须逐项覆盖的疑点清单——这是"穷尽"的可执行定义
-const ULTRA_CHECKLIST = '必须逐项覆盖：①每一条关键红旗；②每一个没有严谨基线的量化宣称（"提升X%""节省Y%"）；③每一处 ownership 模糊（"参与/负责/协助"到底自己做了什么）；④每一个只出现在技能栏、却在项目里找不到佐证的技术名词；⑤每一段时间线重叠或经历性质存疑（在校/兼职/实习 vs 全职）；⑥每一个被包装成"系统/框架/平台"的课程或短期项目。'
+const ULTRA_CHECKLIST = "覆盖材料中有依据的重要主张、量化口径、本人贡献、技术能力、时间线与经历性质；按主题整合，普通合作或版本确认独立列出。缺少证明不等于虚构，重叠经历不自动构成矛盾。"
 const PACING = ULTRA
   ? `本次不是限时面试，而是对这份简历做【全面审查】：不设时间盒、不设题数上限，穷尽其中所有疑点。${DEPTH.note}`
   : `本场面试约 ${PLAN.minutes} 分钟：开场约 ${PLAN.opener} 分钟，${NCORE} 道核心题每题约 ${PLAN.perQuestion} 分钟，留约 ${PLAN.buffer} 分钟收尾。${DEPTH.note}`
@@ -84,108 +111,458 @@ function directive(lang){
 }
 const LANGNOTE = `【输出语言】${directive(LANG)}`
 
-const ROLE = `你是一线科技公司的资深技术面试官，风格严苛、对简历注水极度敏感。你深知简历常见把戏：大量"参与"其实贡献极小；百分比指标（"节省65%""提升28%"）常无严谨基线；课程/短期项目包装成"系统"；术语背后是调库还是真懂原理需要戳穿。提问必须具体、扎进底层实现（数据结构/阈值/失败模式/评估口径/为何这么选），能区分"真做过"与"只会写在简历上"。同时你也是公正的评估者：在戳穿注水的同时，如实识别候选人真实、可验证的强项与亮点——扎实的技术深度、真实的 ownership、诚实的自我降级都算加分项。不为对抗而对抗：候选人确实强就大方肯定，确实弱也不硬挑刺、不为凑数编造红旗；据实评价，不强求优缺点对称、不面面俱到。`
+const ROLE = "你是公正而有技术判断力的资深面试官。根据岗位与经历选择评价层次：研究及高级岗位优先讨论研究意义、机制、替代路线、取舍、证据与适用边界；工程岗位围绕真实任务的设计判断与结果。具体上下文不等于操作盘问，不能用命令、参数或指标核对取代主要问题。问题礼貌、开放、可讨论，不设套、不预设注水、动机或人格结论；材料差异是待澄清信息。HR评价仅作有来源的转述，转成合作预期的中性问题。肯定有依据的强项，诚实限定已知范围是正面信号；合理替代路线同样得分。避免空泛套话与人为二分，允许第三条路线及任务依赖的答案。每问的示范回答须可以直接口述，回答该问并说明理由；示范不是候选人真实经历，不编造其贡献、实验、数值或承诺。需要实例时明确标为假设示例，不用占位符绕过核心推理。good/pass只写面试官判分依据，与示范回答分离。所有技术追问就近归入原主题的probe或followups，不在文末堆放技术题；probes仅用于独立合作安排或材料确认。"
 
 const TRIAGE = {
-  type:'object', additionalProperties:false,
-  properties:{
-    profile:{type:'string', description:'3-4句画像+整体可信度判断（真本事约几成、包装约几成）；均衡如实，既不美化也不刻意贬低'},
-    ruler:{type:'string', description:'该用什么标尺衡量（应届/初级/中级；点出关键事实如真实全职月数）'},
-    strengths:{type:'array', items:{type:'string'}, description:'真实、可验证的强项/亮点：直接引用简历依据+为何算加分（真实生产经历、扎实底层细节、诚实降级、稀缺/对口技能栈等）；有几条写几条（约2-5条），确实乏善可陈就少列或说明，不硬凑、不与红旗强行对称'},
-    flags:{type:'array', items:{type:'string'}, description:`关键红旗，直接引用可疑话术+为何可疑；${DEPTH.flags}`},
-    opener:{type:'object', additionalProperties:false, properties:{
-      title:{type:'string'}, questions:{type:'array', items:{type:'string'}},
-      expect:{type:'string', description:'期望的行为（强信号）'}, tell:{type:'string', description:'露馅信号'}
-    }, required:['title','questions','expect','tell'], description:'开场态度/事实题（时间线/可展示性/ownership核对）'},
-    domains:{type:'array', items:{type:'object', additionalProperties:false, properties:{
-      key:{type:'string'}, focus:{type:'string', description:'该域最该拷问的实现细节/失败模式清单'}
-    }, required:['key','focus']}, description:`${DEPTH.domains}个最值得对抗性拷问的技术域，须贴合本简历的真实项目`}
-  }, required:['profile','ruler','strengths','flags','opener','domains']
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "ruler",
+    "strengths",
+    "flags",
+    "opener",
+    "domains"
+  ],
+  "properties": {
+    "profile": {
+      "type": "string"
+    },
+    "ruler": {
+      "type": "string"
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "opener": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "questions",
+        "expect",
+        "tell"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expect": {
+          "type": "string"
+        },
+        "tell": {
+          "type": "string"
+        }
+      }
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "focus"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "focus": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
 const PROBE = {
-  type:'object', additionalProperties:false,
-  properties:{ domain:{type:'string'},
-    questions:{type:'array', items:{type:'object', additionalProperties:false, properties:{
-      q:{type:'string'}, probes:{type:'string', description:'这一问在验证什么'},
-      strong:{type:'string', description:'真做过的人会怎么答'}, tell:{type:'string', description:'只堆术语的人会怎么露馅'},
-      followup:{type:'string'}
-    }, required:['q','probes','strong','tell']}}
-  }, required:['domain','questions']
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "domain",
+    "questions"
+  ],
+  "properties": {
+    "domain": {
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "q",
+          "probes",
+          "strong",
+          "tell",
+          "followup",
+          "followup_answer",
+          "when"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "probes": {
+            "type": "string"
+          },
+          "strong": {
+            "type": "string"
+          },
+          "tell": {
+            "type": "string"
+          },
+          "followup": {
+            "type": "string"
+          },
+          "followup_answer": {
+            "type": "string"
+          },
+          "when": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
 const CARD = {
-  type:'object', additionalProperties:false, properties:{ n:{type:'string'}, title:{type:'string'},
-    anchor:{type:'string', description:'本题挂靠的简历项目/宣称（从简历出发的锚点，如「TraceFix 多Agent」「NL2SQL 实习」）'},
-    ladder:{type:'array', items:{type:'object', additionalProperties:false, properties:{
-      level:{type:'string', description:'L1 项目切入 或 L2 设计决策'}, q:{type:'string'} }, required:['level','q']},
-      description: DEPTH.rungs === 1
-        ? '暖场阶梯恰好1级（时间紧，省去泛泛的项目概览）：直接问该简历项目的关键设计决策/为什么这么选。ask 本身即 L3 硬核验伪题。'
-        : '由浅入深的提问阶梯（恰好2级，作为硬核题的暖场引子）：L1=从该简历项目切入的概览/general 问题，让候选人先自述、暴露信息与切入点；L2=关键设计决策/为什么这么选。ask 本身即 L3 硬核验伪题。'},
-    ask:{type:'string', description:'L3 建议提问（硬核验伪）：完整、具体、能戳穿话术'},
-    good:{type:'array', items:{type:'string'}, description:`期望的优质回答，${DEPTH.good}个分点，技术准确、含取舍/阈值/机制`},
-    pass:{type:'array', items:{type:'string'}, description:`及格线：必须听到的关键点，${DEPTH.pass}条`},
-    tell:{type:'string', description:'典型露馅'}, probe:{type:'string', description:'逼到底层的追问'} },
-  required:['n','title','anchor','ladder','ask','good','pass','tell','probe']
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "n",
+    "title",
+    "anchor",
+    "ladder",
+    "ask",
+    "good",
+    "pass",
+    "tell",
+    "probe",
+    "ask_answer",
+    "probe_answer",
+    "followups"
+  ],
+  "properties": {
+    "n": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "anchor": {
+      "type": "string"
+    },
+    "ladder": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "level",
+          "q",
+          "answer"
+        ],
+        "properties": {
+          "level": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ask": {
+      "type": "string"
+    },
+    "good": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pass": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tell": {
+      "type": "string"
+    },
+    "probe": {
+      "type": "string"
+    },
+    "ask_answer": {
+      "type": "string"
+    },
+    "probe_answer": {
+      "type": "string"
+    },
+    "followups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "q",
+          "answer",
+          "when"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "when": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
 const AUTHOR = {
-  type:'object', additionalProperties:false, properties:{
-    cards:{type:'array', items:CARD, description: ULTRA
-      ? '覆盖简历中每一处疑点的核心题卡：题数不固定（通常12-24张，宁多勿漏，但不得为凑数编造），按 Q1、Q2… 依次编号'
-      : `恰好${NCORE}张核心验伪题卡，题号Q1..Q${NCORE}，选最能一击验伪的`},
-    probes:{type:'array', items:{type:'object', additionalProperties:false, properties:{
-      tag:{type:'string', description:'行首主题标签，如 RAG/可观测性'}, q:{type:'string'} }, required:['tag','q']},
-      description:`补充探针（无标准答案）${DEPTH.probes}条，去重后按主题标签排列`}
-  }, required:['cards','probes']
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cards",
+    "probes"
+  ],
+  "properties": {
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "n",
+          "title",
+          "anchor",
+          "ladder",
+          "ask",
+          "good",
+          "pass",
+          "tell",
+          "probe",
+          "ask_answer",
+          "probe_answer",
+          "followups"
+        ],
+        "properties": {
+          "n": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "anchor": {
+            "type": "string"
+          },
+          "ladder": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "level",
+                "q",
+                "answer"
+              ],
+              "properties": {
+                "level": {
+                  "type": "string"
+                },
+                "q": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "ask": {
+            "type": "string"
+          },
+          "good": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pass": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tell": {
+            "type": "string"
+          },
+          "probe": {
+            "type": "string"
+          },
+          "ask_answer": {
+            "type": "string"
+          },
+          "probe_answer": {
+            "type": "string"
+          },
+          "followups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "q",
+                "answer",
+                "when"
+              ],
+              "properties": {
+                "q": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "when": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "probes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tag",
+          "q",
+          "answer"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
-const VERIFY = { type:'object', additionalProperties:false, properties:{
-  corrections:{type:'array', items:{type:'object', additionalProperties:false, properties:{
-    n:{type:'string'}, severity:{type:'string', enum:['error','imprecise','overclaim','missing']},
-    issue:{type:'string'}, fix:{type:'string'} }, required:['n','severity','issue','fix']}},
-  verdict:{type:'string'} }, required:['corrections','verdict'] }
+const VERIFY = {
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "corrections",
+    "verdict"
+  ],
+  "properties": {
+    "corrections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "n",
+          "severity",
+          "issue",
+          "fix"
+        ],
+        "properties": {
+          "n": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "imprecise",
+              "overclaim",
+              "missing"
+            ]
+          },
+          "issue": {
+            "type": "string"
+          },
+          "fix": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string"
+    }
+  }
+}
 
+const AUTHOR_RULES = "各题围绕一个具体项目背景和重要判断组织，避免只是把通用问题换上项目名。研究及高级岗位由意义与问题进入路线取舍，再用ask讨论开放推演、竞争解释、证据或边界；其他岗位匹配其实际设计职责，不能一律降为底层操作核对。每问只推进一个主要判断，不堆砌多个考试点。ladder每项给answer，ask给ask_answer，probe给probe_answer；这些都是直接回答对应问题的可口述示范，说明观点、理由和边界；good/pass另写判分维度，不能用评分要点冒充逐问回答。允许不同研究路线，不把一种示范设成唯一答案。不虚构候选人事实；需要例子则明确标为假设，且完成推理。probe是主题主线的顺势追问（可空）；followups只放根据回答选用的额外技术分支，不重复ladder、ask或probe，每项含q、answer、when。when说明何时值得选问，followups可为空，不凑数；没有必要的probe时probe与probe_answer都为空串。probes仅收录独立合作安排或材料确认，每项tag、q、answer；技术问题不得散落在文末。HR转述不能变成事实或人格结论；把相关内容改成中性、可澄清的合作预期问题。"
+const VERIFY_RULES = "独立审核完整面试内容与参考回答。检查问题层次是否匹配岗位，是否有研究意义、机制、替代路线、取舍与论据；检查人为二分、暗含结论、设套、不礼貌、空泛套话，以及用操作盘问取代主要判断。逐问检查ladder.answer、ask_answer、probe_answer、followups[].answer、probes[].answer是否直接回答对应问题，是否技术正确、逻辑成立、边界准确，是否编造候选人经历、数字、贡献或承诺。假设示例应明确标注。检查good/pass是否与口述示范分离，是否允许合理替代答案；HR仅作转述。检查技术追问是否归属原主题、文末probes是否仅独立合作安排/材料确认。只报实质问题；n填题号或字段路径。缺少外部来源时标明待核实，不能声称已完成外部事实确认。"
 async function analyzeOne(c){
   const resume = `候选人 ${c.label||c.id}｜岗位线索：${c.role_hint||'（未指定）'}\n简历正文：\n---\n${c.resume_text||''}\n---`
-
-  // 1) Triage
-  const openerSpec = ULTRA ? '一组开场态度/事实题（时间线/可展示性/ownership）'
-    : `一组开场态度/事实题（时间线/可展示性/ownership，控制在约${PLAN.opener}分钟内问完）`
-  const flagSpec = ULTRA ? `关键红旗——${DEPTH.flags}。${ULTRA_CHECKLIST}` : '关键红旗（注水多就多列、干净就少列，不硬凑）'
-  const tri = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、${flagSpec}、${openerSpec}，以及${DEPTH.domains}个最值得对抗性拷问的技术域（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。\n\n${LANGNOTE}`,
-    { label:`triage:${c.id}`, phase:'Triage', schema:TRIAGE, effort:'high' })
+  const tri = await agent(`${ROLE}\n${resume}\n${PACING}\n通读材料，给出有依据的画像、岗位标尺、强项与待澄清事项，不估算包装比例、不预设嫌疑。开场邀请选择参与深入的问题展开。提炼贴合项目的主题，每域focus写重要问题、机制、路线选择和证据边界。主题建议${DEPTH.domains}个，不为数量重复。${ULTRA ? ULTRA_CHECKLIST : ''}\n${LANGNOTE}`,
+    {label:`triage:${c.id}`, phase:'Triage', schema:TRIAGE, effort:'high'})
   if(!tri) return null
-
-  // 2) Probe each domain in parallel
   const probes = (await parallel((tri.domains||[]).map(d => () =>
-    agent(`${ROLE}\n\n${resume}\n\n只聚焦这一个技术域做对抗性拷问：【${d.key}】\n重点覆盖：${d.focus}\n产出5-8个由浅入深、层层设套的问题（每题：验证什么/真做过怎么答/只堆术语怎么露馅/一个逼底层的追问），具体到实现层，不要泛泛而谈。\n\n${LANGNOTE}`,
-      { label:`probe:${c.id}:${d.key}`, phase:'Probe', schema:PROBE, effort:'high' })
+    agent(`${ROLE}\n${resume}\n聚焦主题：${d.key}\n关注：${d.focus}\n提出由浅入深的问题，数量按需要，不凑配额。先讨论意义、机制与取舍，按需要追问证据。q为礼貌的具体问题；probes说明评价目的；strong为可口述示范；tell只写论证缺口；followup、followup_answer、when给同主题追问、对应示范及选问条件，无必要则置空。技术问题最终合并回原主题，不能散落文末。\n${LANGNOTE}`,
+      {label:`probe:${c.id}:${d.key}`, phase:'Probe', schema:PROBE, effort:'high'})
   ))).filter(Boolean)
-
-  // 3) Author kill questions + answer keys
   const ladderSpec = DEPTH.rungs === 1
-    ? `②时间紧，暖场阶梯（ladder）只给恰好1级：直接问该简历项目的关键设计决策/为什么这么选，省去泛泛的项目概览`
-    : `②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选`
-  const missionSpec = ULTRA
-    ? `作为首席面试官，对这份简历做【全面审查】：把简历里每一处可能被追问、被质疑、被要求举证的疑点，都变成一道"核心验伪题"，按 Q1、Q2… 依次编号。题数不固定（通常12-24道），宁多勿漏；但只针对简历里真实存在的疑点，不得为凑数编造。${ULTRA_CHECKLIST}逐个疑点检查一遍，确认没有遗漏再收笔`
-    : `作为首席面试官，按上面的时长与深度要求，收敛出恰好${NCORE}道"核心验伪题"（题号Q1..Q${NCORE}）——最能区分"真做过"与"只会写简历"、且无法靠背术语蒙混的题；每题现场约${PLAN.perQuestion}分钟问完（含阶梯与追问），题目的粒度要与这个时间预算相称`
-  const authored = await agent(`${ROLE}\n\n${resume}\n\n${PACING}\n\n以下是分域拷问的问题库（JSON）：\n${JSON.stringify({triage:{flags:tri.flags,domains:tri.domains}, probes}, null, 1)}\n\n${missionSpec}。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；${ladderSpec}；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（${DEPTH.good}个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的${DEPTH.pass}点）、典型露馅、追问。另把其余有价值的问题去重整理为${DEPTH.probes}条"补充探针"（每条带主题标签）。\n\n${LANGNOTE}`,
-    { label:`author:${c.id}`, phase:'Author', schema:AUTHOR, effort:'high' })
+    ? 'ladder恰好1级，聚焦项目的重要判断或路线取舍，并给本问answer。'
+    : 'ladder恰好2级，L1问题与意义、L2路线与取舍，每级分别给answer。'
+  const mission = ULTRA
+    ? `按主题覆盖全部重要主张，按Q1、Q2编号，不设题数配额。${ULTRA_CHECKLIST}`
+    : `组织恰好${NCORE}道核心主题题，按Q1..Q${NCORE}编号，每题约${PLAN.perQuestion}分钟，追问选用。`
+  const authored = await agent(`${ROLE}\n${resume}\n${PACING}\n分域材料：\n${JSON.stringify({triage:tri,probes})}\n${mission}${ladderSpec}${AUTHOR_RULES}\n${LANGNOTE}`,
+    {label:`author:${c.id}`, phase:'Author', schema:AUTHOR, effort:'high'})
   if(!authored) return null
-
-  // 4) Fact-check the answer keys
-  const ver = await agent(`你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，对下面这份面试"标准答案(answer key)"做对抗式事实核查。逐条检查 good 与 pass 是否有：技术性错误、不精确、夸大（把课程/理论说成工业标准）、关键遗漏。只报真正的问题，准确的不要报。\n\n答案(JSON)：\n${JSON.stringify(authored.cards, null, 1)}\n\n${LANGNOTE}`,
-    { label:`verify:${c.id}`, phase:'Verify', schema:VERIFY, effort:'high' })
-
-  let cards = authored.cards
+  const ver = await agent(`${ROLE}\n${VERIFY_RULES}\n材料供归因核对：\n${resume}\n完整内容：\n${JSON.stringify(authored)}\n${LANGNOTE}`,
+    {label:`verify:${c.id}`, phase:'Verify', schema:VERIFY, effort:'high'})
+  let content = authored
   if(ver && (ver.corrections||[]).length){
-    const revised = await agent(`${ROLE}\n\n下面是核心验伪题的答案键(JSON)与事实核查发现的问题(JSON)。请按核查意见修正 good/pass 中的错误/不精确/夸大/遗漏，保持题目与结构不变、其余内容不动，返回修正后的完整卡片数组。\n\n卡片：\n${JSON.stringify(authored.cards, null, 1)}\n\n核查：\n${JSON.stringify(ver.corrections, null, 1)}\n\n${LANGNOTE}`,
-      { label:`revise:${c.id}`, phase:'Verify', schema:{type:'object', additionalProperties:false, properties:{cards:{type:'array', items:CARD}}, required:['cards']}, effort:'high' })
-    if(revised && revised.cards && revised.cards.length) cards = revised.cards
+    const revised = await agent(`${ROLE}\n按审核意见修订受影响的问题、逐问示范与判分，不得只改good/pass而遗留错误问题。保持题号和主题归属；必要时把技术尾部题迁回相应followups。返回完整cards与probes。未受影响内容保持原意，检查每问回答与题意一致。${AUTHOR_RULES}\n原材料：\n${resume}\n内容：\n${JSON.stringify(authored)}\n审核：\n${JSON.stringify(ver.corrections)}\n${LANGNOTE}`,
+      {label:`revise:${c.id}`, phase:'Verify', schema:AUTHOR, effort:'high'})
+    if(revised && revised.cards && revised.cards.length) content = revised
   }
-
-  return { id:c.id, cand:{
-    name: c.label || c.id, resume: c.resume || null,
-    profile: tri.profile, ruler: tri.ruler, strengths: tri.strengths, flags: tri.flags,
-    opener: tri.opener, cards, probes: authored.probes,
-    _factcheck: ver ? ver.verdict : null
+  return {id:c.id, cand:{
+    name:c.label||c.id, resume:c.resume||null,
+    profile:tri.profile, ruler:tri.ruler, strengths:tri.strengths, flags:tri.flags,
+    opener:tri.opener, cards:content.cards, probes:content.probes,
+    _factcheck:ver ? ver.verdict : null
   }}
 }
 

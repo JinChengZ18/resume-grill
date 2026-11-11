@@ -2,7 +2,7 @@
 
 [Chinese](README.md) | [English](README.en.md)
 
-An Agent Skill for grilling resumes: feed it one or more resume PDFs and it produces a three-piece interview kit: an interview guide, a printable scorecard, and Q&A attack-defense cards. Questions start from the candidate's real projects and escalate layer by layer. Answer keys are fact-checked. The evaluation is balanced and candid: it exposes inflated claims while still recognizing real strengths, without forcing symmetrical pros and cons. **Output language follows the resume automatically**: Chinese resumes produce Chinese materials, English resumes produce English materials. It can run in Claude Code or any agent framework.
+An Agent Skill that turns resumes into an interview guide, a printable scorecard, and collapsible Q&A cards. Questions form project-based themes, with follow-ups kept inside their parent theme and a spoken sample response below each question. Scoring cues are separate. For research and senior roles, discussion emphasizes significance, alternative approaches, tradeoffs, and evidence. Output language follows the resume. Runs in Claude Code or other agent frameworks.
 
 > This repository includes a **fully anonymized** demo resume for a fictional candidate, "Zhang San", applying for an Agent / AI Infra role with 2 years of experience. See the generated kit: [guide](examples/agent_engineer_demo/agent_engineer_demo_guide.md), [scorecard](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html), and [Q&A cards](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html). Open the HTML files in a browser.
 
@@ -28,11 +28,13 @@ Outputs are written to `workspace/output/<slug>/`: `_qa_cards.html` for reading 
 
 The three files are written to the same directory, link to each other with local relative paths, and are fully self-contained. They can be opened directly via `file://`.
 
-- **Full guide** `<slug>_guide.md` - candidate profile and credibility, real strengths, key red flags, opening attitude questions, and core verification questions. Each question includes an L1 project entry point, L2 design-decision probe, L3 hard verification probe, expected strong-answer points, pass line, common tells, and follow-ups.
-- **Live scorecard** `<slug>_scorecard.html` - one A4 page per candidate, with Strong / Medium / Exposed checkboxes and scoring clues for every question. Ready to print and use during the interview.
-- **Q&A cards** `<slug>_qa_cards.html` - candidate tabs, one-click answer folding for self-testing, colored sections for strengths, red flags, and layered probes, plus links back to each candidate's original resume PDF.
+- **Full guide** `<slug>_guide.md`: profile, strengths, points to clarify, and coherent project themes with questions, paired sample responses, local follow-ups, and separate scoring cues.
+- **Live scorecard** `<slug>_scorecard.html`: one A4 page per candidate for timed interviews, with locally saved scores. Full-audit mode may span multiple pages.
+- **Q&A cards** `<slug>_qa_cards.html`: candidate tabs and collapsible responses. Technical follow-ups stay within their theme, and hiding answers keeps all questions visible.
 
-The engine is an adaptive multi-stage workflow: read the resume, triage the profile, strengths, red flags, and technical domains to probe, generate domain-specific grilling questions, converge on project-grounded layered verification questions with answer keys, then fact-check and revise. It works for arbitrary roles and resumes without hand-writing a new question set for every candidate.
+The workflow reviews the resume, develops domain-specific topics, writes coherent themes and spoken responses, then verifies and revises them. Review covers technical accuracy, question continuity, response alignment, and evidence boundaries. Well-supported alternative approaches are welcome. Working arrangements and material checks remain separate.
+
+The screenshots and linked examples below use the legacy format. Newly generated kits use theme-local follow-ups and paired spoken responses.
 
 ![ScreenShot_en1](./DEMO/ScreenShot_en1.png)
 
@@ -64,13 +66,13 @@ Output language is detected by default and follows the resume: Chinese resumes p
 
 ## Interview Length & Full-Audit Mode
 
-Interviews vary in length: a long slot lets you probe more questions in finer detail, a short one only allows hitting the essentials. Just tell it the length ("a 30-minute phone screen", "a 90-minute onsite"); it defaults to 60 minutes.
+Specify a duration, or use the 60-minute default. The table is a coverage guide: prioritize substantive discussion over asking every question, and leave unasked items unscored.
 
 | Length | Core questions | What changes |
 | --- | --- | --- |
 | 30 min | 3 (≈7′ each) | Warm-up ladder drops to 1 rung; answer keys stay tight |
 | 60 min | 6 (≈8′) | Default |
-| 90 min | 9 (≈8′) | More bullets per answer key, follow-ups press a layer deeper, more domains |
+| 90 min | About 9 themes (about 8 min each) | More discussion of alternatives and evidence; follow-ups remain inside their theme |
 
 **Full-audit mode (ultra).** Say "do a full review of this resume", "audit it thoroughly", "find every weak point", or "what will I get asked", and it drops the time box and the question cap, digging out every point in the resume that an interviewer could challenge: every red flag, every percentage without a baseline, every vague "participated in / responsible for" ownership claim, every technology listed under skills but absent from the projects, every overlapping timeline, every coursework project dressed up as a "system". Typically 12-24 questions, erring on the side of more — but only for doubts that genuinely exist in the resume; it will not invent them. Interviewers use it to dig deep; candidates work through the fold-away answers on the Q&A cards and patch the holes before the interview. The switch is decided by whether you want exhaustive coverage, not by who is asking.
 

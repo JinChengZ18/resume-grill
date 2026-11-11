@@ -1,238 +1,500 @@
-# 分析流水线规格（运行无关 · 供任意 agent 系统实现）
+# 面试分析流水线契约
 
-本文件把「简历 → 面试材料」的分析流水线抽象成**与运行时无关的契约**：阶段划分、每阶段的提问词、以及严格的 JSON schema。任何 agent 框架（LangChain、OpenAI Assistants、自研编排、乃至一次性脚本）只要能做「给定 system+user 提示、返回符合给定 JSON schema 的结构化输出」，就能实现本技能，无需依赖 Claude Code 的 Workflow 运行时。
+本契约由`scripts/analyze.js`与`scripts/analyze_portable.py`共同实现。输入为简历、岗位线索和面试设置，输出`{meta, candidates}`，供渲染器生成指南、评分卡和问答卡。两条分析路径遵循相同内容要求；Python的`--single`合并前期分析，但仍执行Verify/Revise。
 
-两个参考实现都遵循本规格：
-- `scripts/analyze.js` — Claude Code 原生多智能体 Workflow（各阶段并行、`agent()`/`parallel()`）。
-- `scripts/analyze_portable.py` — 运行无关的顺序编排，只依赖一个你自己接入模型的 `call_llm(system, user, schema)` 回调；另带 `--single` 单调回退模式。
+## 内容标准
 
-两条路径产出**同一份 `payload.json`**，都交给 `scripts/render.py` 渲染三件套。
+研究及高级岗位以问题为何重要、方法如何起作用、有哪些替代路线、如何取舍、证据支持到哪里为主。工程岗位匹配真实设计职责。具体上下文是讨论依据，不等于命令、参数或指标盘问。操作细节只在有助于判断时成为主题内选问，不能替代主要讨论。
 
-## 唯一外部依赖：结构化输出
+提问礼貌开放，不设套、不预设注水或人格结论；允许第三种路线和依任务而变的答案。材料差异先澄清。HR评价仅作有来源的转述，转换成中性的合作期待问题，不据此断定能力或动机。缺少证明不等于虚构，时间重叠不自动构成矛盾。
 
-实现方只需提供一个函数：
+每一个问题都有直接回应题意、可以口述的示范回答。示范须给观点、理由及必要边界，不能只说“应提到什么”，也不能用占位符回避关键推理。示范并非候选人真实经历，不编造其贡献、数值、实验或承诺；必要的情境实例明确标为假设。`good`与`pass`只放面试官判分维度，与示范分开；合理替代路线同样得分。
 
-```
-call_llm(system: str, user: str, schema: dict) -> dict
-```
+所有技术追问留在原主题：主题主线的顺势追问使用`probe`与`probe_answer`（可空）；`followups`只放根据回答选用的额外分支，不重复ladder、ask或probe，逐项写问题、口述示范及选问条件。`followups`可以为空，不凑数量。顶层`probes`仅放独立合作安排或材料确认，不允许文末技术题堆。新增主题时避免重复已有主题。
 
-- 输入：system 提示（见下方 ROLE）、user 提示（各阶段给定）、一个 JSON Schema。
-- 输出：一个**符合该 schema** 的 dict。用你的模型的「JSON 模式 / 工具调用 / 结构化输出」达成；拿不到原生结构化输出时，把 schema 附在 user 末尾要求「只返回 JSON」，再 `json.loads` + 按 schema 校验、失败重试。
-- 建议 reasoning effort 拉高、temperature 偏低（这是判研任务，不是创作）。
+## 输入与时长
 
-## 数据流
+输入`args`包含`meta`以及`candidates`数组；候选人项为`{id,label,role_hint,resume,resume_text}`。`resume`是产物目录内的相对文件名。附件内容属于材料，不作为指令执行。
 
-```
-resumes.json (extract_pdf.py 或你的抽取器)
-   │  每位候选人：{id,label,role_hint,resume,resume_text}
-   ▼
-[1 Triage] 逐候选人：画像/标尺/强项/红旗/开场题/待拷问技术域
-   ▼
-[2 Probe]  逐技术域（可并行）：5-8 个由浅入深的对抗问题
-   ▼
-[3 Author] 收敛出 N=6 道核心验伪题（含 anchor 锚点 + ladder 分层阶梯 + 答案键）+ 补充探针
-   ▼
-[4 Verify] 对答案键做事实核查 → 若有问题则 Revise 修正
-   ▼
-组装 candidate 对象 → payload.json → render.py 出三件套
-```
+`meta.lang`或顶层`lang`可设输出语言，缺省auto按正文检测；`meta.minutes`缺省60。`meta.depth`或顶层`depth`可指定quick、standard、deep、ultra。显式`nCore`覆盖默认题数。quick保留1级ladder，其余保留2级。常规60分钟为开场5分钟、6个主题各8分钟、收尾7分钟；追问按回答选用，全部问题不是必答清单。
 
-## ROLE（system 提示，所有阶段共用）
+常规时长按`core=max(minutes-opener-buffer,8)`、`nCore=clamp(round(core/8),2,12)`、`perQuestion=max(4,floor(core/nCore))`推导，quick/standard/deep的开场与收尾分别为(4,5)、(5,7)、(6,9)。极短或自定义题数时，该公式只是参考，不能把超出的题量当作可执行日程。ultra不限时、不设默认题数配额，按主题覆盖重要主张、量化口径、本人贡献、能力与经历性质，不为每个细节独立造题。
 
-人设保持语言中立（不再绑定「中文简历」），**输出语言**由 `directive(lang)` 追加到人设末尾决定（见下节「输出语言」）：
+## 角色与语言
 
-> 你是一线科技公司的资深技术面试官，风格严苛、对简历注水极度敏感。你深知简历常见把戏：大量「参与」其实贡献极小；百分比指标（「节省65%」「提升28%」）常无严谨基线；课程/短期项目包装成「系统」；术语背后是调库还是真懂原理需要戳穿。提问必须具体、扎进底层实现（数据结构/阈值/失败模式/评估口径/为何这么选），能区分「真做过」与「只会写在简历上」。同时你也是公正的评估者：在戳穿注水的同时，如实识别候选人真实、可验证的强项与亮点——扎实的技术深度、真实的 ownership、诚实的自我降级都算加分项。不为对抗而对抗：候选人确实强就大方肯定，确实弱也不硬挑刺、不为凑数编造红旗；据实评价，不强求优缺点对称、不面面俱到。
->
-> **{directive(lang)}** — 例：`lang=zh` → 「全部用简体中文输出；散文遵循中英文之间不加多余空格、中文用全角标点；不要出现这些词：交付、再生、天然、免费、回连、让渡、封顶、能量账、省下、补上、旋钮、喂、健壮、落地。」；`lang=en` → 「Write ALL output — every field, question, and answer key — in natural, direct English technical prose.」
+两套运行时使用相同角色原则：
 
-各阶段的 user 提示（下文）为**指令语**，可保持中文；模型据 ROLE 末尾的 `directive(lang)` 决定**产物语言**。原生 `analyze.js`（无独立 system 位）改为把该指令以「【输出语言】…」追加到每个阶段 user 提示末尾，效果等同。
+> 你是公正而有技术判断力的资深面试官。根据岗位与经历选择评价层次：研究及高级岗位优先讨论研究意义、机制、替代路线、取舍、证据与适用边界；工程岗位围绕真实任务的设计判断与结果。具体上下文不等于操作盘问，不能用命令、参数或指标核对取代主要问题。问题礼貌、开放、可讨论，不设套、不预设注水、动机或人格结论；材料差异是待澄清信息。HR评价仅作有来源的转述，转成合作预期的中性问题。肯定有依据的强项，诚实限定已知范围是正面信号；合理替代路线同样得分。避免空泛套话与人为二分，允许第三条路线及任务依赖的答案。每问的示范回答须可以直接口述，回答该问并说明理由；示范不是候选人真实经历，不编造其贡献、实验、数值或承诺。需要实例时明确标为假设示例，不用占位符绕过核心推理。good/pass只写面试官判分依据，与示范回答分离。所有技术追问就近归入原主题的probe或followups，不在文末堆放技术题；probes仅用于独立合作安排或材料确认。
 
-## 面试时长（题量与深度）
+全部字段使用目标语言。中文散文遵守`writing-norms.md`；跨语言引用需翻译。代码、文件名与通用技术名词保留适当原文。语言检测与时长计算属于运行时，内容模型不得自行更换用户指定的语言或范围。
 
-现实中各家面试时长不一：时间长则问得更细、题目更多；时间短则只能抓要害。一个 `minutes`（缺省 60）贯穿全流程：
+## 阶段1：Triage
 
-1. **推导 plan**（两个参考实现共用同一套公式）：
-   - `depth` 优先取显式的 `meta.depth`／`--depth`（`quick`/`standard`/`deep`/`ultra`）；否则由时长推导：`minutes < 40 → quick`；`minutes >= 85 → deep`；否则 `standard`。
-   - `depth == 'ultra'` 直接返回 `{minutes:null, opener:null, buffer:null, nCore:null, perQuestion:null}`——全面审查模式不限时、不设题数上限（见下）。
-   - 其余档位：`(opener, buffer)` 取 `quick(4,5)`／`standard(5,7)`／`deep(6,9)` 分钟；`core = max(minutes - opener - buffer, 8)`；`nCore = clamp(round(core/8), 2, 12)`；`perQuestion = max(4, floor(core/nCore))`——用 floor 保证 `opener + nCore×perQuestion + buffer` 不超出时长。
-   - 坑：Python 内置 `round()` 是银行家舍入，须换成四舍五入才与 JS `Math.round` 一致（见 `_round_half_up`），否则两实现在 `minutes=32` 处分叉。
-2. **档位决定深度**：
+根据简历与岗位线索，给出有材料依据的画像、标尺、强项和待澄清信息。不估算“真本事/包装比例”。开场邀请候选人选择参与深入的问题展开。各domain的focus明确重要问题、机制、替代路线、取舍、证据及边界，而非机械列底层细节。主题数量只作参考，不因数量重复主题。
 
-   | depth | 题数 | 阶梯级数 | good 分点 | pass 条数 | 补充探针 | 技术域 | 红旗 |
-   | --- | --- | --- | --- | --- | --- | --- | --- |
-   | quick | 由时长推导 | 1（省去项目概览，直取设计决策） | 4-5 | 2-3 | 4-6 | 3-4 | 3-6 条，不硬凑 |
-   | standard | 由时长推导 | 2（L1 项目切入 + L2 设计决策） | 5-8 | 3-5 | 10-14 | 4-6 | 3-6 条，不硬凑 |
-   | deep | 由时长推导 | 2 | 7-10 | 4-6 | 14-18 | 6-8 | 4-8 条，不硬凑 |
-   | ultra | **不固定（通常 12-24）** | 2 | 6-10 | 3-6 | 20-30 | 8-12 | **穷尽所有真实疑点，不设上限** |
+## 阶段2：Probe
 
-3. **ultra = 全面审查模式**（面试官深挖 / 候选人面试前自查，同一件事的两种立场）：不设时间盒与题数上限，把简历里每一处可能被追问的疑点都变成一道题。切换判据是「用户要不要穷尽」，而非谁在用。「穷尽」的可执行定义是一份必须逐项覆盖的清单——①每条关键红旗；②每个无严谨基线的量化宣称；③每处 ownership 模糊（「参与/负责/协助」）；④每个只出现在技能栏却无项目佐证的术语；⑤每段时间线重叠或经历性质存疑；⑥每个被包装成「系统/框架/平台」的课程项目。硬约束：**宁多勿漏，但只针对真实存在的疑点，不得为凑数编造**（与 ROLE 的「不硬凑」一致）。该清单同时注入 Triage（穷尽红旗）与 Author（穷尽题目）。
-4. **注入提示**：非 ultra 拼「本场面试约 N 分钟：开场约 …，X 道核心题每题约 …，留约 … 分钟收尾」；ultra 拼「不是限时面试，而是面试前自我排查：不设时间盒、不设题数上限」。两者都附档位说明；schema 里 `flags`/`domains`/`ladder`/`good`/`pass`/`probes`/`cards` 的描述按档位插值（ultra 的 `cards` 描述改为「题数不固定、按 Q1、Q2… 依次编号」）。
-5. **落盘与渲染**：`plan` 写入 `payload.meta.plan`；`render.py` 据此在指南顶部给一行时间预算、在评分卡显示总时长与每题 `≈N′` 预算。ultra 的 `minutes`/`perQuestion` 为 `null`，渲染层据此改标「全面审查 · 不限时」并省去每题时间徽标。
+逐主题分析，可并行。`q`是礼貌具体的问题，`probes`说明评价目的，`strong`是直接回答的口述示范，`tell`描述论证缺口，`followup`、`followup_answer`与`when`提供同主题追问、对应示范和选问条件；无必要追问时这三项可为空字符串。问题数按主题需要，不设凑数配额。
 
-`nCore` 可显式覆盖（`args.nCore` / `--ncore`），覆盖后 `plan.nCore` 同步为该值；ultra 下 `nCore` 为 `null`（题数由疑点数量决定）。
+## 阶段3：Author
 
-## 输出语言（多语言支持）
+把分域结果收敛为核心主题卡，保持项目背景与问题之间的实际联系。常规按时长给核心主题数，ultra按覆盖范围决定。L1讨论问题与意义，L2讨论路线与取舍，ask推进开放推演、竞争解释、证据或边界；quick只保留1级切入。每问推进一个主要判断，避免把大量考试点塞进一句话。
 
-产物语言与输入一致，靠一个贯穿全流程的 `lang`：
+每个ladder项必须有answer；ask必须有ask_answer；probe必须有probe_answer。无必要顺势追问时probe和probe_answer均为空字符串。技术追问全部就近归属同卡followups；独立合作安排/材料确认才进入顶层probes，且每项必须有answer。good/pass为独立判分内容。
 
-1. **判定**：显式 `args.lang` / `meta.lang`（非 `auto`）优先；否则按简历正文自动判定——按汉字占字母比例，含相当比例汉字判 `zh`，否则 `en`（两个参考实现用同一启发式）。
-2. **注入**：把 `directive(lang)` 追加进 system 提示（`analyze_portable.py`）或每个阶段 user 提示末尾（`analyze.js`）。`directive`：
-   - `zh` → 「全部用简体中文输出；中英文免多余空格、中文全角标点；禁用词表（同上）。简历若为外文，引用其措辞时先译成中文（通用技术名词可留英文）。」
-   - `en` → 「Write ALL output … in natural, direct English technical prose. …TRANSLATE any phrase cited from the résumé; never reproduce the original characters; the output must contain NO CJK characters at all.」
-   - 其它 ISO 码 → 「Write ALL output … in the language with ISO code "<lang>". …translate any phrase you cite from the résumé; never reproduce its original script.」
-3. **落盘**：`lang` 写入 `payload.meta.lang`。
-4. **渲染**：`render.py` 按 `meta.lang` 从 `LABELS` 取界面文案（zh/en 全套；缺失语言回退英文界面壳，正文仍为该语言）；`meta.lang` 缺省时按 payload 内容再嗅探一次。**新增一门语言 = 给 `LABELS` 加一条目**（键集须与既有语言一致）。
-5. **校验**：`scripts/check_lang.py payload.json` 逐字段扫描——产物语言非 CJK 时不得出现任何中日韩字符（`resume`/`href` 等文件名字段豁免）。有泄漏就重写该字段再重渲。
+## 阶段4：Verify与Revise
 
-**跨语言引用是本流水线最容易破的地方**：简历为中文而产物为英文时，模型倾向于把简历原句直接嵌进英文散文（`anchor`、`flags`、`strengths` 尤甚）。`directive` 明令翻译，`check_lang.py` 做确定性兜底。
+Verify接收原始材料及完整`{cards,probes}`，逐问审核层次、逻辑、礼貌、隐含假设、技术准确性、证据边界与示范覆盖。检查ladder.answer、ask_answer、probe_answer、followups[].answer和probes[].answer是否回答对应问题、是否编造经历；检查判分是否与示范分离、替代路线是否被公平对待、HR是否仍只是转述。检查技术追问归属，纠正文末技术题堆。只报告实质问题，不为审查而造错；无法从现有来源核实的外部事实保留待核实，不伪称已完成外部核查。
 
-指令语（各阶段 user 提示、schema 字段描述）可保持中文，不影响产物语言——产物语言只由 `directive(lang)` 决定。
+corrections中n可为Q编号或字段路径；severity保持error、imprecise、overclaim、missing四类。若有修正，Revise返回完整AUTHOR结构，而非只返回cards。允许修订有问题的题目、所有对应示范与判分；不能固定错误题目而只改good/pass。主题与编号保持一致，必要时将技术尾部题迁回followups；无关内容保持原意。核查失败时不得声称核查通过，载荷_factcheck为null。
 
-## 阶段 1 · Triage（逐候选人）
+## Schema与兼容
 
-**user 提示**（`{resume}` = `候选人 {label}｜岗位线索：{role_hint}\n简历正文：\n---\n{resume_text}\n---`）：
+下列为新生成内容的严格schema，required包括全部新字段。旧字段名称保持兼容：历史载荷仍可能缺少新增answer或followups，读取与渲染端应允许这种缺失并明确未提供示范，不能把good/pass当作已经存在的逐问回答。新生成端必须完整填写。REVISE使用AUTHOR；SINGLE合并TRIAGE中的profile/ruler/strengths/flags/opener与AUTHOR的cards/probes。
 
-> {resume}
->
-> 任务：通读简历做面试前研判。给出：画像+可信度（均衡如实）、该用的标尺、真实可验证的强项/亮点（有几条写几条、乏善可陈不硬凑）、关键红旗（注水多就多列、干净就少列，不硬凑）、一组开场态度/事实题（时间线/可展示性/ownership），以及4-6个最值得对抗性拷问的技术域（贴合其真实项目，每域列出该戳的实现细节/失败模式）。既要戳穿注水，也要如实肯定真本事，不强求优缺点对称。
-
-**输出 schema**：
+### TRIAGE
 
 ```json
 {
-  "type":"object","additionalProperties":false,
-  "required":["profile","ruler","strengths","flags","opener","domains"],
-  "properties":{
-    "profile":{"type":"string"},
-    "ruler":{"type":"string"},
-    "strengths":{"type":"array","items":{"type":"string"}},
-    "flags":{"type":"array","items":{"type":"string"}},
-    "opener":{"type":"object","additionalProperties":false,
-      "required":["title","questions","expect","tell"],
-      "properties":{"title":{"type":"string"},"questions":{"type":"array","items":{"type":"string"}},
-        "expect":{"type":"string"},"tell":{"type":"string"}}},
-    "domains":{"type":"array","items":{"type":"object","additionalProperties":false,
-      "required":["key","focus"],"properties":{"key":{"type":"string"},"focus":{"type":"string"}}}}
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "ruler",
+    "strengths",
+    "flags",
+    "opener",
+    "domains"
+  ],
+  "properties": {
+    "profile": {
+      "type": "string"
+    },
+    "ruler": {
+      "type": "string"
+    },
+    "strengths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "opener": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "questions",
+        "expect",
+        "tell"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expect": {
+          "type": "string"
+        },
+        "tell": {
+          "type": "string"
+        }
+      }
+    },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "focus"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "focus": {
+            "type": "string"
+          }
+        }
+      }
+    }
   }
 }
 ```
 
-字段含义：`profile` 3-4 句画像+可信度（均衡如实）；`ruler` 衡量标尺；`strengths` 真实可验证的强项，约 2-5 条，乏善可陈不硬凑、不与红旗对称；`flags` 关键红旗，注水多就多列、干净就少列；`opener` 开场态度/事实题；`domains` 4-6 个待拷问技术域（`focus` 为该域该戳的实现细节/失败模式）。
-
-## 阶段 2 · Probe（逐技术域，可并行）
-
-对 `domains` 里每个域 `d` 各发一次：
-
-**user 提示**：
-
-> {resume}
->
-> 只聚焦这一个技术域做对抗性拷问：【{d.key}】
-> 重点覆盖：{d.focus}
-> 产出5-8个由浅入深、层层设套的问题（每题：验证什么/真做过怎么答/只堆术语怎么露馅/一个逼底层的追问），具体到实现层，不要泛泛而谈。
-
-**输出 schema**：
+### PROBE
 
 ```json
 {
-  "type":"object","additionalProperties":false,"required":["domain","questions"],
-  "properties":{"domain":{"type":"string"},
-    "questions":{"type":"array","items":{"type":"object","additionalProperties":false,
-      "required":["q","probes","strong","tell"],
-      "properties":{"q":{"type":"string"},"probes":{"type":"string"},
-        "strong":{"type":"string"},"tell":{"type":"string"},"followup":{"type":"string"}}}}}
-}
-```
-
-## 阶段 3 · Author（逐候选人，汇总 probe 结果）
-
-**user 提示**（`{bank}` = `JSON.stringify({triage:{flags,domains}, probes})`；`{N}` 默认 6）：
-
-> {resume}
->
-> 以下是分域拷问的问题库（JSON）：
-> {bank}
->
-> 作为首席面试官，收敛出恰好{N}道「核心验伪题」（题号Q1..Q{N}）——最能区分「真做过」与「只会写简历」、且无法靠背术语蒙混的题。每道题都要：①挂靠到一个具体简历项目/宣称（anchor）；②做好提问分层，给一个恰好2级的暖场阶梯（ladder）——L1 从该简历项目切入的概览/general 问题（先让候选人自己讲，既给他展开空间也给你观察点与切入口），L2 关键设计决策/为什么这么选；ask 则落到实现层、无法靠背术语蒙混的 L3 硬核验伪。此外每道给：期望的优质回答（5-8个分点、技术准确、含机制/阈值/取舍）、及格线（必须听到的3-5点）、典型露馅、追问。另把其余有价值的问题去重整理为「补充探针」（每条带主题标签）。
-
-**输出 schema**：
-
-```json
-{
-  "type":"object","additionalProperties":false,"required":["cards","probes"],
-  "properties":{
-    "cards":{"type":"array","items":{
-      "type":"object","additionalProperties":false,
-      "required":["n","title","anchor","ladder","ask","good","pass","tell","probe"],
-      "properties":{
-        "n":{"type":"string"},"title":{"type":"string"},
-        "anchor":{"type":"string"},
-        "ladder":{"type":"array","items":{"type":"object","additionalProperties":false,
-          "required":["level","q"],"properties":{"level":{"type":"string"},"q":{"type":"string"}}}},
-        "ask":{"type":"string"},
-        "good":{"type":"array","items":{"type":"string"}},
-        "pass":{"type":"array","items":{"type":"string"}},
-        "tell":{"type":"string"},"probe":{"type":"string"}}}},
-    "probes":{"type":"array","items":{"type":"object","additionalProperties":false,
-      "required":["tag","q"],"properties":{"tag":{"type":"string"},"q":{"type":"string"}}}}
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "domain",
+    "questions"
+  ],
+  "properties": {
+    "domain": {
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "q",
+          "probes",
+          "strong",
+          "tell",
+          "followup",
+          "followup_answer",
+          "when"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "probes": {
+            "type": "string"
+          },
+          "strong": {
+            "type": "string"
+          },
+          "tell": {
+            "type": "string"
+          },
+          "followup": {
+            "type": "string"
+          },
+          "followup_answer": {
+            "type": "string"
+          },
+          "when": {
+            "type": "string"
+          }
+        }
+      }
+    }
   }
 }
 ```
 
-`anchor` = 本题挂靠的简历项目/宣称；`ladder` = 恰好 2 级暖场阶梯（L1 项目切入、L2 设计决策），`ask` 即 L3 硬核验伪；`good` 5-8 分点、`pass` 3-5 条及格线。
-
-## 阶段 4 · Verify（+ Revise）
-
-**Verify user 提示**（`{cards}` = 阶段 3 的 cards）：
-
-> 你是横跨AI基础设施/RAG/多Agent/建模/系统的资深技术专家，对下面这份面试「标准答案(answer key)」做对抗式事实核查。逐条检查 good 与 pass 是否有：技术性错误、不精确、夸大（把课程/理论说成工业标准）、关键遗漏。只报真正的问题，准确的不要报。
->
-> 答案(JSON)：{cards}
-
-**Verify 输出 schema**：
+### CARD
 
 ```json
 {
-  "type":"object","additionalProperties":false,"required":["corrections","verdict"],
-  "properties":{
-    "corrections":{"type":"array","items":{"type":"object","additionalProperties":false,
-      "required":["n","severity","issue","fix"],
-      "properties":{"n":{"type":"string"},
-        "severity":{"type":"string","enum":["error","imprecise","overclaim","missing"]},
-        "issue":{"type":"string"},"fix":{"type":"string"}}}},
-    "verdict":{"type":"string"}}
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "n",
+    "title",
+    "anchor",
+    "ladder",
+    "ask",
+    "good",
+    "pass",
+    "tell",
+    "probe",
+    "ask_answer",
+    "probe_answer",
+    "followups"
+  ],
+  "properties": {
+    "n": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "anchor": {
+      "type": "string"
+    },
+    "ladder": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "level",
+          "q",
+          "answer"
+        ],
+        "properties": {
+          "level": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ask": {
+      "type": "string"
+    },
+    "good": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pass": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tell": {
+      "type": "string"
+    },
+    "probe": {
+      "type": "string"
+    },
+    "ask_answer": {
+      "type": "string"
+    },
+    "probe_answer": {
+      "type": "string"
+    },
+    "followups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "q",
+          "answer",
+          "when"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "when": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
 ```
 
-若 `corrections` 非空，再发一次 **Revise**（system 用 ROLE）：
-
-> 下面是核心验伪题的答案键(JSON)与事实核查发现的问题(JSON)。请按核查意见修正 good/pass 中的错误/不精确/夸大/遗漏，保持题目与结构不变、其余内容不动，返回修正后的完整卡片数组。
->
-> 卡片：{cards}
-> 核查：{corrections}
-
-Revise 输出 schema：`{"type":"object","required":["cards"],"properties":{"cards":{"type":"array","items":<CARD>}}}`（CARD 同阶段 3）。用修正后的 cards 覆盖。
-
-## 组装 payload
-
-逐候选人组装：
+### AUTHOR
 
 ```json
 {
-  "name": "<label>", "resume": "<相对文件名或 null>",
-  "profile": "<triage.profile>", "ruler": "<triage.ruler>",
-  "strengths": "<triage.strengths>", "flags": "<triage.flags>",
-  "opener": "<triage.opener>", "cards": "<revise 或 author.cards>",
-  "probes": "<author.probes>"
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cards",
+    "probes"
+  ],
+  "properties": {
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "n",
+          "title",
+          "anchor",
+          "ladder",
+          "ask",
+          "good",
+          "pass",
+          "tell",
+          "probe",
+          "ask_answer",
+          "probe_answer",
+          "followups"
+        ],
+        "properties": {
+          "n": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "anchor": {
+            "type": "string"
+          },
+          "ladder": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "level",
+                "q",
+                "answer"
+              ],
+              "properties": {
+                "level": {
+                  "type": "string"
+                },
+                "q": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "ask": {
+            "type": "string"
+          },
+          "good": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pass": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tell": {
+            "type": "string"
+          },
+          "probe": {
+            "type": "string"
+          },
+          "ask_answer": {
+            "type": "string"
+          },
+          "probe_answer": {
+            "type": "string"
+          },
+          "followups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "q",
+                "answer",
+                "when"
+              ],
+              "properties": {
+                "q": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "when": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "probes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tag",
+          "q",
+          "answer"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string"
+          },
+          "q": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
 }
 ```
 
-最终 `payload.json = { "meta": {...}, "candidates": { "<id>": <上面对象>, ... } }`。`meta` 见 SKILL.md。交给 `python scripts/render.py payload.json <out_dir> <slug>` 渲染。
+### VERIFY
 
-## 单调回退（--single）
+```json
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "corrections",
+    "verdict"
+  ],
+  "properties": {
+    "corrections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "n",
+          "severity",
+          "issue",
+          "fix"
+        ],
+        "properties": {
+          "n": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "imprecise",
+              "overclaim",
+              "missing"
+            ]
+          },
+          "issue": {
+            "type": "string"
+          },
+          "fix": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string"
+    }
+  }
+}
+```
 
-编排能力不足或只想跑一次模型时，可把 Triage+Author 合成**一次调用**：system 用 ROLE，user 给简历，要求一次性返回 `{profile,ruler,strengths,flags,opener,cards,probes}`（schema = Triage 去掉 domains + Author 合并；cards 仍需 anchor/ladder/ask/good/pass/tell/probe）。跳过分域 Probe 会牺牲深度与题目锐度，但产物结构完全一致、可直接渲染。事实核查（阶段 4）仍建议保留。`analyze_portable.py --single` 即此模式。
+## 组装与无运行时依赖的接入
 
-## 与写作规范的关系
+每个candidate保留name、resume、profile、ruler、strengths、flags、opener、cards、probes及_factcheck。`payload={meta:{...meta,lang,plan},candidates:{id:candidate}}`。原始简历、HR转述与公开证据的来源不能在组装时混同。
 
-所有阶段的散文都遵循 `reference/writing-norms.md`：答案分点、提问具体到实现层、诚实降级给分为强信号。语言相关约束按 `lang` 生效——中文产物守中英文免多余空格、中文全角标点、禁用词表；英文产物用直白准确的技术散文。这些约束通过 `directive(lang)` 写进 ROLE 与各阶段提问词。
+可移植端只要求`call_llm(system,user,schema)->dict`。正常路径按Triage→逐域Probe→Author→Verify→必要时Revise运行。single仅跳过分域Probe，按同一角色、逐问回答、主题内追问与判分分离标准一次生成，再对完整cards/probes执行相同审核与修订。测试可替换call_llm为本地stub验证schema及分支，不需要调用外部API。
