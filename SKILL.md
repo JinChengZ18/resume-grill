@@ -1,6 +1,6 @@
 ---
 name: resume-grill
-description: 根据简历制作技术面试指南、可打印评分卡和可折叠问答卡片；支持限时面试与全面审查。适用于拷打简历、面试出题、候选人自查和简历真实性核验。按项目组织连贯主题，参考回答逐问对应，兼顾研究判断、技术深度与事实依据。
+description: 简历拷打（resume-grill）——根据简历生成技术面试指南、A4评分卡和可折叠问答卡片，每问附可口述的示范回答，支持30/60/90分钟限时面试或全面审查。用户发来简历（PDF、图片或文字）并要求拷打、深挖、追问、模拟面试、预测面试官会问什么、找简历疑点或核验简历真实性时使用；面试官要按候选人简历出题、准备结构化面试或现场评分卡时也用；即使没提技能名，只要是拿简历准备技术面试或出题就用。Use it to grill a resume or CV, run a mock technical interview, or turn a resume into interview questions, model answers and a printable scorecard, for candidates and interviewers alike. 只想润色、改写、翻译简历，按JD改简历或写求职信时不用。
 ---
 
 # 简历技术面试材料

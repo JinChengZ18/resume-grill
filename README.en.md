@@ -2,21 +2,39 @@
 
 [Chinese](README.md) | [English](README.en.md)
 
-An Agent Skill that turns resumes into an interview guide, a printable scorecard, and collapsible Q&A cards. Questions form project-based themes, with follow-ups kept inside their parent theme and a spoken sample response below each question. Scoring cues are separate. For research and senior roles, discussion emphasizes significance, alternative approaches, tradeoffs, and evidence. Output language follows the resume. Runs in Claude Code or other agent frameworks.
+[![skills.sh](https://skills.sh/b/JinChengZ18/resume-grill)](https://skills.sh/JinChengZ18/resume-grill)
+
+**Resume-based technical interview prep, for candidates and interviewers.** Candidates use it to grill their own resume before an interview, run a mock technical interview, and predict the follow-ups an interviewer will ask. Interviewers use it to build an interview from a candidate's resume, score answers on a printable scorecard, and check whether resume claims hold up.
+
+```bash
+npx skills add JinChengZ18/resume-grill
+```
+
+An Agent Skill that turns resumes into an interview guide, a printable scorecard, and collapsible Q&A cards. Questions form project-based themes, with follow-ups kept inside their parent theme and a spoken sample response below each question. Scoring cues are separate. For research and senior roles, discussion emphasizes significance, alternative approaches, tradeoffs, and evidence. Output language follows the resume. Runs in Claude Code, Codex, claude.ai, and other agents that read `SKILL.md`.
 
 > This repository includes a **fully anonymized** demo resume for a fictional candidate, "Zhang San", applying for an Agent / AI Infra role with 2 years of experience. See the generated kit: [guide](examples/agent_engineer_demo/agent_engineer_demo_guide.md), [scorecard](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html), and [Q&A cards](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html). Open the HTML files in a browser.
 
 
 
+## Use Cases
+
+- **Candidates**: grill your own resume before an interview, see where an interviewer is likely to push, and self-test with the collapsible Q&A cards so weak metrics, unclear ownership, and timeline gaps get fixed in advance.
+- **Interviewers**: generate a 30/60/90-minute structured technical interview from a candidate's resume, with a model answer and scoring cues for each question and an A4 scorecard for live scoring.
+- **Resume checks**: full-audit mode lists every percentage without a baseline, every vague "participated in / responsible for" claim, every skill listed without project evidence, and every overlapping timeline, without inventing doubts.
+
+Typical requests: "grill this resume", "mock interview based on my CV", "interview questions from this resume", "full audit of this resume", or in Chinese 「拷打这份简历」「根据简历出面试题」.
+
+
+
 ## Quick Start
 
-**1. Install once** with a cross-platform command. No PowerShell required:
+**1. Install once** with any of these:
 
-```bash
-python scripts/install.py
-```
-
-The installer copies the skill into detected agents, such as Claude Code and Codex. Rerun it after changing the skill.
+| Method | Command | Notes |
+| --- | --- | --- |
+| skills CLI | `npx skills add JinChengZ18/resume-grill` | Installs into Claude Code, Codex, Cursor, and other agents; add `-g` for a global install |
+| Claude Code plugin | `/plugin marketplace add JinChengZ18/resume-grill`, then `/plugin install resume-grill@resume-grill` | Installs as a plugin |
+| Clone and install | `python scripts/install.py` | Cross-platform, no PowerShell required; copies the skill into detected agents such as Claude Code and Codex. Rerun it after changing the skill |
 
 **2. Use it** by opening a fresh session in the agent, dragging a resume PDF into the conversation, and saying "grill this resume". For multiple candidates, drag in all resumes together. The agent ingests the files into the workspace, runs the pipeline, and returns local links to the generated kit, so you do not have to hunt through folders.
 
@@ -98,6 +116,9 @@ python scripts/render.py payload.json workspace/output/demo demo
 ```text
 resume-grill/
   SKILL.md                     Skill entry point: frontmatter plus instructions
+  .claude-plugin/
+    plugin.json                Plugin manifest for Claude Code and Anthropic's plugin directory
+    marketplace.json           Single-plugin marketplace for /plugin marketplace add
   scripts/
     extract_pdf.py             Resume PDF to text
     analyze.js                 Claude Code native multi-agent Workflow engine
@@ -117,6 +138,8 @@ resume-grill/
 ## Privacy
 
 It is recommended to remove any personal information from your resume to avoid potential data leakage risks associated with API service providers. `workspace/`, including resumes and generated outputs, is excluded by `.gitignore`, and `*.pdf` has an additional global ignore rule, so private resumes are not committed when publishing the repository.
+
+While the skill runs, inputs, intermediate files, and outputs stay under `workspace/`. Apart from your agent's own model calls, the scripts make no network requests; resume text goes to a model provider only if you run `analyze_portable.py` with `RG_LLM_PROVIDER` set.
 
 
 

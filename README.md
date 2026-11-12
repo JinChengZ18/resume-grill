@@ -2,22 +2,40 @@
 
 [中文](README.md) | [English](README.en.md)
 
-根据简历制作技术面试指南、可打印评分卡和可折叠问答卡片。问题按项目组织成连贯主题，追问与原问题放在一起，每问紧邻可口述的示范回答，判分提示单列。研究与高级技术岗位重点讨论问题意义、路线选择、取舍与证据，具体上下文用于支撑判断。支持Claude Code及其他agent框架，输出语言默认跟随简历。
+[![skills.sh](https://skills.sh/b/JinChengZ18/resume-grill)](https://skills.sh/JinChengZ18/resume-grill)
+
+**拿简历出技术面试题的 Agent Skill。** 求职者用它在面试前拷打自己的简历、模拟技术面试、预测面试官会追问什么；面试官用它按候选人简历出题、打印评分卡现场打分、核验简历真实性。
+
+```bash
+npx skills add JinChengZ18/resume-grill
+```
+
+根据简历制作技术面试指南、可打印评分卡和可折叠问答卡片。问题按项目组织成连贯主题，追问与原问题放在一起，每问紧邻可口述的示范回答，判分提示单列。研究与高级技术岗位重点讨论问题意义、路线选择、取舍与证据，具体上下文用于支撑判断。支持 Claude Code、Codex、claude.ai 等读取 `SKILL.md` 的 agent，输出语言默认跟随简历。
 
 > 展示一份**完全脱敏**的示例简历（虚构「张三」，某 Agent / AI Infra 岗，2 年经验）跑出的真实三件套——[指南文档](examples/agent_engineer_demo/agent_engineer_demo_guide.md)、[评分卡](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html)、[攻防卡片](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html)（html 用浏览器打开）。
 >
 
 
 
+## 适用场景
+
+- **求职者自查**：面试前拷打自己的简历，预测面试官会从哪里追问，用问答卡片折叠答案自测，把量化结果、本人贡献、时间线里的漏洞提前补上。
+- **面试官出题**：按候选人简历生成 30/60/90 分钟的结构化技术面试，每问附示范回答和判分提示，评分卡可 A4 打印现场打分。
+- **简历核验**：用「全面审查」逐条列出没有基线的百分比、模糊的「参与/负责」、只写在技能栏的术语和重叠的时间线，只挖真实存在的疑点。
+
+常见说法：「拷打这份简历」「根据简历出面试题」「模拟技术面试」「全面审查这份简历」，英文如 "grill my resume"、"mock interview based on my CV"。
+
+
+
 ## 快速开始
 
-**1. 装一次**——一条命令，跨平台，无需 PowerShell：
+**1. 装一次**——任选一种：
 
-```
-python scripts/install.py
-```
-
-自动装进检测到的 agent（Claude Code / Codex …）。改完技能后重跑一次即可。
+| 方式 | 命令 | 说明 |
+| --- | --- | --- |
+| skills CLI | `npx skills add JinChengZ18/resume-grill` | 装进 Claude Code、Codex、Cursor 等 agent；加 `-g` 装到全局 |
+| Claude Code 插件 | `/plugin marketplace add JinChengZ18/resume-grill`，再 `/plugin install resume-grill@resume-grill` | 以插件形式安装 |
+| 克隆后安装 | `python scripts/install.py` | 跨平台，无需 PowerShell；自动装进检测到的 agent（Claude Code / Codex …），改完技能后重跑一次即可 |
 
 **2. 用**——装完新开一个会话，把简历 PDF **直接拖进对话**，说一句「拷打这份简历」即可（多份就都拖进来）。Agent 会自动把文件纳入工作区、跑完流水线，并**直接回给你三件套的本地链接**，不用翻文件夹。
 
@@ -99,6 +117,9 @@ python scripts/render.py payload.json workspace/output/demo demo
 ```
 resume-grill/
   SKILL.md                     技能入口（开放 Agent Skills 格式：frontmatter + 指令）
+  .claude-plugin/
+    plugin.json                插件清单（Claude Code 插件 / Anthropic 插件目录）
+    marketplace.json           单插件市场，供 /plugin marketplace add 使用
   scripts/
     extract_pdf.py             简历 PDF → 文本
     analyze.js                 Claude Code 原生多智能体 Workflow 引擎
@@ -118,6 +139,8 @@ resume-grill/
 ## 隐私
 
 建议移除简历中的任何个人信息——以规避API服务商所带来的任何泄露风险。`workspace/`（含简历与生成产物）已在 `.gitignore` 中排除，`*.pdf` 另有全局兜底忽略，发布时不会入库。
+
+技能运行时的输入、中间文件和产物都放在 `workspace/` 下。除你所用 agent 自身的模型调用外，脚本不联网；只有手动运行 `analyze_portable.py` 并设置 `RG_LLM_PROVIDER` 时，简历文本才会发给你选择的模型服务商。
 
 
 
