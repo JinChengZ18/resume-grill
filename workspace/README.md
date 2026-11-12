@@ -13,7 +13,7 @@
 ## 处理流程
 
 1. 简历放进 `inbox/`。
-2. 让 Claude：「用 resume-grill 技能处理 inbox 里的简历」；或按仓库 `README.md` 的纯脚本三步跑。
+2. 让 Claude：「用 resume-grill 技能处理 inbox 里的简历」；或按仓库 `README.zh-CN.md` 的纯脚本三步跑。
 3. 打开 `output/<slug>/<slug>_qa_cards.html` 阅读/自测；打印 `..._scorecard.html`（A4）现场打分；`..._guide.md` 深挖。
 4. 处理完的简历从 `inbox/` 移到对应 `output/<slug>/`，卡片里的「原始简历」链接即生效。
 

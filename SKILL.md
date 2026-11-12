@@ -1,6 +1,6 @@
 ---
 name: resume-grill
-description: 简历拷打（resume-grill）——根据简历生成技术面试指南、A4评分卡和可折叠问答卡片，每问附可口述的示范回答，支持30/60/90分钟限时面试或全面审查。用户发来简历（PDF、图片或文字）并要求拷打、深挖、追问、模拟面试、预测面试官会问什么、找简历疑点或核验简历真实性时使用；面试官要按候选人简历出题、准备结构化面试或现场评分卡时也用；即使没提技能名，只要是拿简历准备技术面试或出题就用。Use it to grill a resume or CV, run a mock technical interview, or turn a resume into interview questions, model answers and a printable scorecard, for candidates and interviewers alike. 只想润色、改写、翻译简历，按JD改简历或写求职信时不用。
+description: Resume grill (简历拷打) — turns a resume or CV into a technical interview guide, a printable A4 scorecard and collapsible Q&A cards, with a spoken model answer for every question; supports 30/60/90-minute interviews or a full audit. Use it when someone wants to grill a resume, run a mock technical interview, predict interviewer follow-ups, or find weak and unverifiable resume claims, and when an interviewer wants questions and a scorecard built from a candidate's resume, even if the skill isn't named. Not for polishing, rewriting or translating a resume, tailoring it to a job description, or writing a cover letter. 简历拷打：根据简历生成技术面试指南、A4评分卡和问答卡片，每问附示范回答。用户发来简历（PDF、图片或文字）并要求拷打、深挖、追问、模拟面试、预测面试官会问什么、找简历疑点或核验简历真实性时使用；面试官要按候选人简历出题、准备结构化面试或现场评分卡时也用；即使没提技能名，只要是拿简历准备技术面试或出题就用。只想润色、改写、翻译简历，按JD改简历或写求职信时不用。
 ---
 
 # 简历技术面试材料
