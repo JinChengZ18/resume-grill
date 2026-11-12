@@ -53,6 +53,8 @@
   .toolbar button{font:600 9pt/1 "Segoe UI",Arial,sans-serif;padding:6px 11px;border:1px solid var(--accent);
     background:#fff;color:var(--accent);border-radius:5px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);}
   .toolbar button:hover{background:var(--tint);}
+  .toolbar a.navlink{font:600 9pt/1 "Segoe UI",Arial,sans-serif;padding:6px 11px;border:1px solid var(--line);
+    background:#fff;color:var(--accent);border-radius:5px;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.12);}
   @media print{
     body{background:#fff;}
     .noprint{display:none !important;}
@@ -110,6 +112,7 @@ function page(id, d){
 
 document.title = (meta.title ? meta.title + " · " : "") + L.scorecard_suffix;
 document.getElementById("bar").innerHTML =
+  (meta._index ? `<a class="navlink" href="${esc(meta._index)}">${esc(L.nav_index)}</a>` : "") +
   `<span class="hint">${esc(L.score_hint)}</span>` +
   `<button id="printBtn">${esc(L.print_btn)}</button>` +
   `<button id="resetBtn">${esc(L.reset_btn)}</button>`;

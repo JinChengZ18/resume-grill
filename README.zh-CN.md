@@ -2,26 +2,32 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-**拿简历出技术面试题的 Agent Skill。** 求职者用它在面试前拷打自己的简历、模拟技术面试、预测面试官会追问什么；面试官用它按候选人简历出题、打印评分卡现场打分、核验简历真实性。
+**拿简历做面试准备的 Agent Skill，求职者和面试官都能用。** 四种模式：把简历拷打成带示范回答和评分卡的技术面试、找出简历弱点、在不编造事实的前提下优化简历、对照JD看匹配。每种模式一句话启动，可以在对话里继续追问，产物是互相链接、可导出PDF的HTML页面。
 
 ```bash
 npx skills add JinChengZ18/resume-grill
 ```
 
-根据简历制作技术面试指南、可打印评分卡和可折叠问答卡片。问题按项目组织成连贯主题，追问与原问题放在一起，每问紧邻可口述的示范回答，判分提示单列。研究与高级技术岗位重点讨论问题意义、路线选择、取舍与证据，具体上下文用于支撑判断。支持 Claude Code、Codex、claude.ai 等读取 `SKILL.md` 的 agent，输出语言默认跟随简历。
+默认的面试拷打模式根据简历制作技术面试指南、可打印评分卡和可折叠问答卡片。问题按项目组织成连贯主题，追问与原问题放在一起，每问紧邻可口述的示范回答，判分提示单列。研究与高级技术岗位重点讨论问题意义、路线选择、取舍与证据，具体上下文用于支撑判断。支持 Claude Code、Codex、claude.ai 等读取 `SKILL.md` 的 agent，输出语言默认跟随简历。
 
-> 展示一份**完全脱敏**的示例简历（虚构「张三」，某 Agent / AI Infra 岗，2 年经验）跑出的真实三件套——[指南文档](examples/agent_engineer_demo/agent_engineer_demo_guide.md)、[评分卡](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html)、[攻防卡片](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html)（html 用浏览器打开）。
+> 展示一份**完全脱敏**的示例简历（虚构「张三」，某 Agent / AI Infra 岗，2 年经验）跑出的真实产物：从[总入口](examples/agent_engineer_demo/agent_engineer_demo_index.html)进入，或直接打开[面试指南](examples/agent_engineer_demo/agent_engineer_demo_guide.html)、[问答卡片](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html)、[评分卡](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html)、[弱点分析](examples/agent_engineer_demo/agent_engineer_demo_weakness.html)、[简历优化](examples/agent_engineer_demo/agent_engineer_demo_resume.html)、[JD匹配](examples/agent_engineer_demo/agent_engineer_demo_jd.html)（对照为演示编写的示例JD）。html 用浏览器打开。
 >
 
 
 
-## 适用场景
+## 工作模式
 
-- **求职者自查**：面试前拷打自己的简历，预测面试官会从哪里追问，用问答卡片折叠答案自测，把量化结果、本人贡献、时间线里的漏洞提前补上。
-- **面试官出题**：按候选人简历生成 30/60/90 分钟的结构化技术面试，每问附示范回答和判分提示，评分卡可 A4 打印现场打分。
-- **简历核验**：用「全面审查」逐条列出没有基线的百分比、模糊的「参与/负责」、只写在技能栏的术语和重叠的时间线，只挖真实存在的疑点。
+| 模式 | 一句话启动 | 页面 |
+| --- | --- | --- |
+| 面试拷打（默认） | 「拷打这份简历」「根据简历出面试题」「全面审查这份简历」 | `_guide.html`、`_qa_cards.html`、`_scorecard.html` |
+| 弱点分析 | 「分析这份简历的弱点」「我的简历哪里会被问住」 | `_weakness.html` |
+| 简历优化 | 「帮我优化这份简历」「按面试标准改写简历」 | `_resume.html` |
+| JD匹配 | 「对照这个JD看看我的简历」，附JD文字或链接 | `_jd.html` |
 
-常见说法：「拷打这份简历」「根据简历出面试题」「模拟技术面试」「全面审查这份简历」，英文如 "grill my resume"、"mock interview based on my CV"。
+- **求职者**面试前拷打自己的简历，预测面试官会从哪里追问，把量化结果、本人贡献、时间线里的漏洞提前补上；**面试官**按候选人简历生成 30/60/90 分钟的结构化技术面试，每问附示范回答和判分提示，评分卡可 A4 打印现场打分。
+- **追问**：对任何一条接着问（「W2 怎么回答更好」「把第一段经历往后端方向改」「这是我的真实数字……」），同一批页面原地更新，链接不变。简历优化缺少的事实会一次问完，绝不编造数字；没补充的事实保持黄色占位符。
+- **组合模式**：一句话就能组合，如「拷打并优化这份简历」「全套」（面试拷打、弱点分析与简历优化，给了JD时再加JD匹配）。
+- 英文说法同样可以，如 "grill my resume"、"optimize my resume"、"check my resume against this JD"。
 
 
 
@@ -35,19 +41,25 @@ npx skills add JinChengZ18/resume-grill
 | Claude Code 插件 | `/plugin marketplace add JinChengZ18/resume-grill`，再 `/plugin install resume-grill@resume-grill` | 以插件形式安装 |
 | 克隆后安装 | `python scripts/install.py` | 跨平台，无需 PowerShell；自动装进检测到的 agent（Claude Code / Codex …），改完技能后重跑一次即可 |
 
-**2. 用**——装完新开一个会话，把简历 PDF **直接拖进对话**，说一句「拷打这份简历」即可（多份就都拖进来）。Agent 会自动把文件纳入工作区、跑完流水线，并**直接回给你三件套的本地链接**，不用翻文件夹。
+**2. 用**——装完新开一个会话，把简历 PDF **直接拖进对话**，说一句上面表格里的话即可，例如「拷打这份简历」（多份就都拖进来）。Agent 会自动把文件纳入工作区、跑完流水线，并**直接回给你从总入口开始的本地链接**，不用翻文件夹。
 
-产物在 `workspace/output/<slug>/`：`_qa_cards.html`（阅读/自测）、`_scorecard.html`（A4 打印现场打分）、`_guide.md`（深挖）。
+产物在 `workspace/output/<slug>/`，`<slug>_index.html` 链接所有页面。每页都有 **导出PDF** 按钮，会打开浏览器的打印窗口，选「另存为 PDF」即可。
 
 
 
 ## 产物说明
 
-三件套写进同一目录，互相以本地相对路径链接、完全自包含（可直接 `file://` 打开）：
+所有页面写进同一目录，互相以本地相对路径链接、完全自包含（可直接 `file://` 打开），打印为 A4，折叠的答案会自动展开：
 
-- **完整指南** `<slug>_guide.md`：画像、真实强项、待确认事项及项目主题。每个主题包含分层问题、逐问示范回答和本主题追问，最后单列判分依据。
+- **总入口** `<slug>_index.html`：每位候选人的全部页面，一点就到。
+- **面试指南** `<slug>_guide.html`：画像、真实强项、待确认事项及项目主题。每个主题包含分层问题、逐问示范回答和本主题追问，最后单列判分依据；`<slug>_guide.md` 保留为 Markdown 源文件。
 - **现场评分卡** `<slug>_scorecard.html`：限时模式每人一页A4，点击评分后本地保存；全面审查模式允许跨页。
 - **问答卡片** `<slug>_qa_cards.html`：按候选人切换，逐问折叠答案；技术追问留在所属主题，折叠答案后仍可看见问题。
+- **弱点分析** `<slug>_weakness.html`：按严重程度排列的薄弱点，每条附简历原文、面试官会怎样理解、可能的追问与示范回答、修改建议。
+- **简历优化** `<slug>_resume.html`：还需要你补充的事实、逐条改前改后对照和理由，以及可单独导出成 PDF 的优化版简历。
+- **JD匹配** `<slug>_jd.html`：逐条对照岗位要求的状态和简历证据、关键词覆盖、每个缺口的补强计划与可能的面试问题。不给凭空的总分，只统计各状态的数量。
+
+三种扩展模式由 agent 按 `reference/modes-spec.md` 撰写；`analyze.js` 与 `analyze_portable.py` 实现的是面试拷打流水线。
 
 流程为简历研判、分域选题、主题与示范回答撰写、核查及修订。核查同时覆盖技术准确性、问题衔接、逐问回答与事实边界。不同且有依据的路线同样可以得分。合作安排与材料确认独立列出。
 
@@ -122,11 +134,13 @@ resume-grill/
     extract_pdf.py             简历 PDF → 文本
     analyze.js                 Claude Code 原生多智能体 Workflow 引擎
     analyze_portable.py        运行无关的参考编排（可接任意模型）+ --single 回退
-    render.py                  payload.json → 三件套（零依赖、含界面文案 i18n）
+    render.py                  payload.json → 互相链接的 HTML 页面（零依赖、含界面文案 i18n）
+    pages.py                   总入口、HTML 指南、弱点分析、简历优化与 JD 匹配页面
     install.py                 跨平台安装到各 agent 的 skills 目录（Claude Code / Codex …）
-  templates/                   qa_cards / scorecard 的自包含 HTML 模板
+  templates/                   qa_cards / scorecard 的自包含 HTML 模板与共用 page.css
   reference/
     pipeline-spec.md           运行无关的流水线契约（阶段/提示/JSON schema/输出语言）
+    modes-spec.md              弱点分析、简历优化、JD匹配的内容规则与 schema
     writing-norms.md           输出写作规范（按语言分别生效）
   workspace/                   本地工作区（简历与产物，均不入库）
     inbox/  output/  BG/

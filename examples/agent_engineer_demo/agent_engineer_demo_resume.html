@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>简历优化</title>
+<style>
+/* Shared stylesheet for the static pages written by scripts/pages.py.
+   It is inlined into every page so each file stays self-contained (file:// works). */
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --ink:#1c2430; --soft:#5b6675; --line:#e2e7ee;
+  --accent:#2b4a7a; --accent-soft:#eef2f8;
+  --good:#1f7a3d; --good-bg:#eef7f0; --good-line:#bfe0c8;
+  --warn:#9a5b00; --warn-bg:#fdf5e6; --warn-line:#f0d9a8;
+  --bad:#a52424; --bad-bg:#fbeeee; --bad-line:#efc9c9;
+  --probe:#6a3fb0; --probe-bg:#f3eefb; --probe-line:#dbc9f0;
+  --quote-bg:#fbfaf4; --quote-line:#e8e0c4;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#12161c; --card:#1b212a; --ink:#e6ebf2; --soft:#9aa6b4; --line:#2b333e;
+    --accent:#7fa8e0; --accent-soft:#22303f;
+    --good:#7fce97; --good-bg:#17281c; --good-line:#2c4a34;
+    --warn:#f0c070; --warn-bg:#2b2416; --warn-line:#54452a;
+    --bad:#ef9a9a; --bad-bg:#2a1818; --bad-line:#523030;
+    --probe:#c3a3ef; --probe-bg:#221a30; --probe-line:#3f2f57;
+    --quote-bg:#211f16; --quote-line:#463f27;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px 48px}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:14px 16px 8px;margin:0 0 8px}
+header.top .inner{max-width:960px;margin:0 auto}
+h1{font-size:19px;margin:0 0 2px;color:var(--accent)}
+.sub{font-size:12.5px;color:var(--soft);margin:0 0 8px}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.links{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px}
+.links a{color:var(--accent);text-decoration:none}
+.links a:hover{text-decoration:underline}
+.tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--soft);
+  padding:6px 12px;border-radius:20px;font-size:12.5px;cursor:pointer}
+.btn:hover{color:var(--ink)}
+.btn.primary{border-color:var(--accent);color:var(--accent);font-weight:600}
+.toc{font-size:13px;margin:10px 0;display:flex;gap:12px;flex-wrap:wrap}
+.toc a{color:var(--accent)}
+section.cand{margin:16px 0 28px}
+.cand-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 0 8px}
+.cand-h h2{font-size:18px;margin:0;color:var(--accent)}
+.rlink{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);
+  border-radius:14px;padding:2px 9px;white-space:nowrap}
+h3.sec{font-size:15.5px;margin:22px 0 8px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.panel p{margin:0 0 8px}
+.panel p:last-child{margin-bottom:0}
+.lead{font-size:14px}
+.ruler{font-size:13px;background:var(--accent-soft);border-left:3px solid var(--accent);
+  padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0}
+ul.plain,ol.plain{margin:6px 0 0;padding-left:20px;font-size:14px}
+ul.plain li,ol.plain li{margin:4px 0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{display:inline-block;font-size:12.5px;font-weight:600;border:1px solid var(--line);border-radius:14px;
+  padding:2px 10px;background:var(--card);color:var(--soft)}
+.chip.high,.chip.gap{color:var(--bad);border-color:var(--bad-line);background:var(--bad-bg)}
+.chip.medium,.chip.partial{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+.chip.low,.chip.met{color:var(--good);border-color:var(--good-line);background:var(--good-bg)}
+.chip.kw{font-weight:500}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0;
+  overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card.high{border-left:4px solid var(--bad)}
+.card.medium{border-left:4px solid var(--warn)}
+.card.low{border-left:4px solid var(--good)}
+.card-h{display:flex;gap:10px;align-items:flex-start;padding:12px 16px 4px}
+.badge{flex:none;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;padding:2px 9px;border-radius:7px;margin-top:2px}
+.card-h h4{margin:0;font-size:15px;line-height:1.45;min-width:0}
+.card-b{padding:4px 16px 12px}
+.anchor{display:inline-block;font-weight:600;font-size:11px;color:var(--soft);background:var(--accent-soft);
+  border:1px solid var(--line);border-radius:10px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+.k{display:block;font-weight:700;font-size:11.5px;letter-spacing:.3px;color:var(--accent);margin:10px 0 3px}
+.k.bad{color:var(--bad)} .k.good{color:var(--good)} .k.probe{color:var(--probe)} .k.warn{color:var(--warn)}
+blockquote.q{margin:6px 0;padding:8px 12px;background:var(--quote-bg);border:1px solid var(--quote-line);
+  border-radius:8px;font-size:14px}
+.rung{font-size:14px;padding:8px 12px;margin:6px 0;background:var(--accent-soft);border:1px solid var(--line);border-radius:8px}
+.rung .lv{display:inline-block;font-weight:700;color:var(--accent);font-size:11px;margin-right:6px}
+.fu{padding:8px 12px;border-left:3px solid var(--probe);background:var(--probe-bg);border-radius:6px;margin:8px 0;font-size:14px}
+.fu p{margin:4px 0}
+.when{font-size:12px;color:var(--soft)}
+details.fold{margin:6px 0 2px;padding:7px 12px;background:var(--good-bg);border:1px solid var(--good-line);border-radius:6px;font-size:14px}
+details.fold>summary{cursor:pointer;color:var(--good);font-weight:600}
+details.fold p{margin:6px 0 2px}
+.blk{border:1px solid;border-radius:8px;padding:9px 12px;margin:8px 0;font-size:14px}
+.blk ul{margin:4px 0 0;padding-left:18px}
+.blk.good{background:var(--good-bg);border-color:var(--good-line)}
+.blk.bad{background:var(--bad-bg);border-color:var(--bad-line)}
+.blk.warn{background:var(--warn-bg);border-color:var(--warn-line)}
+.blk.probe{background:var(--probe-bg);border-color:var(--probe-line)}
+.blk .bt{font-weight:700;font-size:11.5px;letter-spacing:.3px;margin-bottom:4px}
+.blk.good .bt{color:var(--good)} .blk.bad .bt{color:var(--bad)} .blk.warn .bt{color:var(--warn)} .blk.probe .bt{color:var(--probe)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}
+.ba>div{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+.ba .before{background:var(--bad-bg);border-color:var(--bad-line)}
+.ba .after{background:var(--good-bg);border-color:var(--good-line)}
+.ba .k{margin-top:0}
+@media (max-width:640px){.ba{grid-template-columns:1fr}}
+table.req{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border:1px solid var(--line)}
+table.req th,table.req td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+table.req thead th{background:var(--accent-soft);color:var(--ink);font-size:12px}
+table.req td ul{margin:0;padding-left:16px}
+table.req td p{margin:0 0 6px}
+table.req td p:last-child,.card-b p:last-child,.blk p:last-child{margin-bottom:0}
+.card-b p{margin:4px 0 8px}
+.blk p{margin:2px 0 6px}
+table.req .id{white-space:nowrap;font-weight:700;color:var(--accent)}
+mark.tbd{background:#fff3b0;color:#5a4500;border-radius:3px;padding:0 2px}
+.notice{font-size:13px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line);
+  border-radius:8px;padding:7px 12px;margin:8px 0}
+code{font-family:"Cascadia Code",Consolas,monospace;font-size:.92em;background:var(--accent-soft);padding:0 3px;border-radius:3px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:10px 0}
+a.tile{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  text-decoration:none;color:var(--ink)}
+a.tile:hover{border-color:var(--accent)}
+a.tile .tl{display:block;font-weight:700;color:var(--accent);margin-bottom:3px}
+a.tile .td{display:block;font-size:13px;color:var(--soft)}
+a.tile .tf{display:block;font-size:11.5px;color:var(--soft);margin-top:6px;font-family:"Cascadia Code",Consolas,monospace}
+/* The optimized resume is shown as a white sheet in both themes, like the printed page. */
+.paper{background:#fff;color:#1c2430;border:1px solid #d6dce4;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.08);
+  max-width:210mm;margin:14px auto;padding:16mm 15mm;font-size:13.5px;line-height:1.5}
+.paper .pn{font-size:24px;font-weight:700;margin:0;color:#1c2430}
+.paper .ph{font-size:14px;color:#2b4a7a;margin:2px 0}
+.paper .pc{font-size:12.5px;color:#5b6675;margin:0 0 6px}
+.paper h5{font-size:13px;letter-spacing:.5px;color:#2b4a7a;border-bottom:1.5px solid #2b4a7a;margin:14px 0 6px;padding-bottom:2px}
+.paper .entry{margin:6px 0 8px}
+.paper .eh{display:flex;justify-content:space-between;gap:12px;font-weight:600}
+.paper .eh>span:first-child{min-width:0}
+.paper .eo{font-weight:400;color:#5b6675}
+.paper .ep{flex:none;max-width:45%;text-align:right;font-weight:400;color:#5b6675}
+.paper ul{margin:3px 0 0;padding-left:18px}
+.paper li{margin:2px 0}
+footer.foot{font-size:12px;color:var(--soft);text-align:center;margin:24px 0}
+footer.foot .brand{font-weight:600;color:var(--accent);opacity:.8;letter-spacing:.3px}
+@media print{
+  :root{
+    --bg:#fff; --card:#fff; --ink:#1c2430; --soft:#5b6675; --line:#d6dce4;
+    --accent:#2b4a7a; --accent-soft:#eef2f8;
+    --good:#1f7a3d; --good-bg:#eef7f0; --good-line:#bfe0c8;
+    --warn:#9a5b00; --warn-bg:#fdf5e6; --warn-line:#f0d9a8;
+    --bad:#a52424; --bad-bg:#fbeeee; --bad-line:#efc9c9;
+    --probe:#6a3fb0; --probe-bg:#f3eefb; --probe-line:#dbc9f0;
+    --quote-bg:#fbfaf4; --quote-line:#e8e0c4;
+  }
+  @page{size:A4;margin:14mm 12mm}
+  html,body{background:#fff;font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header.top{position:static;border:0;padding:0 0 6px}
+  .noprint{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .card,.blk,.fu,.rung,.ba,a.tile,tr,.paper .entry,blockquote.q{break-inside:avoid}
+  h3.sec,.cand-h{break-after:avoid}
+  section.cand + section.cand{break-before:page}
+  a{color:inherit;text-decoration:none}
+  .card{box-shadow:none}
+  .paper{box-shadow:none;border:0;margin:0 auto;padding:0;max-width:none}
+  body.print-resume header.top,body.print-resume footer.foot,body.print-resume .toc{display:none !important}
+  body.print-resume section.cand>*:not(.paper){display:none !important}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="inner"><h1>简历优化</h1><div class="sub">日期：2026-07-10｜对抗性技术面试 · Agent 开发工程师（示例）</div><nav class="bar noprint"><span class="links"><a href="agent_engineer_demo_index.html">⌂ 总入口</a><a href="agent_engineer_demo_guide.html">▤ 面试指南</a><a href="agent_engineer_demo_qa_cards.html">☰ 问答卡片</a><a href="agent_engineer_demo_scorecard.html">▦ 评分卡</a><a href="agent_engineer_demo_weakness.html">▲ 弱点分析</a><a href="agent_engineer_demo_jd.html">◎ JD匹配</a></span><span class="tools"><button class="btn" data-print="resume" title="在打印窗口选择「另存为PDF」">⤓ 只导出简历PDF</button><button class="btn primary" data-print="all" title="在打印窗口选择「另存为PDF」">⤓ 导出PDF</button></span></nav></div></header>
+<main class="wrap">
+
+<section class="cand" id="cand-0"><div class="cand-h"><h2>候选人A · Agent 开发工程师（2年）</h2></div><div class="panel"><p>改写原则：不改变事实，把「参与」改成本人负责的范围，写出实现方式、规模和验证方法；时间线把全职与在读经历分开。下面6个问题的答案决定改写后的数字和措辞，回答后占位符会替换成真实信息。</p></div><h3 class="sec">需要你补充的事实</h3><p class="sub">在对话里回答这些问题后，占位符会替换为你的真实信息，本页随之重新生成。</p><ol class="plain"><li><b>A1</b> Capisoft那段（2024-12至2025-06）是兼职、研究还是全职，每周投入多少时间？Sorin和网页抽取两个项目分别属于哪段经历？<div class="when">决定时间线、标题口径和项目归属怎么写。</div><div class="chips"><span class="chip">影响 E1</span><span class="chip">影响 E5</span><span class="chip">影响 E6</span></div></li><li><b>A2</b> Exec-Layer是自研，还是基于LiteLLM等开源项目二次开发？你本人负责哪些模块？<div class="when">决定网关条目怎么写，也是面试必问点。</div><div class="chips"><span class="chip">影响 E2</span></div></li><li><b>A3</b> 网关的规模：峰值QPS或日请求量、接入几家模型服务商、覆盖多少个内部服务？<div class="when">让网关与可观测性两条有可核验的规模信息。</div><div class="chips"><span class="chip">影响 E2</span><span class="chip">影响 E3</span></div></li><li><b>A4</b> Sorin项目里你独立完成的模块或Agent Tool有哪些？部署上线时你具体做了什么？<div class="when">用本人职责替换「参与」。</div><div class="chips"><span class="chip">影响 E5</span></div></li><li><b>A5</b> 项目三的Selector评估用了什么数据（站点数、页面数），结果如何？<div class="when">没有评测数据时，需要改成设计思路的写法。</div><div class="chips"><span class="chip">影响 E6</span></div></li><li><b>A6</b> Redis、ClickHouse在哪个项目或场景里用过？<div class="when">决定它们放在「熟练」还是「了解」。</div><div class="chips"><span class="chip">影响 E7</span></div></li></ol><h3 class="sec">逐条改前改后</h3><article class="card"><div class="card-h"><span class="badge">E1</span><h4>标题</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>Agent 开发工程师(2年)</div><div class="after"><span class="k good">改后</span>Agent/AI Infra后端工程师｜Sahara AI全职（2025-09至2026-05）｜在读期间经历2段</div></div><span class="k">理由</span><p>去掉合并计算的年限，按经历性质写，面试时口径一致。</p></div></article><article class="card"><div class="card-h"><span class="badge">E2</span><h4>项目一 · LLM网关</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>多 Provider 统一转发；建立 QPS、Token Usage、Inference Cost 监控</div><div class="after"><span class="k good">改后</span>基于<mark class="tbd">【待补充：自研或开源项目】</mark>实现LLM网关Exec-Layer，统一转发<mark class="tbd">【待补充：数量】</mark>家模型服务商的请求，按请求统计Token用量与推理成本，建立QPS监控；本人负责<mark class="tbd">【待补充：模块】</mark>。</div></div><span class="k">理由</span><p>写清实现方式、规模和本人范围，提前回答“是不是自研”。</p></div></article><article class="card"><div class="card-h"><span class="badge">E3</span><h4>项目一 · 可观测性</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>Datadog→Signoz 迁移；提升可观测性</div><div class="after"><span class="k good">改后</span>完成Datadog到Signoz的可观测性迁移，覆盖<mark class="tbd">【待补充：服务数量】</mark>个服务的指标、链路与日志；<mark class="tbd">【待补充：迁移后可核验的变化，例如告警或排障时间】</mark>。</div></div><span class="k">理由</span><p>用范围和可核验的变化替换“提升可观测性”。</p></div></article><article class="card"><div class="card-h"><span class="badge">E4</span><h4>项目一 · 稳定性</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>生产环境 Memory Leak 与 Runtime Stability 修复</div><div class="after"><span class="k good">改后</span>定位并修复生产环境中的内存泄漏，根因是<mark class="tbd">【待补充：根因】</mark>；<mark class="tbd">【待补充：修复后的效果，例如内存曲线恢复平稳的观察周期】</mark>。</div></div><span class="k">理由</span><p>写出根因与效果，面试时可以按“现象、定位、根因、验证”讲完整。</p></div></article><article class="card"><div class="card-h"><span class="badge">E5</span><h4>项目二 · Sorin</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>参与开发……参与部署……参与 Cloud Run 运行维护</div><div class="after"><span class="k good">改后</span>独立实现<mark class="tbd">【待补充：Tool名称】</mark>等<mark class="tbd">【待补充：数量】</mark>个Agent Tool，负责<mark class="tbd">【待补充：本人负责的环节】</mark>；在Cloud Run部署中负责<mark class="tbd">【待补充：具体工作】</mark>。</div></div><span class="k">理由</span><p>每条写成“动作＋对象＋本人范围”，替换「参与」。</p></div></article><article class="card"><div class="card-h"><span class="badge">E6</span><h4>项目三 · Selector评估</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>多维度 Selector 评估（结构相似度/语义相关性/噪声抗性）</div><div class="after"><span class="k good">改后</span>设计结构相似度、语义相关性与噪声抗性三项指标，筛选LLM生成的CSS Selector；在<mark class="tbd">【待补充：站点与页面数量】</mark>上验证，回放命中率<mark class="tbd">【待补充：结果】</mark>。</div></div><span class="k">理由</span><p>给评估机制写明数据与结果；没有评测数据时改成“设计了……指标用于筛选”，不写成已验证的结论。</p></div></article><article class="card"><div class="card-h"><span class="badge">E7</span><h4>个人技能</h4></div><div class="card-b"><div class="ba"><div class="before"><span class="k bad">改前</span>Redis、ClickHouse（与其它技能并列）</div><div class="after"><span class="k good">改后</span>熟练：Python、FastAPI（异步）、PostgreSQL、InfluxDB、Kubernetes、Cloud Run、Signoz、Langfuse；了解：Redis、ClickHouse</div></div><span class="k">理由</span><p>技能按熟练程度分组，只把项目里用过的技术放在「熟练」；Redis、ClickHouse找到项目出处后（见A6）再移回「熟练」并写进对应条目。</p></div></article><h3 class="sec">优化版简历</h3><div class="notice">还有23处待补充（黄色标记），导出前请先确认。</div><div class="paper"><p class="pn">张三</p><p class="ph">Agent/AI Infra后端工程师｜LLM网关 · 可观测性 · Agent应用</p><p class="pc"><mark class="tbd">【待补充：邮箱｜电话｜GitHub】</mark></p><h5>工作经历</h5><div class="entry"><div class="eh"><span><mark class="tbd">【待补充：职位】</mark> <span class="eo">Sahara AI</span></span><span class="ep">2025-09 至 2026-05 · 全职</span></div><ul class=""><li>基于<mark class="tbd">【待补充：自研或开源项目】</mark>实现LLM网关Exec-Layer，统一转发<mark class="tbd">【待补充：数量】</mark>家模型服务商的请求，按请求统计Token用量与推理成本，建立QPS监控；本人负责<mark class="tbd">【待补充：模块】</mark>。</li><li>使用FastAPI异步优化含LLM推理的长耗时请求链路，<mark class="tbd">【待补充：优化前后的可核验变化】</mark>。</li><li>完成Datadog到Signoz的可观测性迁移，覆盖<mark class="tbd">【待补充：服务数量】</mark>个服务的指标、链路与日志；<mark class="tbd">【待补充：迁移后可核验的变化】</mark>。</li><li>定位并修复生产环境中的内存泄漏，根因是<mark class="tbd">【待补充：根因】</mark>；<mark class="tbd">【待补充：修复后的效果】</mark>。</li></ul></div><h5>在读期间项目</h5><div class="entry"><div class="eh"><span>Sorin（金融数据分析Agent） <span class="eo"><mark class="tbd">【待补充：所属经历：Capisoft或绿盟】</mark></span></span><span class="ep"><mark class="tbd">【待补充：起止年月】</mark></span></div><ul class=""><li>独立实现<mark class="tbd">【待补充：Tool名称】</mark>等<mark class="tbd">【待补充：数量】</mark>个Agent Tool，负责<mark class="tbd">【待补充：本人负责的环节】</mark>；在Cloud Run部署中负责<mark class="tbd">【待补充：具体工作】</mark>。</li><li>采用可模块化打包的Agent Skill架构，分析加密货币与股票数据并由LLM动态生成Markdown分析结果；<mark class="tbd">【待补充：数字准确性的校验方式】</mark>。</li></ul></div><div class="entry"><div class="eh"><span>LLM辅助网页抽取 <span class="eo"><mark class="tbd">【待补充：所属经历：Capisoft或绿盟】</mark></span></span><span class="ep"><mark class="tbd">【待补充：起止年月】</mark></span></div><ul class=""><li>设计结构相似度、语义相关性与噪声抗性三项指标，筛选LLM生成的CSS Selector；在<mark class="tbd">【待补充：站点与页面数量】</mark>上验证，回放命中率<mark class="tbd">【待补充：结果】</mark>。</li><li>以基于队列的分层解析与分块处理超出LLM上下文窗口的HTML页面，并用模板引擎把选择器生成可执行的爬虫。</li></ul></div><h5>教育背景</h5><div class="entry"><div class="eh"><span>大数据工程 硕士 <span class="eo">阿姆斯特丹大学</span></span><span class="ep">2022-09 至 2025-08</span></div></div><div class="entry"><div class="eh"><span>物联网 本科 <span class="eo">北京邮电大学</span></span><span class="ep"><mark class="tbd">【待补充：起止年月】</mark></span></div></div><h5>技能</h5><div class="entry"><div class="eh"><span>熟练</span></div><ul class=""><li>Python、FastAPI（异步）、PostgreSQL、InfluxDB</li><li>Kubernetes、Google Cloud Run、Signoz、Langfuse、Datadog</li><li>Pytest、Poetry、UV</li></ul></div><div class="entry"><div class="eh"><span>了解</span></div><ul class=""><li>Redis、ClickHouse<mark class="tbd">【待补充：使用场景，确认后决定是否移入熟练】</mark></li></ul></div></div></section>
+</main>
+<footer class="foot"><div class="brand">resume-grill</div></footer>
+<script>(function(){
+var opened=[];
+function openAll(){opened=[];document.querySelectorAll('details:not([open])').forEach(function(d){d.open=true;opened.push(d);});}
+function restore(){opened.forEach(function(d){d.open=false;});opened=[];document.body.classList.remove('print-resume');}
+window.addEventListener('beforeprint',openAll);
+window.addEventListener('afterprint',restore);
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-print]');
+  if(b){if(b.getAttribute('data-print')==='resume'){document.body.classList.add('print-resume');}window.print();return;}
+  var t=e.target.closest('[data-toggle]');
+  if(t){var open=t.getAttribute('data-state')==='closed';
+    document.querySelectorAll('details.fold').forEach(function(d){d.open=open;});
+    t.setAttribute('data-state',open?'open':'closed');
+    t.textContent=t.getAttribute(open?'data-close':'data-open');}
+});
+})();</script>
+</body>
+</html>

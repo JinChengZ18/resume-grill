@@ -9,9 +9,12 @@
 - `agent_engineer_demo_guide.md` — 完整指南（画像、真实强项、关键红旗、开场题、6 道核心验伪题含答案键、补充探针）。
 - `agent_engineer_demo_scorecard.html` — 现场评分卡（一页 A4，浏览器打开或打印）。
 - `agent_engineer_demo_qa_cards.html` — 攻防卡片（答案可折叠自测，浏览器打开）。
-- `agent_engineer_demo_payload.json` — 分析载荷（可据此复现三件套）。
+- `agent_engineer_demo_index.html` — 总入口，链接下面所有页面。
+- `agent_engineer_demo_guide.html` — HTML 版完整指南（`_guide.md` 为源文件）。
+- `agent_engineer_demo_weakness.html`、`agent_engineer_demo_resume.html`、`agent_engineer_demo_jd.html` — 弱点分析、简历优化与 JD 匹配（JD 为演示编写；简历里没有的事实保留为占位符）。
+- `agent_engineer_demo_payload.json` — 分析载荷（可据此复现全部页面）。
 
-复现三件套（改 `payload.json` 内容后同样可重渲）：
+复现全部页面（改 `payload.json` 内容后同样可重渲）：
 ```
 python scripts/render.py examples/agent_engineer_demo/agent_engineer_demo_payload.json examples/agent_engineer_demo agent_engineer_demo
 ```

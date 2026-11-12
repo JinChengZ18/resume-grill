@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-render.py — turn one analysis payload (JSON) into the three interview deliverables:
-  <slug>_guide.md            full adversarial guide (prose + bulleted answer keys)
-  <slug>_scorecard.html      one-A4-per-candidate live scoring sheet
-  <slug>_qa_cards.html       reading-friendly Q&A attack-defense cards
+render.py — turn one analysis payload (JSON) into linked, printable HTML pages:
+  <slug>_index.html          batch index linking every page below (always written)
+  <slug>_guide.html          full interview guide as a readable page   } written when a
+  <slug>_guide.md            the same guide as Markdown source         } candidate has
+  <slug>_scorecard.html      one-A4-per-candidate live scoring sheet   } "cards"
+  <slug>_qa_cards.html       reading-friendly Q&A attack-defense cards }
+  <slug>_weakness.html       weakness analysis      (candidate "weakness")
+  <slug>_resume.html         resume optimization    (candidate "resume_opt")
+  <slug>_jd.html             job-description match  (candidate "jd_match")
+Every page links its siblings with relative hrefs and exports to PDF via the browser's
+print dialog. The three extra sections are specified in reference/modes-spec.md and
+rendered by pages.py.
 
 Usage:
   python render.py <payload.json> <output_dir> [slug]
@@ -33,6 +41,8 @@ back to the English chrome. To add a language, add one entry to LABELS.
 Writes with UTF-8 + LF endings (Windows-safe). No third-party deps.
 """
 import json, sys, os, io, re
+
+import pages
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TMPL = os.path.join(os.path.dirname(HERE), "templates")
@@ -74,11 +84,41 @@ LABELS = {
         "col_q": "题目与判分线索", "col_strong": "强", "col_mid": "中", "col_tell": "待深入",
         "verdict_label": "综合结论", "advance": "进入下一轮", "hold": "待定", "reject": "淘汰",
         "count_label": "强/中/待深入 计数", "sign_label": "签名",
-        "print_btn": "🖨 打印", "reset_btn": "↺ 重置本页", "score_hint": "点格子打分，自动记忆",
+        "print_btn": "🖨 打印 / 导出PDF", "reset_btn": "↺ 重置本页", "score_hint": "点格子打分，自动记忆",
         "duration": "时长", "min_unit": "分钟", "q_unit": "题",
         "opener_word": "开场", "wrap_word": "收尾",
         "audit_mode": "全面审查 · 不限时",
         "audit_lead": "全面审查 · 不限时｜逐一覆盖简历中的全部疑点（亦可用于面试前自我排查）",
+        # navigation, PDF export and the batch index
+        "export_pdf": "⤓ 导出PDF", "export_pdf_hint": "在打印窗口选择「另存为PDF」",
+        "nav_index": "⌂ 总入口", "nav_guide": "▤ 面试指南", "nav_cards": "☰ 问答卡片",
+        "nav_scorecard": "▦ 评分卡", "nav_weakness": "▲ 弱点分析", "nav_resume": "✎ 简历优化", "nav_jd": "◎ JD匹配",
+        "index_title": "面试准备材料总入口",
+        "index_lead": "以下页面都是可直接打开的本地HTML；每页右上角都可导出PDF。",
+        "desc_guide": "完整阅读版：画像、面试主题、逐问示范回答与判分提示",
+        "desc_cards": "逐问折叠答案，适合自测和快速翻阅",
+        "desc_scorecard": "A4现场评分表，点击打分自动保存",
+        "desc_weakness": "按严重程度排列的薄弱点、可能的追问与回答、修改建议",
+        "desc_resume": "需要你补充的事实、逐条改前改后对照、可打印的优化版简历",
+        "desc_jd": "逐条对照岗位要求、缺口补强计划与可能的面试问题",
+        # weakness analysis
+        "weakness_title": "简历弱点分析", "sev_high": "高", "sev_medium": "中", "sev_low": "低",
+        "actions_h": "优先处理", "keep_h": "保持不变的强项", "items_h": "逐条分析",
+        "quote_h": "简历原文", "issue_h": "问题", "why_h": "面试官会怎样理解", "fu_h": "可能的追问",
+        "fix_h": "怎么改", "rewrite_h": "改写示例",
+        # resume optimization
+        "resume_title": "简历优化", "questions_h": "需要你补充的事实",
+        "questions_lead": "在对话里回答这些问题后，占位符会替换为你的真实信息，本页随之重新生成。",
+        "affects": "影响", "edits_h": "逐条改前改后", "before_h": "改前", "after_h": "改后", "reason_h": "理由",
+        "optimized_h": "优化版简历", "export_resume": "⤓ 只导出简历PDF",
+        "tbd_left": "还有{n}处待补充（黄色标记），导出前请先确认。",
+        # JD match
+        "jd_title": "JD匹配分析", "jd_h": "目标岗位", "jd_source_h": "JD来源",
+        "status_met": "匹配", "status_partial": "部分匹配", "status_gap": "缺口",
+        "prio_must": "必须", "prio_nice": "加分", "req_h": "逐条对照",
+        "col_req": "岗位要求", "col_status": "状态", "col_evidence": "简历证据", "col_note": "判断与建议",
+        "action_h": "建议", "kw_h": "关键词覆盖", "kw_present": "简历已体现", "kw_missing": "简历未体现",
+        "gaps_h": "缺口补强计划", "plan_h": "怎么补强", "talk_h": "面试中怎么说", "jdq_h": "可能的面试问题",
     },
     "en": {
         "colon": ": ", "sep": " · ", "list_sep": "; ",
@@ -112,11 +152,43 @@ LABELS = {
         "col_q": "Question & scoring cues", "col_strong": "Strong", "col_mid": "Mid", "col_tell": "Tell",
         "verdict_label": "Verdict", "advance": "Advance", "hold": "Hold", "reject": "Reject",
         "count_label": "Strong/Mid/Tell count", "sign_label": "Signature",
-        "print_btn": "🖨 Print", "reset_btn": "↺ Reset page", "score_hint": "click a cell to score — saved automatically",
+        "print_btn": "🖨 Print / Save PDF", "reset_btn": "↺ Reset page", "score_hint": "click a cell to score — saved automatically",
         "duration": "Duration", "min_unit": "min", "q_unit": "",
         "opener_word": "Opener", "wrap_word": "Wrap-up",
         "audit_mode": "Full audit · untimed",
         "audit_lead": "Full audit · untimed — covers every doubt in the résumé (also for pre-interview self-check)",
+        # navigation, PDF export and the batch index
+        "export_pdf": "⤓ Export PDF", "export_pdf_hint": "Choose “Save as PDF” in the print dialog",
+        "nav_index": "⌂ Index", "nav_guide": "▤ Interview guide", "nav_cards": "☰ Q&A cards",
+        "nav_scorecard": "▦ Scorecard", "nav_weakness": "▲ Weakness analysis", "nav_resume": "✎ Résumé optimization",
+        "nav_jd": "◎ JD match",
+        "index_title": "Interview Prep Index",
+        "index_lead": "Every page below is a self-contained local HTML file; each one exports to PDF from its toolbar.",
+        "desc_guide": "Full reading copy: profile, interview themes, model answers and scoring cues",
+        "desc_cards": "Collapsible answers for self-testing and quick review",
+        "desc_scorecard": "A4 live scoring sheet; clicks are saved automatically",
+        "desc_weakness": "Weak points by severity, likely follow-ups with answers, and fixes",
+        "desc_resume": "Facts we need from you, before/after rewrites, and a printable optimized résumé",
+        "desc_jd": "Requirement-by-requirement match, a plan for the gaps, and likely interview questions",
+        # weakness analysis
+        "weakness_title": "Résumé Weakness Analysis", "sev_high": "High", "sev_medium": "Medium", "sev_low": "Low",
+        "actions_h": "Do these first", "keep_h": "Keep as is", "items_h": "Item by item",
+        "quote_h": "On the résumé", "issue_h": "Issue", "why_h": "How an interviewer reads it",
+        "fu_h": "Likely follow-ups", "fix_h": "How to fix", "rewrite_h": "Suggested rewrite",
+        # resume optimization
+        "resume_title": "Résumé Optimization", "questions_h": "Facts we need from you",
+        "questions_lead": "Answer these in the chat; the placeholders are replaced with your real facts and this page is regenerated.",
+        "affects": "Affects", "edits_h": "Before and after, line by line", "before_h": "Before", "after_h": "After",
+        "reason_h": "Why", "optimized_h": "Optimized résumé", "export_resume": "⤓ Export résumé only",
+        "tbd_left": "{n} placeholder(s) still need your facts (highlighted); check them before exporting.",
+        # JD match
+        "jd_title": "Job Description Match", "jd_h": "Target role", "jd_source_h": "Source",
+        "status_met": "Met", "status_partial": "Partial", "status_gap": "Gap",
+        "prio_must": "Must", "prio_nice": "Nice to have", "req_h": "Requirement by requirement",
+        "col_req": "Requirement", "col_status": "Status", "col_evidence": "Résumé evidence",
+        "col_note": "Assessment and action", "action_h": "Action", "kw_h": "Keyword coverage",
+        "kw_present": "On the résumé", "kw_missing": "Missing", "gaps_h": "Closing the gaps",
+        "plan_h": "Plan", "talk_h": "How to talk about it", "jdq_h": "Likely interview questions",
     },
 }
 
@@ -243,6 +315,81 @@ def md_guide(payload, L):
     return "\n".join(out) + "\n"
 
 
+# kind, file suffix, nav label key, index description key, candidate field the page needs
+ARTIFACTS = (
+    ("index",     "_index.html",     "nav_index",     None,             None),
+    ("guide",     "_guide.html",     "nav_guide",     "desc_guide",     "cards"),
+    ("cards",     "_qa_cards.html",  "nav_cards",     "desc_cards",     "cards"),
+    ("scorecard", "_scorecard.html", "nav_scorecard", "desc_scorecard", "cards"),
+    ("weakness",  "_weakness.html",  "nav_weakness",  "desc_weakness",  "weakness"),
+    ("resume",    "_resume.html",    "nav_resume",    "desc_resume",    "resume_opt"),
+    ("jd",        "_jd.html",        "nav_jd",        "desc_jd",        "jd_match"),
+)
+
+
+def plan_leads(payload, L):
+    """Date / pacing / reading notes shown at the top of the guide."""
+    m = payload.get("meta", {})
+    leads = []
+    if m.get("date"):
+        leads.append(f"{L['date']}{L['colon']}{m['date']}{L['sep']}{BRAND}")
+    plan = m.get("plan") or {}
+    if plan.get("depth") == "ultra":
+        leads.append(L["audit_lead"])
+    elif plan.get("minutes") and plan.get("nCore") and plan.get("perQuestion"):
+        leads.append(pacing_line(L, plan))
+    leads.append(L["guide_lead"])
+    return leads
+
+
+def render_all(payload, outdir, slug):
+    """Write every page the payload supports; return (lang, written paths, index first)."""
+    os.makedirs(outdir, exist_ok=True)
+    lang, L = resolve_labels(payload)
+    meta = payload.get("meta", {})
+    cands = payload.get("candidates", {})
+    title = meta.get("title") or L["guide_title"]
+
+    present = [a for a in ARTIFACTS if a[4] is None or any(d.get(a[4]) for d in cands.values())]
+    artifacts = [dict(kind=k, href=slug + suf, label=L[lk], desc=L[dk] if dk else "", key=key)
+                 for k, suf, lk, dk, key in present]
+    # Hand-written links to our own pages (any slug) are superseded by the generated nav.
+    own_suffixes = tuple(a[1] for a in ARTIFACTS) + ("_guide.md",)
+    extra = [l for l in (meta.get("links") or []) if not str(l.get("href", "")).endswith(own_suffixes)]
+
+    def nav(kind):
+        return [dict(label=a["label"], href=a["href"]) for a in artifacts if a["kind"] != kind] + extra
+
+    def with_meta(**kw):
+        p = dict(payload)
+        p["meta"] = dict(meta, **kw)
+        return p
+
+    written = []
+
+    def put(kind, text):
+        path = os.path.join(outdir, slug + dict((a[0], a[1]) for a in ARTIFACTS)[kind])
+        wfile(path, text)
+        written.append(path)
+
+    kinds = {a["kind"] for a in artifacts}
+    put("index", pages.index_page(payload, L, lang, nav("index"), artifacts))
+    if "cards" in kinds:
+        put("guide", pages.guide_page(payload, L, lang, nav("guide"), plan_leads(payload, L)))
+        put("cards", inject("qa_cards.html.tmpl", with_meta(links=nav("cards")), title, L))
+        put("scorecard", inject("scorecard.html.tmpl", with_meta(_index=slug + "_index.html"), title, L))
+        md_path = os.path.join(outdir, f"{slug}_guide.md")
+        wfile(md_path, md_guide(payload, L))
+        written.append(md_path)
+    if "weakness" in kinds:
+        put("weakness", pages.weakness_page(payload, L, lang, nav("weakness")))
+    if "resume" in kinds:
+        put("resume", pages.resume_page(payload, L, lang, nav("resume")))
+    if "jd" in kinds:
+        put("jd", pages.jd_page(payload, L, lang, nav("jd")))
+    return lang, written
+
+
 def main():
     if len(sys.argv) < 3:
         print("usage: python render.py <payload.json> <output_dir> [slug]"); sys.exit(1)
@@ -250,16 +397,10 @@ def main():
     slug = sys.argv[3] if len(sys.argv) > 3 else "interview"
     with io.open(payload_path, encoding="utf-8") as f:
         payload = json.load(f)
-    os.makedirs(outdir, exist_ok=True)
-    lang, L = resolve_labels(payload)
-    title = payload.get("meta", {}).get("title") or L["guide_title"]
-
-    wfile(os.path.join(outdir, f"{slug}_qa_cards.html"),  inject("qa_cards.html.tmpl",  payload, title, L))
-    wfile(os.path.join(outdir, f"{slug}_scorecard.html"), inject("scorecard.html.tmpl", payload, title, L))
-    wfile(os.path.join(outdir, f"{slug}_guide.md"),       md_guide(payload, L))
+    lang, written = render_all(payload, outdir, slug)
     print("wrote (lang=%s):" % lang)
-    for suff in ("_qa_cards.html", "_scorecard.html", "_guide.md"):
-        print("  " + os.path.join(outdir, slug + suff))
+    for path in written:
+        print("  " + os.path.abspath(path))
 
 if __name__ == "__main__":
     main()

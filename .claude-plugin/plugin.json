@@ -1,7 +1,7 @@
 {
   "name": "resume-grill",
   "displayName": "Resume Grill",
-  "description": "Grill a resume or CV into technical interview questions, model answers and a printable scorecard, for mock interviews, resume-based interviewing and checking resume claims. 简历拷打：根据简历生成技术面试指南、A4 评分卡和可折叠问答卡片，附逐问示范回答，用于模拟面试、面试官出题和简历疑点核验。",
+  "description": "Resume-based interview prep in four modes: grill a resume into technical interview questions with model answers and a printable scorecard, weakness analysis, resume optimization without invented facts, and job-description match; every result is linked HTML that exports to PDF. 简历拷打：面试拷打、弱点分析、简历优化、JD匹配四种模式，一句话启动，产物为可导出PDF的HTML。",
   "author": {
     "name": "Jincheng Zhang",
     "url": "https://github.com/JinChengZ18"
@@ -27,6 +27,12 @@
     "面试",
     "模拟面试",
     "面试题",
-    "评分卡"
+    "评分卡",
+    "resume-optimization",
+    "weakness-analysis",
+    "job-description",
+    "弱点分析",
+    "简历优化",
+    "JD匹配"
   ]
 }

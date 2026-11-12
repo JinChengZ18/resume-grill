@@ -116,6 +116,25 @@
   .hide{display:none}
   footer{font-size:12px;color:var(--soft);text-align:center;margin-top:24px}
   footer .brand{margin-top:4px;font-weight:600;color:var(--accent);opacity:.8;letter-spacing:.3px}
+  /* Print / Save as PDF: light colours, A4, every candidate and every answer shown. */
+  @media print{
+    :root{--bg:#fff; --card:#fff; --ink:#1c2430; --soft:#5b6675; --line:#d6dce4;
+      --accent:#2b4a7a; --accent-soft:#eef2f8;
+      --good:#1f7a3d; --good-bg:#eef7f0; --good-line:#bfe0c8;
+      --pass:#0f6ea3; --pass-bg:#eef6fb; --pass-line:#bfe0f0;
+      --tell:#a52424; --tell-bg:#fbeeee; --tell-line:#efc9c9;
+      --probe:#6a3fb0; --probe-bg:#f3eefb; --probe-line:#dbc9f0;
+      --ask-bg:#fbfaf4; --ask-line:#e8e0c4;}
+    @page{size:A4;margin:14mm 12mm}
+    html,body{background:#fff;font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    header.top{position:static;border:0;padding:0 0 6px}
+    #bar{display:none !important}
+    .wrap{max-width:none;padding:0}
+    section[data-sec].hide{display:block !important}
+    section[data-sec] + section[data-sec]{break-before:page}
+    .profile,.rung,.blk,.theme-followup,.ask{break-inside:avoid}
+    .card{box-shadow:none}
+  }
 </style>
 
 <header class="top"><div class="inner">
@@ -124,6 +143,7 @@
   <div class="bar" id="bar">
     <span id="tabs"></span>
     <button class="btn" id="toggleAll"></button>
+    <button class="btn" id="exportPdf"></button>
     <span class="links" id="links"></span>
   </div>
 </div></header>
@@ -221,4 +241,15 @@ tgl.addEventListener("click",()=>{
   document.querySelectorAll("details.ans, details.paired-answer").forEach(d=>d.open=open);
   tgl.textContent = open ? L.collapse_all : L.expand_all;
 });
+// Export PDF = the browser's print dialog ("Save as PDF"); answers are expanded while printing.
+const exp = document.getElementById("exportPdf");
+exp.textContent = L.export_pdf || "PDF";
+exp.title = L.export_pdf_hint || "";
+exp.addEventListener("click", ()=>window.print());
+let reopened = [];
+window.addEventListener("beforeprint", ()=>{
+  reopened = [];
+  document.querySelectorAll("details:not([open])").forEach(d=>{ d.open = true; reopened.push(d); });
+});
+window.addEventListener("afterprint", ()=>{ reopened.forEach(d=>{ d.open = false; }); reopened = []; });
 </script>

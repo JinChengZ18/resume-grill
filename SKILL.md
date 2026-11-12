@@ -1,11 +1,25 @@
 ---
 name: resume-grill
-description: Resume grill (简历拷打) — turns a resume or CV into a technical interview guide, a printable A4 scorecard and collapsible Q&A cards, with a spoken model answer for every question; supports 30/60/90-minute interviews or a full audit. Use it when someone wants to grill a resume, run a mock technical interview, predict interviewer follow-ups, or find weak and unverifiable resume claims, and when an interviewer wants questions and a scorecard built from a candidate's resume, even if the skill isn't named. Not for polishing, rewriting or translating a resume, tailoring it to a job description, or writing a cover letter. 简历拷打：根据简历生成技术面试指南、A4评分卡和问答卡片，每问附示范回答。用户发来简历（PDF、图片或文字）并要求拷打、深挖、追问、模拟面试、预测面试官会问什么、找简历疑点或核验简历真实性时使用；面试官要按候选人简历出题、准备结构化面试或现场评分卡时也用；即使没提技能名，只要是拿简历准备技术面试或出题就用。只想润色、改写、翻译简历，按JD改简历或写求职信时不用。
+description: Resume grill (简历拷打) — resume-based interview prep in four modes, each started with one sentence and refined through follow-ups in chat; results are linked HTML pages that export to PDF. Modes are grilling (interview guide, A4 scorecard and Q&A cards with model answers; 30/60/90 minutes or a full audit), weakness analysis, resume optimization (before/after rewrites that never invent facts) and job-description match. Use it when someone wants to grill a resume, run a mock interview, find weak claims, improve resume bullets, check fit against a JD, or build interview questions and a scorecard from a candidate's resume, even if the skill isn't named. Not for writing a resume from scratch, translating one, or cover letters. 简历拷打：面试拷打、弱点分析、简历优化（改前改后对照，不编造事实）、JD匹配四种模式，一句话启动，可继续追问，产物为互相链接、可导出PDF的HTML。用户发来简历并要求拷打、深挖、模拟面试、找弱点、优化或改写简历、对照JD看匹配，或面试官要按简历出题时使用；即使没提技能名也用。从零写简历、翻译简历或写求职信时不用。
 ---
 
 # 简历技术面试材料
 
-输出同目录三件套：`<slug>_guide.md`、`<slug>_scorecard.html`、`<slug>_qa_cards.html`。卡片与评分卡使用本地相对链接，附原简历副本；HTML自包含，评分卡支持本地保存和A4打印。材料语言默认跟随简历。真实强项与待确认事项都据实写，不为平衡而凑数量。
+产物全部是同目录、互相链接的自包含HTML，每批都有总入口`<slug>_index.html`，每页都能在浏览器打印窗口导出A4 PDF。面试拷打生成`<slug>_guide.html`（`<slug>_guide.md`为源文件）、`<slug>_qa_cards.html`、`<slug>_scorecard.html`；扩展模式生成`<slug>_weakness.html`、`<slug>_resume.html`、`<slug>_jd.html`。卡片与评分卡附原简历副本，评分卡支持本地保存。材料语言默认跟随简历。真实强项与待确认事项都据实写，不为平衡而凑数量。
+
+## 工作模式
+
+| 模式 | 一句话启动（示例） | 页面 |
+| --- | --- | --- |
+| 面试拷打（默认） | 「拷打这份简历」「根据简历出面试题」「全面审查这份简历」 | `_guide.html`、`_qa_cards.html`、`_scorecard.html` |
+| 弱点分析 | 「分析这份简历的弱点」「我的简历哪里会被问住」 | `_weakness.html` |
+| 简历优化 | 「帮我优化这份简历」「按面试标准改写简历」 | `_resume.html` |
+| JD匹配 | 「对照这个JD看看我的简历」，附JD文字或链接 | `_jd.html` |
+
+- 识别出模式就按默认设置直接完成，不先列计划征求确认；只有JD匹配缺少JD时，先请用户提供。未指明模式时，求职者自查类说法（「帮我看看简历有什么问题」）做弱点分析，其余按面试拷打处理。
+- 模式可以组合（「拷打并优化这份简历」「全套」），写入同一份载荷与同一`slug`。「全套」是面试拷打、弱点分析与简历优化，用户给了JD时再加JD匹配。
+- 追问：用户对已生成内容的追问或补充的事实，在原载荷上修改后以同一`slug`重新渲染，链接保持不变，回复中说明改了哪些条目。简历优化缺少关键事实时，把问题写进`resume_opt.questions`并在对话里一次问完；用户回答前照常给出带占位符的版本。
+- 扩展模式的内容规则、追问流程与schema见[扩展模式契约](reference/modes-spec.md)。下面的「内容取向」「时长与覆盖」主要针对面试拷打。
 
 ## 内容取向
 
@@ -27,6 +41,7 @@ description: Resume grill (简历拷打) — turns a resume or CV into a technic
 - 扫描件或图片用视觉读取；保留原图，链接标明截图，不伪称PDF。
 - 文本简历直接保存为`[{"file":"name","text":"..."}]`。
 - 将简历副本放在输出目录，`resume`用同目录相对文件名。不得公开发布候选人材料。
+- JD文字保存为`<work>/jd.txt`；用户给的是链接时，抓取正文后保存，并在`jd_match.jd_source`记录链接。
 
 ## 时长与覆盖
 
@@ -34,11 +49,13 @@ description: Resume grill (简历拷打) — turns a resume or CV into a technic
 
 ## 分析与渲染
 
-流程为Triage → 分域Probe → Author → Verify/Revise；问题库仅供选题，不能直接拼成最终散题。详细提示和schema见[流水线契约](reference/pipeline-spec.md)。`meta`包含`title/date/lang/minutes/depth/links`，候选人输入包含`id/label/role_hint/resume/resume_text`；日期取当前会话。`meta.links`仅放评分卡入口。
+流程为Triage → 分域Probe → Author → Verify/Revise；问题库仅供选题，不能直接拼成最终散题。详细提示和schema见[流水线契约](reference/pipeline-spec.md)。`meta`包含`title/date/lang/minutes/depth/links`，候选人输入包含`id/label/role_hint/resume/resume_text`；日期取当前会话。页面之间的导航由渲染器生成，`meta.links`只放额外的外部链接（可为空）。
 
 可用Workflow时运行`scripts/analyze.js`。无该运行时则按同一契约组织当前agent分析或使用`scripts/analyze_portable.py`；不要为了运行脚本擅自配置付费API。分域工作可由子agent执行，最终独立检查技术准确性、问题衔接、研究层次与逐问回答对应。参考回答不是唯一标准答案。
 
 最终载荷为`{"meta":{...},"candidates":{"A":{...}}}`。每张卡片包含`ladder[{level,q,answer}]`、`ask/ask_answer`、`probe/probe_answer`、`followups[{q,answer,when}]`以及单列的`pass/tell`；`good`保留给旧格式兼容。候选人级`probes[{tag,q,answer}]`仅容纳独立合作或材料问题。结构详见契约。
+
+扩展模式由当前agent按[扩展模式契约](reference/modes-spec.md)直接撰写`weakness`、`resume_opt`、`jd_match`，写入同一候选人对象；只做扩展模式时可以没有`cards`。
 
 运行：
 
@@ -46,14 +63,15 @@ description: Resume grill (简历拷打) — turns a resume or CV into a technic
 python SK/scripts/render.py <work>/payload.json <output_dir> <slug>
 ```
 
-渲染器直接把技术追问放入所属主题，并将示范回答放在对应问题下面。旧载荷可显示，但新增内容应使用逐问字段，不依赖输出后手改或项目私有渲染补丁。
+渲染器直接把技术追问放入所属主题，并将示范回答放在对应问题下面；它只为载荷中存在的部分生成页面，每次都重写总入口。旧载荷可显示，但新增内容应使用逐问字段，不依赖输出后手改或项目私有渲染补丁。
 
 ## 核验与返回
 
 - 内容检查：每问是否有清楚的讨论对象；是否承接主题；是否仍以岗位所需判断为主；是否一问对应一答；答案是否遗漏子问题或虚构经历。修改措辞时同时检查答案和评分提示。
 - 技术与事实检查：不同版本和口径先列待确认；不要把未搜索到当作不存在。按实际工具可用性核实一手资料，并把来源与局限写进指南。
 - 结构检查：Markdown与HTML中技术追问都位于对应主题内；独立事项不混入技术主题。折叠答案后仍能看见所有问题。
-- 页面检查：本地链接存在、没有远程依赖，评分保存与折叠有效；限时单人评分卡检查A4分页。对变更运行`scripts/test_render.py`（如存在），并用实际材料检查页面。
+- 页面检查：本地链接存在、没有远程依赖，评分保存与折叠有效；限时单人评分卡检查A4分页；导出PDF时答案全部展开，「只导出简历PDF」只含优化版简历。对变更运行`scripts/test_render.py`（如存在），并用实际材料检查页面。
+- 扩展模式检查：引用确实出自简历或JD；没有简历和对话之外的数字、职责、归属或日期，未知事实都是占位符（见[扩展模式契约](reference/modes-spec.md)的「核验」）。
 - 中文风格与禁用词按写作规范；跨语言输出运行`python SK/scripts/check_lang.py <work>/payload.json`。
 
-返回三件套的绝对路径链接，说明本次主要修改和实际验证范围。更新技能时同时对齐说明、生成提示/schema和渲染行为，不能只在文档末尾追加一条与原工作流冲突的规则。
+先返回总入口`<slug>_index.html`的绝对路径链接，再列本次生成或更新的页面；说明每页可导出PDF，以及本次主要修改和实际验证范围。更新技能时同时对齐说明、生成提示/schema和渲染行为，不能只在文档末尾追加一条与原工作流冲突的规则。

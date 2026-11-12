@@ -1,6 +1,6 @@
 {
   "name": "resume-grill",
-  "description": "Marketplace for resume-grill, resume-based technical interview prep. resume-grill（简历拷打）插件市场：根据简历生成技术面试题、示范回答和评分卡。",
+  "description": "Marketplace for resume-grill: resume grilling, weakness analysis, resume optimization and JD match. resume-grill（简历拷打）插件市场：面试拷打、弱点分析、简历优化与JD匹配。",
   "owner": {
     "name": "Jincheng Zhang",
     "url": "https://github.com/JinChengZ18"
@@ -16,7 +16,9 @@
         "mock-interview",
         "hiring",
         "简历",
-        "面试"
+        "面试",
+        "resume-optimization",
+        "jd-match"
       ]
     }
   ]
