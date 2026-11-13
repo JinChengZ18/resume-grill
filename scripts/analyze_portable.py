@@ -331,6 +331,68 @@ SINGLE = {'type': 'object',
                                                     'q': {'type': 'string'},
                                                     'answer': {'type': 'string'}}}}}}
 
+
+# ---- interviewer-kit fields (reference/pipeline-spec.md「KIT扩展」) ----
+LISTEN = {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['t', 'pass'],
+                                     'properties': {'t': {'type': 'string'}, 'pass': {'type': 'boolean'}}}}
+KIT_CARD = {
+    'prio': {'type': 'string', 'enum': ['must', 'opt', 'role']}, 'minutes': {'type': 'integer'},
+    'dims': {'type': 'array', 'items': {'type': 'string'}}, 'focus': {'type': 'string'},
+    'flags': {'type': 'array', 'items': {'type': 'string'}}, 'fallback': {'type': 'string'},
+    'transfer': {'type': 'string', 'enum': ['ask', 'L1', 'L2', 'none']},
+    'ask_when': {'type': 'string'}, 'probe_when': {'type': 'string'}, 'ask_listen': LISTEN, 'probe_listen': LISTEN,
+}
+KIT = {'type': 'object', 'additionalProperties': False,
+       'required': ['role', 'summary', 'decide', 'verify', 'notes', 'time_note', 'dims', 'rule', 'role_toggle',
+                    'next_round', 'opener_minutes', 'wrap_minutes', 'opener_listen', 'opener_flags'],
+       'properties': {
+           'role': {'type': 'string'}, 'summary': {'type': 'string'},
+           'decide': {'type': 'array', 'items': {'type': 'string'}},
+           'verify': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False, 'required': ['text', 'when'],
+                                                 'properties': {'text': {'type': 'string'}, 'when': {'type': 'string'}}}},
+           'notes': {'type': 'array', 'items': {'type': 'string'}}, 'time_note': {'type': 'string'},
+           'dims': {'type': 'array', 'items': {'type': 'object', 'additionalProperties': False,
+                                               'required': ['id', 'name', 'kind', 'from', 'a4', 'a3', 'a2', 'a1'],
+                                               'properties': {'id': {'type': 'string'}, 'name': {'type': 'string'},
+                                                              'kind': {'type': 'string', 'enum': ['core', 'ref', 'gate']},
+                                                              'from': {'type': 'array', 'items': {'type': 'string'}},
+                                                              'a4': {'type': 'string'}, 'a3': {'type': 'string'},
+                                                              'a2': {'type': 'string'}, 'a1': {'type': 'string'}}}},
+           'rule': {'type': 'object', 'additionalProperties': False, 'required': ['pass', 'fail', 'hold'],
+                    'properties': {'pass': {'type': 'string'}, 'fail': {'type': 'string'}, 'hold': {'type': 'string'}}},
+           'role_toggle': {'type': 'object', 'additionalProperties': False, 'required': ['dim', 'label'],
+                           'properties': {'dim': {'type': 'string'}, 'label': {'type': 'string'}}},
+           'next_round': {'type': 'array', 'items': {'type': 'string'}},
+           'opener_minutes': {'type': 'integer'}, 'wrap_minutes': {'type': 'integer'},
+           'opener_listen': LISTEN, 'opener_flags': {'type': 'array', 'items': {'type': 'string'}},
+       }}
+
+
+def _with_kit(card):
+    card['properties'].update(KIT_CARD)
+    card['required'] += [k for k in KIT_CARD if k not in card['required']]
+    for k in ('ladder', 'followups'):
+        it = card['properties'][k]['items']
+        it['properties']['listen'] = LISTEN
+        if 'listen' not in it['required']:
+            it['required'].append('listen')
+
+
+def _with_kit_output(schema):
+    _with_kit(schema['properties']['cards']['items'])
+    schema['properties']['kit'] = KIT
+    if 'kit' not in schema['required']:
+        schema['required'].append('kit')
+    it = schema['properties']['probes']['items']
+    it['properties']['listen'] = {'type': 'string'}
+    if 'listen' not in it['required']:
+        it['required'].append('listen')
+
+
+_with_kit(CARD)
+for _schema in (AUTHOR, SINGLE):      # REVISE is AUTHOR
+    _with_kit_output(_schema)
+
 # ---- pluggable model call ----
 def _load_custom():
     spec = os.environ.get("RG_LLM_CALL", "")
@@ -387,6 +449,17 @@ AUTHOR_RULES = (
     "probes仅收录独立合作安排或材料确认，每项tag、q、answer；技术问题不得散落在文末。"
     "HR转述不能变成事实或人格结论；把相关内容改成中性、可澄清的合作预期问题。"
 )
+KIT_RULES = (
+    "【面试官手册】问题要有水平有深度：从候选人本人的设计出发，问原则与取舍、失败归因、可证伪的评估、方法的适用边界；"
+    "不问命令、参数、指标复述和实现细节，除非它决定一个判断。有招聘方背景（meta.context）时，ask写成迁移情境题："
+    "把候选人的做法放到招聘方的真实难题中推演，题目先交代必要背景，考迁移推理，不考对方领域知识。"
+    "每道题里对方可能不懂的术语（AI术语对领域工程师、领域术语对AI候选人）第一次出现时用全角括号简短解释，含义模糊的说法也加括号说明。"
+    "ladder每项、ask、probe、followups各给listen（2到3条要听的点，pass=true为及格线，与示范回答一致但更短），ask_when/probe_when写选问条件；"
+    "flags写本主题的危险信号；prio为must/opt/role，minutes合计等于计划时长减去开场和收尾；dims引用kit.dims的id；transfer指出哪一问是迁移情境题。"
+    "kit给出：role、summary（一句话画像）、decide（这场面试要回答的2到3个问题）、verify（先核实的事项及在哪一问核实）、notes、time_note、"
+    "dims（3到5个能力维度，core/ref/gate，各写4/3/2/1分锚点，gate为表达与可信度）、rule（通过/不通过/待定的建议规则）、"
+    "role_toggle（无则dim与label为空串）、next_round、opener_minutes、wrap_minutes、opener_listen、opener_flags；probes每项写listen。"
+)
 VERIFY_RULES = (
     "独立审核完整面试内容与参考回答。检查问题层次是否匹配岗位，是否有研究意义、机制、替代路线、取舍与论据；"
     "检查人为二分、暗含结论、设套、不礼貌、空泛套话，以及用操作盘问取代主要判断。"
@@ -395,7 +468,14 @@ VERIFY_RULES = (
     "检查good/pass是否与口述示范分离，是否允许合理替代答案；HR仅作转述。"
     "检查技术追问是否归属原主题、文末probes是否仅独立合作安排/材料确认。"
     "只报实质问题；n填题号或字段路径。缺少外部来源时标明待核实，不能声称已完成外部事实确认。"
+    "另查面试官手册字段：琐碎的细节题是否可以换成原则、取舍或归因问题；对方可能不懂的术语是否加了括号解释；"
+    "listen是否与示范回答一致且至少有一条及格线；各主题minutes之和是否与计划一致；dims引用是否存在；迁移情境题是否交代了必要背景。"
 )
+CONTEXT = ""   # 招聘方背景（meta.context），main()设置
+
+
+def ctx_note():
+    return ("\n【招聘方背景】" + CONTEXT + "。迁移情境题把候选人的做法放到这个背景中的真实难题里推演，题目先交代必要背景。") if CONTEXT else ""
 
 def p_triage(rb, plan, dep, ncore):
     return (rb + "\n\n" + pacing_text(plan, ncore) +
@@ -425,19 +505,19 @@ def _mission_spec(n, plan, dep):
 def p_author(rb, tri, probes, n, plan, dep):
     bank = json.dumps({"triage": tri, "probes": probes}, ensure_ascii=False, indent=1)
     return (rb + "\n" + pacing_text(plan, n) + "\n分域材料：\n" + bank + "\n" +
-            _mission_spec(n, plan, dep) + _ladder_spec(dep) + AUTHOR_RULES)
+            _mission_spec(n, plan, dep) + _ladder_spec(dep) + AUTHOR_RULES + KIT_RULES + ctx_note())
 
 def p_single(rb, n, plan, dep):
     return (p_triage(rb, plan, dep, n) + "\n一次完成画像与核心主题设计。" +
-            _mission_spec(n, plan, dep) + _ladder_spec(dep) + AUTHOR_RULES)
+            _mission_spec(n, plan, dep) + _ladder_spec(dep) + AUTHOR_RULES + KIT_RULES + ctx_note())
 
 def p_verify(content, rb=""):
-    return VERIFY_RULES + "\n材料供归因核对：\n" + rb + "\n完整内容：\n" + json.dumps(content, ensure_ascii=False, indent=1)
+    return VERIFY_RULES + ctx_note() + "\n材料供归因核对：\n" + rb + "\n完整内容：\n" + json.dumps(content, ensure_ascii=False, indent=1)
 
 def p_revise(content, corrections, rb=""):
     return ("按审核意见修订受影响的问题、逐问示范与判分，不得只改good/pass而遗留错误问题。"
-            "保持题号和主题归属；必要时将技术尾部题迁回相应followups。返回完整cards与probes。"
-            "未受影响内容保持原意，修改后检查每问回答与题意一致。" + AUTHOR_RULES +
+            "保持题号和主题归属；必要时将技术尾部题迁回相应followups。返回完整cards、probes与kit。"
+            "未受影响内容保持原意，修改后检查每问回答与题意一致。" + AUTHOR_RULES + KIT_RULES + ctx_note() +
             "\n原材料：\n" + rb + "\n内容：\n" + json.dumps(content, ensure_ascii=False, indent=1) +
             "\n审核：\n" + json.dumps(corrections, ensure_ascii=False, indent=1))
 
@@ -452,6 +532,7 @@ def analyze_one(c, ncore, single, lang, plan):
         cards = s.get("cards", [])
         tri = s
         probes = s.get("probes", [])
+        kit = s.get("kit")
     else:
         tri = call_llm(role, p_triage(rb, plan, dep, ncore), TRIAGE)
         probes = []
@@ -463,6 +544,7 @@ def analyze_one(c, ncore, single, lang, plan):
         authored = call_llm(role, p_author(rb, tri, probes, ncore, plan, dep), AUTHOR)
         cards = authored.get("cards", [])
         probes = authored.get("probes", [])
+        kit = authored.get("kit")
     # fact-check + revise
     factcheck = None
     if cards:
@@ -470,20 +552,21 @@ def analyze_one(c, ncore, single, lang, plan):
             ver = call_llm(
                 ROLE_BASE + "\n\n【输出语言】"
                 + directive(lang),
-                p_verify({"cards": cards, "probes": probes}, rb), VERIFY)
+                p_verify({"cards": cards, "probes": probes, "kit": kit}, rb), VERIFY)
             factcheck = ver.get("verdict")
             if ver.get("corrections"):
-                rev = call_llm(role, p_revise({"cards": cards, "probes": probes}, ver["corrections"], rb), REVISE)
+                rev = call_llm(role, p_revise({"cards": cards, "probes": probes, "kit": kit}, ver["corrections"], rb), REVISE)
                 if rev.get("cards"):
                     cards = rev["cards"]
                     probes = rev["probes"]
+                    kit = rev.get("kit") or kit
         except Exception as e:
             sys.stderr.write("verify skipped: %s\n" % e)
     return {"id": c.get("id"), "cand": {
         "name": c.get("label") or c.get("id"), "resume": c.get("resume") or None,
         "profile": tri.get("profile"), "ruler": tri.get("ruler"),
         "strengths": tri.get("strengths"), "flags": tri.get("flags"),
-        "opener": tri.get("opener"), "cards": cards, "probes": probes,
+        "opener": tri.get("opener"), "cards": cards, "probes": probes, "kit": kit,
         "_factcheck": factcheck}}
 
 
@@ -525,6 +608,7 @@ def main():
                     help="显式指定深度档位（覆盖 --minutes 推导）。ultra=全面审查：不限时、穷尽简历所有疑点")
     ap.add_argument("--single", action="store_true", help="单调回退：一次调用产出全部")
     ap.add_argument("--ncore", type=int, default=0, help="显式指定核心题数量（覆盖 --minutes 推导出的数量）")
+    ap.add_argument("--context", default="", help="招聘方背景，例如“用AI做数字芯片后端设计的团队”；写入meta.context，用于迁移情境题")
     a = ap.parse_args()
 
     meta, cands, items = {}, [], None
@@ -553,6 +637,10 @@ def main():
         meta["date"] = a.date
     meta["lang"] = lang
     meta["plan"] = plan
+    if a.context:
+        meta["context"] = a.context
+    global CONTEXT
+    CONTEXT = meta.get("context") or ""
 
     scope = "ultra/self-check, exhaustive" if plan["depth"] == "ultra" \
         else "%dmin, %d questions, %s" % (plan["minutes"], ncore, plan["depth"])

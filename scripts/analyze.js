@@ -110,6 +110,8 @@ function directive(lang){
   return `Write ALL output — every field, question, level label, and answer key — in the language with ISO code "${lang}". The résumé may be written in a different language: translate any phrase you cite from it into that language, and never reproduce the résumé's original script. Keep it natural and idiomatic.`
 }
 const LANGNOTE = `【输出语言】${directive(LANG)}`
+const CONTEXT = (A.meta && A.meta.context) || A.context || ''
+const CTXNOTE = CONTEXT ? `【招聘方背景】${CONTEXT}。迁移情境题把候选人的做法放到这个背景中的真实难题里推演，题目先交代必要背景。` : ''
 
 const ROLE = "你是公正而有技术判断力的资深面试官。根据岗位与经历选择评价层次：研究及高级岗位优先讨论研究意义、机制、替代路线、取舍、证据与适用边界；工程岗位围绕真实任务的设计判断与结果。具体上下文不等于操作盘问，不能用命令、参数或指标核对取代主要问题。问题礼貌、开放、可讨论，不设套、不预设注水、动机或人格结论；材料差异是待澄清信息。HR评价仅作有来源的转述，转成合作预期的中性问题。肯定有依据的强项，诚实限定已知范围是正面信号；合理替代路线同样得分。避免空泛套话与人为二分，允许第三条路线及任务依赖的答案。每问的示范回答须可以直接口述，回答该问并说明理由；示范不是候选人真实经历，不编造其贡献、实验、数值或承诺。需要实例时明确标为假设示例，不用占位符绕过核心推理。good/pass只写面试官判分依据，与示范回答分离。所有技术追问就近归入原主题的probe或followups，不在文末堆放技术题；probes仅用于独立合作安排或材料确认。"
 
@@ -483,6 +485,56 @@ const AUTHOR = {
     }
   }
 }
+// ---- interviewer-kit fields (reference/pipeline-spec.md「KIT扩展」) ----
+// Every question carries what to listen for (pass:true = pass line); themes carry priority, minutes,
+// dimensions, danger signals and selection conditions; the candidate carries the kit briefing/scoring data.
+const LISTEN = {type:'array', items:{type:'object', additionalProperties:false, required:['t','pass'],
+  properties:{t:{type:'string'}, pass:{type:'boolean'}}}}
+const KIT_CARD = {
+  prio:{type:'string', enum:['must','opt','role']}, minutes:{type:'integer'},
+  dims:{type:'array', items:{type:'string'}}, focus:{type:'string'},
+  flags:{type:'array', items:{type:'string'}}, fallback:{type:'string'},
+  transfer:{type:'string', enum:['ask','L1','L2','none']},
+  ask_when:{type:'string'}, probe_when:{type:'string'}, ask_listen:LISTEN, probe_listen:LISTEN,
+}
+function withKit(card){
+  Object.assign(card.properties, KIT_CARD)
+  for (const k of Object.keys(KIT_CARD)) if (!card.required.includes(k)) card.required.push(k)
+  for (const k of ['ladder','followups']) {
+    const it = card.properties[k].items
+    it.properties.listen = LISTEN
+    if (!it.required.includes('listen')) it.required.push('listen')
+  }
+  return card
+}
+withKit(CARD); withKit(AUTHOR.properties.cards.items)
+const KIT = {type:'object', additionalProperties:false,
+  required:['role','summary','decide','verify','notes','time_note','dims','rule','role_toggle','next_round',
+            'opener_minutes','wrap_minutes','opener_listen','opener_flags'],
+  properties:{
+    role:{type:'string'}, summary:{type:'string'},
+    decide:{type:'array', items:{type:'string'}},
+    verify:{type:'array', items:{type:'object', additionalProperties:false, required:['text','when'],
+      properties:{text:{type:'string'}, when:{type:'string'}}}},
+    notes:{type:'array', items:{type:'string'}}, time_note:{type:'string'},
+    dims:{type:'array', items:{type:'object', additionalProperties:false,
+      required:['id','name','kind','from','a4','a3','a2','a1'],
+      properties:{id:{type:'string'}, name:{type:'string'}, kind:{type:'string', enum:['core','ref','gate']},
+        from:{type:'array', items:{type:'string'}}, a4:{type:'string'}, a3:{type:'string'}, a2:{type:'string'}, a1:{type:'string'}}}},
+    rule:{type:'object', additionalProperties:false, required:['pass','fail','hold'],
+      properties:{pass:{type:'string'}, fail:{type:'string'}, hold:{type:'string'}}},
+    role_toggle:{type:'object', additionalProperties:false, required:['dim','label'],
+      properties:{dim:{type:'string'}, label:{type:'string'}}},
+    next_round:{type:'array', items:{type:'string'}},
+    opener_minutes:{type:'integer'}, wrap_minutes:{type:'integer'},
+    opener_listen:LISTEN, opener_flags:{type:'array', items:{type:'string'}},
+  }}
+AUTHOR.properties.kit = KIT
+if (!AUTHOR.required.includes('kit')) AUTHOR.required.push('kit')
+{ const it = AUTHOR.properties.probes.items
+  it.properties.listen = {type:'string'}
+  if (!it.required.includes('listen')) it.required.push('listen') }
+
 const VERIFY = {
   "type": "object",
   "additionalProperties": false,
@@ -531,7 +583,8 @@ const VERIFY = {
 }
 
 const AUTHOR_RULES = "各题围绕一个具体项目背景和重要判断组织，避免只是把通用问题换上项目名。研究及高级岗位由意义与问题进入路线取舍，再用ask讨论开放推演、竞争解释、证据或边界；其他岗位匹配其实际设计职责，不能一律降为底层操作核对。每问只推进一个主要判断，不堆砌多个考试点。ladder每项给answer，ask给ask_answer，probe给probe_answer；这些都是直接回答对应问题的可口述示范，说明观点、理由和边界；good/pass另写判分维度，不能用评分要点冒充逐问回答。允许不同研究路线，不把一种示范设成唯一答案。不虚构候选人事实；需要例子则明确标为假设，且完成推理。probe是主题主线的顺势追问（可空）；followups只放根据回答选用的额外技术分支，不重复ladder、ask或probe，每项含q、answer、when。when说明何时值得选问，followups可为空，不凑数；没有必要的probe时probe与probe_answer都为空串。probes仅收录独立合作安排或材料确认，每项tag、q、answer；技术问题不得散落在文末。HR转述不能变成事实或人格结论；把相关内容改成中性、可澄清的合作预期问题。"
-const VERIFY_RULES = "独立审核完整面试内容与参考回答。检查问题层次是否匹配岗位，是否有研究意义、机制、替代路线、取舍与论据；检查人为二分、暗含结论、设套、不礼貌、空泛套话，以及用操作盘问取代主要判断。逐问检查ladder.answer、ask_answer、probe_answer、followups[].answer、probes[].answer是否直接回答对应问题，是否技术正确、逻辑成立、边界准确，是否编造候选人经历、数字、贡献或承诺。假设示例应明确标注。检查good/pass是否与口述示范分离，是否允许合理替代答案；HR仅作转述。检查技术追问是否归属原主题、文末probes是否仅独立合作安排/材料确认。只报实质问题；n填题号或字段路径。缺少外部来源时标明待核实，不能声称已完成外部事实确认。"
+const KIT_RULES = "【面试官手册】问题要有水平有深度：从候选人本人的设计出发，问原则与取舍、失败归因、可证伪的评估、方法的适用边界；不问命令、参数、指标复述和实现细节，除非它决定一个判断。有招聘方背景（meta.context）时，ask写成迁移情境题：把候选人的做法放到招聘方的真实难题中推演，题目先交代必要背景，考迁移推理，不考对方领域知识。每道题里对方可能不懂的术语（AI术语对领域工程师、领域术语对AI候选人）第一次出现时用全角括号简短解释，含义模糊的说法（如“这条线”“上限”）也加括号说明。ladder每项、ask、probe、followups各给listen（2到3条要听的点，pass=true为及格线，与示范回答一致但更短），ask_when/probe_when写选问条件；flags写本主题的危险信号；prio为must/opt/role，minutes合计等于计划时长减去开场和收尾；dims引用kit.dims的id；transfer指出哪一问是迁移情境题。kit给出：role（岗位）、summary（一句话画像）、decide（这场面试要回答的2到3个问题）、verify（先核实的事项及在哪一问核实）、notes、time_note、dims（3到5个能力维度，core/ref/gate，各写4/3/2/1分锚点，gate为表达与可信度）、rule（通过/不通过/待定的建议规则）、role_toggle（无则dim与label为空串）、next_round、opener_minutes、wrap_minutes、opener_listen、opener_flags；probes每项写listen。"
+const VERIFY_RULES = "独立审核完整面试内容与参考回答。检查问题层次是否匹配岗位，是否有研究意义、机制、替代路线、取舍与论据；检查人为二分、暗含结论、设套、不礼貌、空泛套话，以及用操作盘问取代主要判断。逐问检查ladder.answer、ask_answer、probe_answer、followups[].answer、probes[].answer是否直接回答对应问题，是否技术正确、逻辑成立、边界准确，是否编造候选人经历、数字、贡献或承诺。假设示例应明确标注。检查good/pass是否与口述示范分离，是否允许合理替代答案；HR仅作转述。检查技术追问是否归属原主题、文末probes是否仅独立合作安排/材料确认。只报实质问题；n填题号或字段路径。缺少外部来源时标明待核实，不能声称已完成外部事实确认。另查面试官手册字段：是否有琐碎的细节题（命令、参数、指标复述）可以换成原则、取舍或归因问题；对方可能不懂的术语是否加了括号解释；listen是否与示范回答一致且至少有一条及格线；各主题minutes之和是否与计划一致；dims引用是否存在；迁移情境题是否交代了必要背景。"
 async function analyzeOne(c){
   const resume = `候选人 ${c.label||c.id}｜岗位线索：${c.role_hint||'（未指定）'}\n简历正文：\n---\n${c.resume_text||''}\n---`
   const tri = await agent(`${ROLE}\n${resume}\n${PACING}\n通读材料，给出有依据的画像、岗位标尺、强项与待澄清事项，不估算包装比例、不预设嫌疑。开场邀请选择参与深入的问题展开。提炼贴合项目的主题，每域focus写重要问题、机制、路线选择和证据边界。主题建议${DEPTH.domains}个，不为数量重复。${ULTRA ? ULTRA_CHECKLIST : ''}\n${LANGNOTE}`,
@@ -547,21 +600,21 @@ async function analyzeOne(c){
   const mission = ULTRA
     ? `按主题覆盖全部重要主张，按Q1、Q2编号，不设题数配额。${ULTRA_CHECKLIST}`
     : `组织恰好${NCORE}道核心主题题，按Q1..Q${NCORE}编号，每题约${PLAN.perQuestion}分钟，追问选用。`
-  const authored = await agent(`${ROLE}\n${resume}\n${PACING}\n分域材料：\n${JSON.stringify({triage:tri,probes})}\n${mission}${ladderSpec}${AUTHOR_RULES}\n${LANGNOTE}`,
+  const authored = await agent(`${ROLE}\n${resume}\n${PACING}\n分域材料：\n${JSON.stringify({triage:tri,probes})}\n${mission}${ladderSpec}${AUTHOR_RULES}${KIT_RULES}\n${CTXNOTE}\n${LANGNOTE}`,
     {label:`author:${c.id}`, phase:'Author', schema:AUTHOR, effort:'high'})
   if(!authored) return null
-  const ver = await agent(`${ROLE}\n${VERIFY_RULES}\n材料供归因核对：\n${resume}\n完整内容：\n${JSON.stringify(authored)}\n${LANGNOTE}`,
+  const ver = await agent(`${ROLE}\n${VERIFY_RULES}\n${CTXNOTE}\n材料供归因核对：\n${resume}\n完整内容：\n${JSON.stringify(authored)}\n${LANGNOTE}`,
     {label:`verify:${c.id}`, phase:'Verify', schema:VERIFY, effort:'high'})
   let content = authored
   if(ver && (ver.corrections||[]).length){
-    const revised = await agent(`${ROLE}\n按审核意见修订受影响的问题、逐问示范与判分，不得只改good/pass而遗留错误问题。保持题号和主题归属；必要时把技术尾部题迁回相应followups。返回完整cards与probes。未受影响内容保持原意，检查每问回答与题意一致。${AUTHOR_RULES}\n原材料：\n${resume}\n内容：\n${JSON.stringify(authored)}\n审核：\n${JSON.stringify(ver.corrections)}\n${LANGNOTE}`,
+    const revised = await agent(`${ROLE}\n按审核意见修订受影响的问题、逐问示范与判分，不得只改good/pass而遗留错误问题。保持题号和主题归属；必要时把技术尾部题迁回相应followups。返回完整cards、probes与kit。未受影响内容保持原意，检查每问回答与题意一致。${AUTHOR_RULES}${KIT_RULES}\n原材料：\n${resume}\n内容：\n${JSON.stringify(authored)}\n审核：\n${JSON.stringify(ver.corrections)}\n${LANGNOTE}`,
       {label:`revise:${c.id}`, phase:'Verify', schema:AUTHOR, effort:'high'})
-    if(revised && revised.cards && revised.cards.length) content = revised
+    if(revised && revised.cards && revised.cards.length) content = {...revised, kit: revised.kit || authored.kit}
   }
   return {id:c.id, cand:{
     name:c.label||c.id, resume:c.resume||null,
     profile:tri.profile, ruler:tri.ruler, strengths:tri.strengths, flags:tri.flags,
-    opener:tri.opener, cards:content.cards, probes:content.probes,
+    opener:tri.opener, cards:content.cards, probes:content.probes, kit:content.kit||null,
     _factcheck:ver ? ver.verdict : null
   }}
 }

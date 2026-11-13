@@ -1,7 +1,7 @@
 {
   "name": "resume-grill",
   "displayName": "Resume Grill",
-  "description": "Resume-based interview prep in four modes: grill a resume into technical interview questions with model answers and a printable scorecard, weakness analysis, resume optimization without invented facts, and job-description match; every result is linked HTML that exports to PDF. 简历拷打：面试拷打、弱点分析、简历优化、JD匹配四种模式，一句话启动，产物为可导出PDF的HTML。",
+  "description": "Resume-based interview prep in four modes: grill a resume into a per-candidate interviewer kit (briefing, deep questions with what to listen for and folded model answers, scoring and a review draft), weakness analysis, resume optimization without invented facts, and job-description match; every result is a self-contained HTML page that exports to PDF. 简历拷打：面试拷打（每位候选人一份面试官手册）、弱点分析、简历优化、JD匹配四种模式，一句话启动，产物为可导出PDF的HTML。",
   "author": {
     "name": "Jincheng Zhang",
     "url": "https://github.com/JinChengZ18"
@@ -33,6 +33,8 @@
     "job-description",
     "弱点分析",
     "简历优化",
-    "JD匹配"
+    "JD匹配",
+    "interviewer-kit",
+    "面试官手册"
   ]
 }

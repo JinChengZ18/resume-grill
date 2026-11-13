@@ -43,6 +43,7 @@ Writes with UTF-8 + LF endings (Windows-safe). No third-party deps.
 import json, sys, os, io, re
 
 import pages
+import kit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TMPL = os.path.join(os.path.dirname(HERE), "templates")
@@ -91,6 +92,8 @@ LABELS = {
         "audit_lead": "全面审查 · 不限时｜逐一覆盖简历中的全部疑点（亦可用于面试前自我排查）",
         # navigation, PDF export and the batch index
         "export_pdf": "⤓ 导出PDF", "export_pdf_hint": "在打印窗口选择「另存为PDF」",
+        "nav_kit": "☑ 面试官手册",
+        "desc_kit": "每位候选人一页：面试前速览，面试中逐题提问（要听的点和折叠的示范回答紧跟在题下），面试后按维度打分并生成面评草稿",
         "nav_index": "⌂ 总入口", "nav_guide": "▤ 面试指南", "nav_cards": "☰ 问答卡片",
         "nav_scorecard": "▦ 评分卡", "nav_weakness": "▲ 弱点分析", "nav_resume": "✎ 简历优化", "nav_jd": "◎ JD匹配",
         "index_title": "面试准备材料总入口",
@@ -159,6 +162,8 @@ LABELS = {
         "audit_lead": "Full audit · untimed — covers every doubt in the résumé (also for pre-interview self-check)",
         # navigation, PDF export and the batch index
         "export_pdf": "⤓ Export PDF", "export_pdf_hint": "Choose “Save as PDF” in the print dialog",
+        "nav_kit": "☑ Interviewer kit",
+        "desc_kit": "One page per candidate: a briefing before, every question with what to listen for and a folded model answer during, dimension scoring and a review draft after",
         "nav_index": "⌂ Index", "nav_guide": "▤ Interview guide", "nav_cards": "☰ Q&A cards",
         "nav_scorecard": "▦ Scorecard", "nav_weakness": "▲ Weakness analysis", "nav_resume": "✎ Résumé optimization",
         "nav_jd": "◎ JD match",
@@ -342,23 +347,39 @@ def plan_leads(payload, L):
     return leads
 
 
+LEGACY_VIEWS = ("guide", "cards", "scorecard")
+
+
 def render_all(payload, outdir, slug):
-    """Write every page the payload supports; return (lang, written paths, index first)."""
+    """Write every page the payload supports; return (lang, written paths, index first).
+
+    Grilling content (cards) renders as one self-contained interviewer kit per candidate
+    (`<slug>_kit_<id>.html`) plus `<slug>_guide.md` as a plain-text archive. The older guide,
+    Q&A cards and scorecard pages are written only when meta.views asks for them."""
     os.makedirs(outdir, exist_ok=True)
     lang, L = resolve_labels(payload)
     meta = payload.get("meta", {})
     cands = payload.get("candidates", {})
     title = meta.get("title") or L["guide_title"]
+    views = set(meta.get("views") or ())
 
-    present = [a for a in ARTIFACTS if a[4] is None or any(d.get(a[4]) for d in cands.values())]
+    present = [a for a in ARTIFACTS
+               if (a[4] is None or any(d.get(a[4]) for d in cands.values()))
+               and (a[0] not in LEGACY_VIEWS or a[0] in views)]
     artifacts = [dict(kind=k, href=slug + suf, label=L[lk], desc=L[dk] if dk else "", key=key)
                  for k, suf, lk, dk, key in present]
+    kit_hrefs = {cid: kit.kit_filename(slug, cid) for cid, d in cands.items() if d.get("cards")}
+    if kit_hrefs:
+        artifacts.insert(1, dict(kind="kit", href=next(iter(kit_hrefs.values())), href_by_cid=kit_hrefs,
+                                 label=L["nav_kit"], desc=L["desc_kit"], key="cards"))
     # Hand-written links to our own pages (any slug) are superseded by the generated nav.
     own_suffixes = tuple(a[1] for a in ARTIFACTS) + ("_guide.md",)
-    extra = [l for l in (meta.get("links") or []) if not str(l.get("href", "")).endswith(own_suffixes)]
+    extra = [l for l in (meta.get("links") or []) if not str(l.get("href", "")).endswith(own_suffixes)
+             and "_kit_" not in str(l.get("href", ""))]
 
     def nav(kind):
-        return [dict(label=a["label"], href=a["href"]) for a in artifacts if a["kind"] != kind] + extra
+        return [dict(label=a["label"], href=a["href"]) for a in artifacts
+                if a["kind"] not in (kind, "kit")] + extra
 
     def with_meta(**kw):
         p = dict(payload)
@@ -374,13 +395,20 @@ def render_all(payload, outdir, slug):
 
     kinds = {a["kind"] for a in artifacts}
     put("index", pages.index_page(payload, L, lang, nav("index"), artifacts))
-    if "cards" in kinds:
-        put("guide", pages.guide_page(payload, L, lang, nav("guide"), plan_leads(payload, L)))
-        put("cards", inject("qa_cards.html.tmpl", with_meta(links=nav("cards")), title, L))
-        put("scorecard", inject("scorecard.html.tmpl", with_meta(_index=slug + "_index.html"), title, L))
+    for cid, href in kit_hrefs.items():
+        path = os.path.join(outdir, href)
+        wfile(path, kit.kit_page(payload, cid, cands[cid], lang, slug, outdir))
+        written.append(path)
+    if kit_hrefs:
         md_path = os.path.join(outdir, f"{slug}_guide.md")
         wfile(md_path, md_guide(payload, L))
         written.append(md_path)
+    if "guide" in kinds:
+        put("guide", pages.guide_page(payload, L, lang, nav("guide"), plan_leads(payload, L)))
+    if "cards" in kinds:
+        put("cards", inject("qa_cards.html.tmpl", with_meta(links=nav("cards")), title, L))
+    if "scorecard" in kinds:
+        put("scorecard", inject("scorecard.html.tmpl", with_meta(_index=slug + "_index.html"), title, L))
     if "weakness" in kinds:
         put("weakness", pages.weakness_page(payload, L, lang, nav("weakness")))
     if "resume" in kinds:

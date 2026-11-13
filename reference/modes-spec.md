@@ -1,6 +1,6 @@
 # 扩展模式契约：弱点分析、简历优化、JD匹配
 
-三种扩展模式与面试拷打共用同一份`payload.json`和渲染器。每位候选人可以带有`cards`（面试拷打）、`weakness`、`resume_opt`、`jd_match`中的任意组合，`scripts/render.py`只为载荷中存在的部分生成页面，并在每批生成`<slug>_index.html`总入口。三种扩展模式由当前agent按本契约直接撰写载荷，再按「核验」一节自查；`analyze.js`与`analyze_portable.py`只实现面试拷打流水线。
+三种扩展模式与面试拷打共用同一份`payload.json`和渲染器。每位候选人可以带有`cards`（面试拷打）、`weakness`、`resume_opt`、`jd_match`中的任意组合，`scripts/render.py`只为载荷中存在的部分生成页面，并在每批生成`<slug>_index.html`总入口；面试拷打为每位候选人生成一个面试官手册`<slug>_kit_<id>.html`。三种扩展模式由当前agent按本契约直接撰写载荷，再按「核验」一节自查；`analyze.js`与`analyze_portable.py`只实现面试拷打流水线。
 
 | 模式 | 载荷字段 | 页面 | 一句话启动示例 |
 | --- | --- | --- | --- |

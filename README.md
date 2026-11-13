@@ -2,15 +2,15 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-**Resume-based interview prep, for candidates and interviewers.** Grill a resume into a technical interview with model answers and a printable scorecard, find its weak points, optimize it without inventing facts, or check it against a job description. Each mode starts with one sentence, takes follow-up questions in the chat, and produces linked HTML pages that export to PDF.
+**Resume-based interview prep, for candidates and interviewers.** Grill a resume into an interviewer kit with deep questions, model answers and live scoring, find its weak points, optimize it without inventing facts, or check it against a job description. Each mode starts with one sentence, takes follow-up questions in the chat, and produces self-contained HTML pages that export to PDF.
 
 ```bash
 npx skills add JinChengZ18/resume-grill
 ```
 
-In its default grilling mode, this Agent Skill turns resumes into an interview guide, a printable scorecard, and collapsible Q&A cards. Questions form project-based themes, with follow-ups kept inside their parent theme and a spoken sample response below each question. Scoring cues are separate. For research and senior roles, discussion emphasizes significance, alternative approaches, tradeoffs, and evidence. Output language follows the resume. Runs in Claude Code, Codex, claude.ai, and other agents that read `SKILL.md`.
+In its default grilling mode, this Agent Skill turns each resume into an interviewer kit: one self-contained page organized as before, during and after the interview. Questions form project-based themes that ask about principles, trade-offs, failure attribution and evaluation rather than trivia; each question is followed directly by what to listen for (pass line marked) and a folded spoken model answer, with no jump links. Tell it about the hiring team (for example “we use AI for digital chip back-end design”) and each theme gets a situational question that moves the candidate’s approach into that setting, with unfamiliar terms explained in parentheses. After the interview, score each dimension against 4/3/2/1 anchors and generate a review draft. For research and senior roles, discussion emphasizes significance, alternative approaches, tradeoffs, and evidence. Output language follows the resume. Runs in Claude Code, Codex, claude.ai, and other agents that read `SKILL.md`.
 
-> This repository includes a **fully anonymized** demo resume for a fictional candidate, "Zhang San", applying for an Agent / AI Infra role with 2 years of experience. Start from the [index](examples/agent_engineer_demo/agent_engineer_demo_index.html), or open a page directly: [interview guide](examples/agent_engineer_demo/agent_engineer_demo_guide.html), [Q&A cards](examples/agent_engineer_demo/agent_engineer_demo_qa_cards.html), [scorecard](examples/agent_engineer_demo/agent_engineer_demo_scorecard.html), [weakness analysis](examples/agent_engineer_demo/agent_engineer_demo_weakness.html), [resume optimization](examples/agent_engineer_demo/agent_engineer_demo_resume.html), and [JD match](examples/agent_engineer_demo/agent_engineer_demo_jd.html) (against a sample JD written for the demo). Open the HTML files in a browser.
+> This repository includes a **fully anonymized** demo resume for a fictional candidate, "Zhang San", applying for an Agent / AI Infra role with 2 years of experience. Start from the [index](examples/agent_engineer_demo/agent_engineer_demo_index.html), or open a page directly: [interviewer kit](examples/agent_engineer_demo/agent_engineer_demo_kit_A.html), [weakness analysis](examples/agent_engineer_demo/agent_engineer_demo_weakness.html), [resume optimization](examples/agent_engineer_demo/agent_engineer_demo_resume.html), and [JD match](examples/agent_engineer_demo/agent_engineer_demo_jd.html) (against a sample JD written for the demo). Open the HTML files in a browser.
 
 
 
@@ -18,12 +18,12 @@ In its default grilling mode, this Agent Skill turns resumes into an interview g
 
 | Mode | Start it with one sentence | Pages |
 | --- | --- | --- |
-| Grill (default) | "grill this resume", "interview questions from this resume", "full audit of this resume" | `_guide.html`, `_qa_cards.html`, `_scorecard.html` |
+| Grill (default) | "grill this resume", "interview questions from this resume", "full audit of this resume" | `_kit_<id>.html` (one interviewer kit per candidate) |
 | Weakness analysis | "what are the weak points in my resume", "where will interviewers push back" | `_weakness.html` |
 | Resume optimization | "optimize my resume", "rewrite my resume bullets for interviews" | `_resume.html` |
 | JD match | "check my resume against this JD", with the JD text or link | `_jd.html` |
 
-- **Candidates** grill their own resume before an interview, see where an interviewer is likely to push, and fix weak metrics, unclear ownership and timeline gaps in advance. **Interviewers** generate a 30/60/90-minute structured technical interview from a candidate's resume, with a model answer and scoring cues for each question and an A4 scorecard for live scoring.
+- **Candidates** grill their own resume before an interview, see where an interviewer is likely to push, and fix weak metrics, unclear ownership and timeline gaps in advance. **Interviewers** generate a 30/60/90-minute structured technical interview from a candidate's resume, with what to listen for and a folded model answer under each question, a timer, dimension scoring and a review draft.
 - **Follow-ups**: ask about any item ("how should I answer W2?", "rewrite the first job for a backend role", "here are my real numbers") and the same pages are updated in place, so the links stay valid. Resume optimization asks you for missing facts in one go and never invents numbers; unknown facts stay highlighted as placeholders until you supply them.
 - **Combine modes** in one sentence, such as "grill and optimize this resume" or "the full set" (grilling, weakness analysis and optimization, plus JD match when you give a JD).
 - Chinese requests work the same way: 「拷打这份简历」「分析这份简历的弱点」「帮我优化简历」「对照这个JD看看我的简历」.
@@ -42,18 +42,17 @@ In its default grilling mode, this Agent Skill turns resumes into an interview g
 
 **2. Use it** by opening a fresh session in the agent, dragging a resume PDF into the conversation, and saying one of the sentences above, such as "grill this resume". For multiple candidates, drag in all resumes together. The agent ingests the files into the workspace, runs the pipeline, and returns local links starting with the index page, so you do not have to hunt through folders.
 
-Outputs are written to `workspace/output/<slug>/`, where `<slug>_index.html` links every page. Each page has an **Export PDF** button, which opens the browser's print dialog; choose "Save as PDF".
+Outputs are written to `workspace/output/<slug>/`, where `<slug>_index.html` lists every page; each interviewer kit also works as a single file. Each page has an **Export PDF** button, which opens the browser's print dialog; choose "Save as PDF".
 
 
 
 ## Outputs
 
-All pages are written to the same directory, link to each other with local relative paths, and are fully self-contained, so they open directly via `file://`. They print to A4, with collapsed answers expanded automatically.
+All pages are written to the same directory and are fully self-contained, so they open directly via `file://` and print to A4.
 
-- **Index** `<slug>_index.html`: every page for every candidate, one click away.
-- **Interview guide** `<slug>_guide.html`: profile, strengths, points to clarify, and coherent project themes with questions, paired sample responses, local follow-ups, and separate scoring cues. `<slug>_guide.md` keeps the same guide as Markdown source.
-- **Live scorecard** `<slug>_scorecard.html`: one A4 page per candidate for timed interviews, with locally saved scores. Full-audit mode may span multiple pages.
-- **Q&A cards** `<slug>_qa_cards.html`: candidate tabs and collapsible responses. Technical follow-ups stay within their theme, and hiding answers keeps all questions visible.
+- **Index** `<slug>_index.html`: every page for every candidate.
+- **Interviewer kit** `<slug>_kit_<id>.html`, one per candidate, with no links to other pages. *Before*: a one-line profile (yardstick and profile folded), the questions this interview must answer, what to verify and where, the time plan, strengths and notes; the resume is embedded. *During*: the opener, each theme and the wrap-up; every question is followed by what to listen for (★ = pass line, tickable) and a folded model answer, situational questions and probes show when to ask them, and each theme ends with danger signals and a notes box. *After*: score each dimension 4/3/2/1, see the suggested verdict, and generate a review draft from your ticks and notes. Long text is folded; the header has a timer, Expand all and Export PDF, and printing outputs only what is expanded. Ticks and notes stay in your browser.
+- `<slug>_guide.md` keeps the full content as plain text. The older interview guide, Q&A cards and A4 scorecard are still available: add `"views": ["guide", "cards", "scorecard"]` to `meta`.
 - **Weakness analysis** `<slug>_weakness.html`: weak points ordered by severity, each with the resume quote, how an interviewer reads it, likely follow-ups with model answers, and a fix.
 - **Resume optimization** `<slug>_resume.html`: the facts the agent still needs from you, before/after rewrites with reasons, and an optimized resume that exports on its own as a clean PDF.
 - **JD match** `<slug>_jd.html`: requirement-by-requirement status with resume evidence, keyword coverage, a plan for each gap, and likely interview questions. There is no made-up overall score; statuses are counted instead.
@@ -88,7 +87,7 @@ After installation, open a fresh session in that agent and trigger it naturally,
 
 ## Languages
 
-Output language is detected by default and follows the resume: Chinese resumes produce Chinese materials, English resumes produce English materials, including the UI labels in the scorecard and cards. To force a language, ask the agent to output in English, or pass `--lang en` in script mode. Supported values are `zh`, `en`, an ISO language code, or `auto`. The UI shell has built-in Chinese and English labels. For other languages, the main content uses that language while UI labels fall back to English. To add another UI language, add an entry to `LABELS` in `scripts/render.py`.
+Output language is detected by default and follows the resume: Chinese resumes produce Chinese materials, English resumes produce English materials, including the UI labels in the interviewer kit and other pages. To force a language, ask the agent to output in English, or pass `--lang en` in script mode. Supported values are `zh`, `en`, an ISO language code, or `auto`. The UI shell has built-in Chinese and English labels. For other languages, the main content uses that language while UI labels fall back to English. To add another UI language, add an entry to `LABELS` in `scripts/render.py`.
 
 
 
@@ -135,6 +134,7 @@ resume-grill/
     analyze_portable.py        Runtime-neutral reference orchestration plus --single fallback
     render.py                  payload.json to linked HTML pages, zero dependencies, with UI i18n
     pages.py                   Index, HTML guide, weakness, resume and JD pages
+    kit.py                     Interviewer kit, one self-contained page per candidate
     install.py                 Cross-platform installer for agent skills directories
   templates/                   Self-contained HTML templates and shared page.css
   reference/

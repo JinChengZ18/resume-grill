@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>面试官手册 · 候选人A</title>
+<style>
+/* Shared stylesheet for the static pages written by scripts/pages.py.
+   It is inlined into every page so each file stays self-contained (file:// works). */
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --ink:#1c2430; --soft:#5b6675; --line:#e2e7ee;
+  --accent:#2b4a7a; --accent-soft:#eef2f8;
+  --good:#1f7a3d; --good-bg:#eef7f0; --good-line:#bfe0c8;
+  --warn:#9a5b00; --warn-bg:#fdf5e6; --warn-line:#f0d9a8;
+  --bad:#a52424; --bad-bg:#fbeeee; --bad-line:#efc9c9;
+  --probe:#6a3fb0; --probe-bg:#f3eefb; --probe-line:#dbc9f0;
+  --quote-bg:#fbfaf4; --quote-line:#e8e0c4;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#12161c; --card:#1b212a; --ink:#e6ebf2; --soft:#9aa6b4; --line:#2b333e;
+    --accent:#7fa8e0; --accent-soft:#22303f;
+    --good:#7fce97; --good-bg:#17281c; --good-line:#2c4a34;
+    --warn:#f0c070; --warn-bg:#2b2416; --warn-line:#54452a;
+    --bad:#ef9a9a; --bad-bg:#2a1818; --bad-line:#523030;
+    --probe:#c3a3ef; --probe-bg:#221a30; --probe-line:#3f2f57;
+    --quote-bg:#211f16; --quote-line:#463f27;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px 48px}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
+  padding:14px 16px 8px;margin:0 0 8px}
+header.top .inner{max-width:960px;margin:0 auto}
+h1{font-size:19px;margin:0 0 2px;color:var(--accent)}
+.sub{font-size:12.5px;color:var(--soft);margin:0 0 8px}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.links{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px}
+.links a{color:var(--accent);text-decoration:none}
+.links a:hover{text-decoration:underline}
+.tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--soft);
+  padding:6px 12px;border-radius:20px;font-size:12.5px;cursor:pointer}
+.btn:hover{color:var(--ink)}
+.btn.primary{border-color:var(--accent);color:var(--accent);font-weight:600}
+.toc{font-size:13px;margin:10px 0;display:flex;gap:12px;flex-wrap:wrap}
+.toc a{color:var(--accent)}
+section.cand{margin:16px 0 28px}
+.cand-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 0 8px}
+.cand-h h2{font-size:18px;margin:0;color:var(--accent)}
+.rlink{font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);
+  border-radius:14px;padding:2px 9px;white-space:nowrap}
+h3.sec{font-size:15.5px;margin:22px 0 8px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.panel p{margin:0 0 8px}
+.panel p:last-child{margin-bottom:0}
+.lead{font-size:14px}
+.ruler{font-size:13px;background:var(--accent-soft);border-left:3px solid var(--accent);
+  padding:8px 12px;border-radius:0 6px 6px 0;margin:8px 0}
+ul.plain,ol.plain{margin:6px 0 0;padding-left:20px;font-size:14px}
+ul.plain li,ol.plain li{margin:4px 0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{display:inline-block;font-size:12.5px;font-weight:600;border:1px solid var(--line);border-radius:14px;
+  padding:2px 10px;background:var(--card);color:var(--soft)}
+.chip.high,.chip.gap{color:var(--bad);border-color:var(--bad-line);background:var(--bad-bg)}
+.chip.medium,.chip.partial{color:var(--warn);border-color:var(--warn-line);background:var(--warn-bg)}
+.chip.low,.chip.met{color:var(--good);border-color:var(--good-line);background:var(--good-bg)}
+.chip.kw{font-weight:500}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:14px 0;
+  overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card.high{border-left:4px solid var(--bad)}
+.card.medium{border-left:4px solid var(--warn)}
+.card.low{border-left:4px solid var(--good)}
+.card-h{display:flex;gap:10px;align-items:flex-start;padding:12px 16px 4px}
+.badge{flex:none;background:var(--accent);color:#fff;font-weight:700;font-size:12.5px;padding:2px 9px;border-radius:7px;margin-top:2px}
+.card-h h4{margin:0;font-size:15px;line-height:1.45;min-width:0}
+.card-b{padding:4px 16px 12px}
+.anchor{display:inline-block;font-weight:600;font-size:11px;color:var(--soft);background:var(--accent-soft);
+  border:1px solid var(--line);border-radius:10px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+.k{display:block;font-weight:700;font-size:11.5px;letter-spacing:.3px;color:var(--accent);margin:10px 0 3px}
+.k.bad{color:var(--bad)} .k.good{color:var(--good)} .k.probe{color:var(--probe)} .k.warn{color:var(--warn)}
+blockquote.q{margin:6px 0;padding:8px 12px;background:var(--quote-bg);border:1px solid var(--quote-line);
+  border-radius:8px;font-size:14px}
+.rung{font-size:14px;padding:8px 12px;margin:6px 0;background:var(--accent-soft);border:1px solid var(--line);border-radius:8px}
+.rung .lv{display:inline-block;font-weight:700;color:var(--accent);font-size:11px;margin-right:6px}
+.fu{padding:8px 12px;border-left:3px solid var(--probe);background:var(--probe-bg);border-radius:6px;margin:8px 0;font-size:14px}
+.fu p{margin:4px 0}
+.when{font-size:12px;color:var(--soft)}
+details.fold{margin:6px 0 2px;padding:7px 12px;background:var(--good-bg);border:1px solid var(--good-line);border-radius:6px;font-size:14px}
+details.fold>summary{cursor:pointer;color:var(--good);font-weight:600}
+details.fold p{margin:6px 0 2px}
+.blk{border:1px solid;border-radius:8px;padding:9px 12px;margin:8px 0;font-size:14px}
+.blk ul{margin:4px 0 0;padding-left:18px}
+.blk.good{background:var(--good-bg);border-color:var(--good-line)}
+.blk.bad{background:var(--bad-bg);border-color:var(--bad-line)}
+.blk.warn{background:var(--warn-bg);border-color:var(--warn-line)}
+.blk.probe{background:var(--probe-bg);border-color:var(--probe-line)}
+.blk .bt{font-weight:700;font-size:11.5px;letter-spacing:.3px;margin-bottom:4px}
+.blk.good .bt{color:var(--good)} .blk.bad .bt{color:var(--bad)} .blk.warn .bt{color:var(--warn)} .blk.probe .bt{color:var(--probe)}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}
+.ba>div{border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+.ba .before{background:var(--bad-bg);border-color:var(--bad-line)}
+.ba .after{background:var(--good-bg);border-color:var(--good-line)}
+.ba .k{margin-top:0}
+@media (max-width:640px){.ba{grid-template-columns:1fr}}
+table.req{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border:1px solid var(--line)}
+table.req th,table.req td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+table.req thead th{background:var(--accent-soft);color:var(--ink);font-size:12px}
+table.req td ul{margin:0;padding-left:16px}
+table.req td p{margin:0 0 6px}
+table.req td p:last-child,.card-b p:last-child,.blk p:last-child{margin-bottom:0}
+.card-b p{margin:4px 0 8px}
+.blk p{margin:2px 0 6px}
+table.req .id{white-space:nowrap;font-weight:700;color:var(--accent)}
+mark.tbd{background:#fff3b0;color:#5a4500;border-radius:3px;padding:0 2px}
+.notice{font-size:13px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-line);
+  border-radius:8px;padding:7px 12px;margin:8px 0}
+code{font-family:"Cascadia Code",Consolas,monospace;font-size:.92em;background:var(--accent-soft);padding:0 3px;border-radius:3px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:10px 0}
+a.tile{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  text-decoration:none;color:var(--ink)}
+a.tile:hover{border-color:var(--accent)}
+a.tile .tl{display:block;font-weight:700;color:var(--accent);margin-bottom:3px}
+a.tile .td{display:block;font-size:13px;color:var(--soft)}
+a.tile .tf{display:block;font-size:11.5px;color:var(--soft);margin-top:6px;font-family:"Cascadia Code",Consolas,monospace}
+/* The optimized resume is shown as a white sheet in both themes, like the printed page. */
+.paper{background:#fff;color:#1c2430;border:1px solid #d6dce4;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.08);
+  max-width:210mm;margin:14px auto;padding:16mm 15mm;font-size:13.5px;line-height:1.5}
+.paper .pn{font-size:24px;font-weight:700;margin:0;color:#1c2430}
+.paper .ph{font-size:14px;color:#2b4a7a;margin:2px 0}
+.paper .pc{font-size:12.5px;color:#5b6675;margin:0 0 6px}
+.paper h5{font-size:13px;letter-spacing:.5px;color:#2b4a7a;border-bottom:1.5px solid #2b4a7a;margin:14px 0 6px;padding-bottom:2px}
+.paper .entry{margin:6px 0 8px}
+.paper .eh{display:flex;justify-content:space-between;gap:12px;font-weight:600}
+.paper .eh>span:first-child{min-width:0}
+.paper .eo{font-weight:400;color:#5b6675}
+.paper .ep{flex:none;max-width:45%;text-align:right;font-weight:400;color:#5b6675}
+.paper ul{margin:3px 0 0;padding-left:18px}
+.paper li{margin:2px 0}
+footer.foot{font-size:12px;color:var(--soft);text-align:center;margin:24px 0}
+footer.foot .brand{font-weight:600;color:var(--accent);opacity:.8;letter-spacing:.3px}
+@media print{
+  :root{
+    --bg:#fff; --card:#fff; --ink:#1c2430; --soft:#5b6675; --line:#d6dce4;
+    --accent:#2b4a7a; --accent-soft:#eef2f8;
+    --good:#1f7a3d; --good-bg:#eef7f0; --good-line:#bfe0c8;
+    --warn:#9a5b00; --warn-bg:#fdf5e6; --warn-line:#f0d9a8;
+    --bad:#a52424; --bad-bg:#fbeeee; --bad-line:#efc9c9;
+    --probe:#6a3fb0; --probe-bg:#f3eefb; --probe-line:#dbc9f0;
+    --quote-bg:#fbfaf4; --quote-line:#e8e0c4;
+  }
+  @page{size:A4;margin:14mm 12mm}
+  html,body{background:#fff;font-size:11pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header.top{position:static;border:0;padding:0 0 6px}
+  .noprint{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .card,.blk,.fu,.rung,.ba,a.tile,tr,.paper .entry,blockquote.q{break-inside:avoid}
+  h3.sec,.cand-h{break-after:avoid}
+  section.cand + section.cand{break-before:page}
+  a{color:inherit;text-decoration:none}
+  .card{box-shadow:none}
+  .paper{box-shadow:none;border:0;margin:0 auto;padding:0;max-width:none}
+  body.print-resume header.top,body.print-resume footer.foot,body.print-resume .toc{display:none !important}
+  body.print-resume section.cand>*:not(.paper){display:none !important}
+}
+
+.phase{display:flex;align-items:baseline;gap:12px;margin:26px 0 6px;flex-wrap:wrap}
+.phase h2{font-size:19px;margin:0;color:var(--accent)}
+.phase .hint{font-size:12.5px;color:var(--soft);flex:1;min-width:260px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.grid2>.panel{margin:0}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+h3.s2{font-size:14.5px;margin:0 0 6px;color:var(--ink)}
+.small{font-size:12.5px;color:var(--soft)}
+.dl{margin:8px 0 0}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+table.t th{font-size:12px;color:var(--soft);font-weight:600;white-space:nowrap}
+table.t td.num{white-space:nowrap;color:var(--soft)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:10px;padding:1px 8px;white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--soft)}
+.tag.must,.tag.core{background:var(--bad-bg);color:var(--bad);border-color:var(--bad-line)}
+.tag.opt{background:var(--accent-soft);color:var(--accent)}
+.tag.role,.tag.gate{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-line)}
+.tag.dim{background:var(--good-bg);color:var(--good);border-color:var(--good-line)}
+details.fold{margin:6px 0}
+details.fold>summary,details.ans>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--accent);list-style-position:inside}
+details.fold>.body{font-size:13.5px;margin-top:6px}
+details.resume img,details.resume object{width:100%;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+details.resume object{height:80vh}
+.qb{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px 14px;margin:14px 0}
+.qb.now{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.qb>h3{font-size:16.5px;margin:0 0 4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qn{font-weight:800;color:var(--accent)}
+.sum{margin-left:auto;font-size:12px;font-weight:600;color:var(--good)}
+.focus{font-size:13px;color:var(--soft);margin:2px 0 4px}
+.anchor{font-size:12.5px;color:var(--soft);background:var(--quote-bg);border-left:3px solid var(--quote-line);padding:4px 8px;border-radius:0 6px 6px 0}
+.sq{border-top:1px dashed var(--line);padding:12px 0 4px;margin-top:8px}
+.sqh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lv{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:0 8px;white-space:nowrap}
+.lv.ask{color:var(--probe);background:var(--probe-bg)}
+.cond{font-size:12px;color:var(--probe);font-weight:600}
+.askd{margin-left:auto;font-size:12.5px;color:var(--soft);display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+.mainq{font-size:15.5px;font-weight:600;margin:6px 0 6px;line-height:1.6}
+.lbl{font-size:12px;font-weight:700;color:var(--soft);margin:6px 0 2px}
+ul.chk{list-style:none;margin:0;padding:0}
+ul.chk li{margin:2px 0}
+ul.chk label{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+ul.chk input{margin-top:4px;flex:none}
+.star{color:var(--good);font-weight:800}
+ul.flag label{color:var(--bad)}
+details.ans{background:var(--good-bg);border:1px solid var(--good-line);border-radius:8px;padding:6px 11px;margin:8px 0 4px}
+details.ans[open]>summary{margin-bottom:4px}
+details.ans>.body{font-size:14px;line-height:1.65}
+.expect{font-size:13.5px;margin:6px 0 0}
+.tail{border-top:1px solid var(--line);margin-top:10px;padding-top:6px}
+.fb{font-size:12.5px;color:var(--warn);margin:8px 0 0}
+textarea.note,textarea.memo{width:100%;border:1px dashed var(--line);border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:13.5px;padding:6px 8px;resize:vertical;margin-top:8px}
+textarea.note{min-height:46px}
+textarea.memo{min-height:280px;border-style:solid}
+.dimrow{border-top:1px solid var(--line);padding:10px 0}
+.dimrow:first-child{border-top:0;padding-top:0}
+.dimh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14.5px}
+.auto{font-size:12px;color:var(--good);margin:3px 0}
+.anchors label{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:3px 0;cursor:pointer}
+.anchors b{min-width:12px}
+.suggest{font-weight:700;color:var(--accent);margin:6px 0}
+.verdict{display:flex;gap:18px;font-size:14.5px;flex-wrap:wrap}
+.verdict label,.toggle{cursor:pointer}
+.toggle{font-size:13.5px;display:flex;gap:8px;align-items:flex-start;margin:4px 0 8px}
+.tools2{display:flex;gap:8px;flex-wrap:wrap}
+.clock{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent);font-size:13px}
+.seg{font-size:12px;color:var(--soft)}
+@media print{
+  .noprint,.tools2,.sum,details.resume{display:none!important}
+  details:not([open]){display:none!important}
+  details>summary{list-style:none}
+  #during,#after{break-before:page}
+  .qb[data-seg]:not([data-seg="OP"]){break-before:page}
+  .sq{break-inside:avoid}
+  .qb>h3,.focus{break-after:avoid}
+  .qb.now{box-shadow:none;border-color:var(--line)}
+  textarea.note{min-height:15mm;border:1px solid #c9d1db}
+  textarea.memo{min-height:60mm;border:1px solid #c9d1db}
+  .grid2{grid-template-columns:1fr 1fr}
+  #before{font-size:9.6pt}
+  #before .phase{margin:4px 0}
+  #before .panel{padding:7px 10px;margin:6px 0}
+  #before .grid2{gap:8px;margin:6px 0}
+  #before table.t{font-size:8.8pt}
+  #before table.t td,#before table.t th{padding:2px 4px}
+  #before ul.plain,#before ol.plain{font-size:9.4pt}
+  #before ul.plain li,#before ol.plain li{margin:2px 0}
+}
+</style>
+</head>
+<body data-key="agent_engineer_demo:A">
+<header class="top"><div class="inner"><h1>面试官手册 · 候选人A</h1><div class="sub">对抗性技术面试 · Agent 开发工程师（示例）｜60分钟｜2026-07-10</div><nav class="bar noprint"><span class="tools"><span class="clock" id="clock">00:00</span><span class="seg" id="seg"></span><button class="btn" id="timerBtn">开始计时</button><button class="btn" id="expandBtn">展开全部</button><button class="btn primary" id="printBtn" title="打印时只输出已展开的内容">导出PDF</button></span></nav></div></header>
+<main class="wrap">
+<section id="before"><div class="phase"><h2>面试前</h2><span class="hint">开场前花5分钟读完这一部分</span></div><div class="panel"><p class="lead"><b>候选人A · Agent 开发工程师（2年）</b></p><details class="fold"><summary>标尺（点开查看）</summary><div class="body"><p>按&quot;初级 / 近应届 + 单一强项方向&quot;衡量，而非 2 年中级。关键事实：真实全职工程仅 Sahara AI 一段约 8 个月(2025-09~2026-05)；Capisoft(2024-12~2025-06)与绿盟实习(2024-07~2024-09)均处于硕士就读期(2022-09~2025-08)，属兼职研究/暑期实习。评估应聚焦&quot;Gateway/可观测性这一段是否真做深&quot;，而非项目数量；对项目二、项目三按&quot;参与度存疑&quot;打折。</p></div></details><details class="fold"><summary>画像与可信度（点开查看）</summary><div class="body"><p>候选人主线清晰：北邮物联网本科 + 阿姆斯特丹大学大数据工程硕士，落点在 AI Infra / Agent 后端，简历有一条真实且对口的生产级 LLM Gateway 经历(Sahara AI 的 Exec-Layer)，这是加分主轴。整体可信度中上：难得地几乎没有堆砌&quot;提升 X%&quot;式注水指标，成果多为定性描述，相对诚实；但&quot;2 年经验&quot;存在明显水分——真正全职工程仅 Sahara 约 8 个月，其余两段都落在硕士就读窗口内(兼职研究/暑期实习)。真本事约六成(Gateway 与可观测性这块像真做过)，包装约四成(项目二通篇&quot;参与&quot;、项目三学术术语密集但无评测口径)。总体应按初级偏应届来衡量，重点戳其 Gateway 域的原理深度与 ownership 边界。</p></div></details></div><div class="grid2"><div class="panel"><h3 class="s2">先核实的事项</h3><table class="t"><tr><th>事项</th><th>时机</th></tr><tr><td>&#x27;Agent 开发工程师(2年)&#x27;注水：真实全职工程仅 Sahara AI 约 8 个月，Capisoft 与绿盟均落在硕士就读窗口(2022-09~2025-08)内，多为兼职研究/暑期实习。&#x27;2 年&#x27;是把在校经历与实习拼进去凑出来的，须按初级/近应届校准。</td><td class="num"></td></tr><tr><td>项目二 Sorin 通篇&#x27;参与开发&#x27;&#x27;参与部署&#x27;&#x27;参与...上线&#x27;&#x27;参与 Cloud Run 运行维护&#x27;，几乎找不到第一人称 owner 动词——典型的团队项目蹭经历写法，需逼问他到底独立写了哪几个 Agent Tool、哪些代码是他的。</td><td class="num"></td></tr><tr><td>项目三术语堆叠但零评测口径：&#x27;结构相似度/语义相关性/噪声抗性&#x27;多维评估机制、&#x27;基于队列的 HTML 分层解析算法&#x27;听起来学术，却没有任何数据集、样本量、准确率或对照——高度疑似概念包装，须让其给出每个指标的具体计算定义和真实评测数字。</td><td class="num"></td></tr><tr><td>技能栈与项目对不上：个人技能列了 Redis、ClickHouse，但三个项目实际出现的数据库是 PostgreSQL、InfluxDB。Redis/ClickHouse 是真在生产用过还是&#x27;了解过&#x27;需当场戳穿。</td><td class="num"></td></tr><tr><td>Exec-Layer 是标准 LLM Gateway，与开源 LiteLLM 高度重合：需确认是自研网关还是基于 LiteLLM 等二次开发。诚实说&#x27;基于开源改&#x27;是加分，含糊其辞把开源能力说成自建是减分。</td><td class="num"></td></tr></table></div><div class="panel"><h3 class="s2">时间安排（60分钟）</h3><table class="t"><tr><th>分钟</th><th>内容</th><th>时长</th><th>优先级</th></tr><tr><td class="num">0–5</td><td>开场</td><td class="num">5分钟</td><td>—</td></tr><tr><td class="num">5–13</td><td>Q1 LLM 网关</td><td class="num">8分钟</td><td><span class="tag must">必问</span></td></tr><tr><td class="num">13–21</td><td>Q2 可观测性</td><td class="num">8分钟</td><td><span class="tag must">必问</span></td></tr><tr><td class="num">21–29</td><td>Q3 异步阻塞隔离与 Cloud Run 长请求</td><td class="num">8分钟</td><td><span class="tag must">必问</span></td></tr><tr><td class="num">29–37</td><td>Q4 Agent Skill 模块化与金融数字防幻觉</td><td class="num">8分钟</td><td><span class="tag must">必问</span></td></tr><tr><td class="num">37–45</td><td>Q5 Selector 评估三指标与回放命中验证</td><td class="num">8分钟</td><td><span class="tag opt">视时间</span></td></tr><tr><td class="num">45–53</td><td>Q6 云原生 ownership</td><td class="num">8分钟</td><td><span class="tag opt">视时间</span></td></tr><tr><td class="num">53–60</td><td>收尾</td><td class="num">7分钟</td><td>—</td></tr></table></div></div><div class="grid2"><div class="panel"><h3 class="s2">简历里的优势</h3><ul class="plain"><li>真实生产级 LLM Gateway 经历，与 AI Infra 岗位高度对口(项目一 Exec-Layer)：OpenAI 风格 Auth/API Key、多 Provider 统一转发、Token Usage 与推理成本统计、QPS 监控——这正是当前稀缺且直接相关的网关/基建方向，是简历最硬的加分项。</li><li>罕见地没有堆砌注水百分比：三个项目的&#x27;项目成果&#x27;几乎全是定性描述(如&#x27;提升可观测性&#x27;&#x27;支撑生产流量&#x27;)，没有编造&#x27;节省 65%&#x27;&#x27;提升 28%&#x27;式无基线指标，相对诚实，减少了戳穿成本。</li><li>多处工程动作具体且可核验：Datadog→Signoz 迁移、生产环境 Memory Leak 与 Runtime Stability 修复、Pytest 单测/集成测试——这些不是纯概念词，能在追问中快速验证真假。</li><li>工具链现代且成体系：Pytest、Poetry、UV、FastAPI 异步、K8s、Cloud Run、Signoz/Langfuse 可观测，符合后端基建岗审美，说明日常工程环境是真在这套栈里。</li><li>项目三若属实有一定系统设计深度：用 chunk/分层解析绕过 LLM context window、LLM 生成 CSS Selector 并做多维评估、template engine 生成可执行爬虫——体现 LLM 应用工程化思路(需靠追问确认是否只停在概念)。</li></ul></div><div class="panel"><h3 class="s2">注意事项</h3><p class="small dl"><b>评分维度：</b>D1 LLM 网关：流式 Token 计量与成本核算（核心）；D2 可观测性：高基数指标与 OTel 采集链路（核心）；D3 异步阻塞隔离与 Cloud Run 长请求（核心）；D4 Agent Skill 模块化与金融数字防幻觉（核心）；D5 Selector 评估三指标与回放命中验证（参考）；D6 云原生 ownership：探针配置与密钥管理（参考）；D7 表达与可信度（门槛）。评分标准和结论规则在“面试后”部分。</p></div></div></section><section id="during"><div class="phase"><h2>面试中</h2><span class="hint">L1、L2由浅入深；情境题和追问按条件选问。每道题下面是要听的点（★为及格线），示范回答折叠在其后，点开即看。勾选和记录自动保存在本机浏览器。</span></div><div class="qb" data-seg="OP"><h3><span class="qn">开场</span>时间线、可展示性与 ownership 核对<span class="tag">5分钟</span><span class="sum" id="sum-OP"></span></h3><ol class="plain"><li>你的&#x27;2 年&#x27;经验具体怎么构成？Sahara(2025-09~2026-05)是全职吗，实际几个月？Capisoft 那段(2024-12~2025-06)是在阿姆斯特丹读硕士期间的兼职/研究，还是全职？每周投入多少小时？</li><li>三个项目里，哪个是你端到端 owner、哪个只是团队里参与一部分？以 Exec-Layer 为例：整套网关是你一个人从零搭的，还是接手/团队协作？你独占负责的是哪几个模块？</li><li>项目二 Sorin 全是&#x27;参与&#x27;，具体说：你亲手写了哪几个 Agent Tool？分析加密货币/股票数据的那部分逻辑是你的还是别人的？</li><li>这些项目里哪些代码现在可展示或开源可看(比如 Exec-Layer 是不是 LiteLLM fork)？能否现场画出 Exec-Layer 的请求链路图并指出你写的部分？</li><li>Datadog→Signoz 迁移是你主导还是配合？迁移前后你具体改了哪些采集/上报代码？</li></ol><p class="expect"><b>期望：</b>能清楚区分&#x27;我独立做的&#x27;与&#x27;团队做我参与的&#x27;，主动坦白 Sahara 才是唯一全职、其余是在校兼职/实习；对 Exec-Layer 能讲出请求链路和自己负责的模块；坦承是否基于 LiteLLM。诚实降级(如&#x27;这块是基于开源改的&#x27;&#x27;那部分主要是同事写的&#x27;)是强信号。</p><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="OP:R0"><span>把&#x27;参与&#x27;一律说成&#x27;我做的&#x27;、回避全职月数、把在校兼职说成正式工作年限、Exec-Layer 讲不清链路细节、被问 LiteLLM 时含糊，都是露馅信号。</span></label></li></ul><textarea class="note" data-k="note:OP" placeholder="记录"></textarea></div></div><div class="qb" id="Q1" data-seg="Q1"><h3><span class="qn">Q1</span>LLM 网关：流式 Token 计量与成本核算<span class="tag must">必问</span><span class="tag">8分钟</span><span class="tag dim">D1 LLM 网关：流式 Token 计量与成本核算</span><span class="sum" id="sum-Q1"></span></h3><details class="fold"><summary>简历原文</summary><div class="body"><div class="anchor">项目一 Exec-Layer「建立 QPS、Token Usage、Inference Cost 监控」「多 Provider 统一转发」</div></div></details><div class="sq"><div class="sqh"><span class="lv">L1 项目切入</span></div><p class="mainq">一个请求从进入 Exec-Layer 到把上游响应返回给客户端，整条链路经过哪些环节？其中哪几块是你亲自写的、哪几块是团队既有的？</p><div class="lbl">要听的点（<span class="star">★</span>为及格线）</div><ul class="chk"><li><label><input type="checkbox" data-k="Q1:S0:L0"><span><span class="star">★</span> 知道流式要边收边转、断连需 cancel 上游</span></label></li><li><label><input type="checkbox" data-k="Q1:S0:L1"><span><span class="star">★</span> 知道 OpenAI 需 stream_options.include_usage，或说得出无 usage 时的兜底估算办法</span></label></li><li><label><input type="checkbox" data-k="Q1:S0:L2"><span><span class="star">★</span> 承认自估与 provider 账单有偏差、最终以 provider usage/账单为准</span></label></li><li><label><input type="checkbox" data-k="Q1:S0:L3"><span><span class="star">★</span> 定价按请求当时单价快照、历史账单不被调价改写</span></label></li><li><label><input type="checkbox" data-k="Q1:S0:L4"><span><span class="star">★</span> 区分 QPS 限流与 token 预算限流的本质差异</span></label></li></ul></div><div class="sq"><div class="sqh"><span class="lv">L2 设计决策</span></div><p class="mainq">用户级限流你限的是 QPS（请求数）还是 Token 预算？这两者实现完全不同，你们实际限哪个、为什么，计数落在 Redis 还是 Postgres？</p></div><div class="sq"><div class="sqh"><span class="lv ask">情境题</span><span class="cond">前两问答得扎实再问</span><label class="askd"><input type="checkbox" data-k="Q1:S2:A">已问</label></div><p class="mainq">流式（SSE）转发下你怎么把 Token Usage 算准并计费——OpenAI 流里默认不带 usage、非 OpenAI 兼容 provider 干脆不给 usage、客户端流到一半断连，这三种情况分别怎么处理？推理成本又怎么按请求发生当时的价格算、而不被后来的调价追溯改写？</p></div><div class="sq"><div class="sqh"><span class="lv ask">追问</span><span class="cond">上一问答得好再追问</span><label class="askd"><input type="checkbox" data-k="Q1:S3:A">已问</label></div><p class="mainq">你们内部统计的 token 成本和月底 provider 的真实账单差多少？这个差异你怎么归因和收敛，最终以谁的数出账给用户？</p></div><details class="ans"><summary>期望的优质回答（点开查看）</summary><div class="body"><ul class="plain"><li>流式必须用 async generator/StreamingResponse 边收边转，不能缓冲全部再吐；客户端断连要主动 cancel 上游请求，否则连接与成本泄漏</li><li>OpenAI 流默认无 usage，需显式传 stream_options:{include_usage:true} 才在末帧给出；拿不到就按累积 chunk 文本用对应 tokenizer 估算并标注为估算值</li><li>各家 tokenizer 不同，tiktoken 只对 OpenAI 系准，Anthropic/Gemini 编码空间不同；input 侧还有 chat 模板、tool schema、多模态的隐藏 token，自估与账单有系统性偏差，务实做法以 provider 回传 usage 为准</li><li>Token 预算限流难点在 output token 事前不可知，须先预扣（reserve）再按真实 usage 结算（reconcile）；QPS 限流才是简单的固定/滑动窗口计数</li><li>计数放 Redis 做原子操作（INCR+过期/Lua 脚本/sorted set 滑窗），Postgres 只落最终账单；并发下 check-then-act 竞态用原子原语防超额透支</li><li>定价表带生效时间戳/版本，按请求发生时间取当时单价并把单价快照进账单记录，含 cached prompt 折扣价、input/output 分开计价、模型别名映射到计价 SKU</li><li>断连场景要明确且前后一致的计费口径（按已收到 token 计，或明确不计费）</li></ul></div></details><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="Q1:R0"><span>说「把流收完再统一返回」（等于没做流式）</span></label></li><li><label><input type="checkbox" data-k="Q1:R1"><span>张口「tiktoken 一律能算」不知各家 tokenizer 不同</span></label></li><li><label><input type="checkbox" data-k="Q1:R2"><span>定价「配置里写死、改的时候直接改」（历史账单会被追溯篡改）</span></label></li><li><label><input type="checkbox" data-k="Q1:R3"><span>把 QPS 限流和 token 预算混为一谈</span></label></li><li><label><input type="checkbox" data-k="Q1:R4"><span>说不清断连怎么计费。</span></label></li></ul><textarea class="note" data-k="note:Q1" placeholder="记录要点、原话或疑点"></textarea></div></div><div class="qb" id="Q2" data-seg="Q2"><h3><span class="qn">Q2</span>可观测性：高基数指标与 OTel 采集链路<span class="tag must">必问</span><span class="tag">8分钟</span><span class="tag dim">D2 可观测性：高基数指标与 OTel 采集链路</span><span class="sum" id="sum-Q2"></span></h3><details class="fold"><summary>简历原文</summary><div class="body"><div class="anchor">项目一「建立 QPS/Token/Cost 监控体系」「Datadog→Signoz 迁移」，技能栏 ClickHouse</div></div></details><div class="sq"><div class="sqh"><span class="lv">L1 项目切入</span></div><p class="mainq">迁到 Signoz 之后，应用侧的 metrics/traces/logs 是怎么送出去的？这套采集链路哪一部分是你亲手搭的？</p><div class="lbl">要听的点（<span class="star">★</span>为及格线）</div><ul class="chk"><li><label><input type="checkbox" data-k="Q2:S0:L0"><span><span class="star">★</span> user_id/api_key 不进 metric label，明确知道 cardinality 爆炸后果</span></label></li><li><label><input type="checkbox" data-k="Q2:S0:L1"><span><span class="star">★</span> 成本明细走明细表或 trace/log attribute，与聚合大盘分工清楚</span></label></li><li><label><input type="checkbox" data-k="Q2:S0:L2"><span><span class="star">★</span> 知道 Signoz 背后是 OTel+ClickHouse、采集经 Collector</span></label></li><li><label><input type="checkbox" data-k="Q2:S0:L3"><span><span class="star">★</span> 迁移能说出真实成本取舍，而非「开源不花钱就更好」一边倒</span></label></li></ul></div><div class="sq"><div class="sqh"><span class="lv">L2 设计决策</span></div><p class="mainq">Signoz 内核是 OTel+ClickHouse，你的 Collector 以什么形态跑在 K8s 里（sidecar/DaemonSet/Deployment），为什么这么选，为什么不让应用直连后端？</p></div><div class="sq"><div class="sqh"><span class="lv ask">情境题</span><span class="cond">前两问答得扎实再问</span><label class="askd"><input type="checkbox" data-k="Q2:S2:A">已问</label></div><p class="mainq">Token Usage 这个 metric 的 label 维度你放了什么？user_id、api_key 这种 per-user 维度你是当 metric label 打上去、还是放别处？如果打成 label 会发生什么？你怎么既要实时聚合大盘、又要可追溯到单请求的成本明细？</p></div><div class="sq"><div class="sqh"><span class="lv ask">追问</span><span class="cond">上一问答得好再追问</span><label class="askd"><input type="checkbox" data-k="Q2:S3:A">已问</label></div><p class="mainq">技能栏还写了 InfluxDB，为何监控里两个时序库并存？给一个真实 measurement 的 schema——tag 放什么、field 放什么，为什么 user_id 绝不能进 tag？</p></div><details class="ans"><summary>期望的优质回答（点开查看）</summary><div class="body"><ul class="plain"><li>明确区分低基数维度（model/provider/status_code/route）适合做 metric label，高基数维度（user_id/api_key/request_id）绝不进 metric label</li><li>per-user/api_key 用量走 trace/log 的 attribute，或单独的用量明细表（Postgres/ClickHouse 明细）来算账单</li><li>能算出「各维度取值数的笛卡尔积＝时间序列数」，理解 cardinality 爆炸会打垮存储与查询</li><li>采集走 OTel SDK→OTLP（gRPC 4317/HTTP 4318）→Collector，Collector 有 receiver/processor/exporter 三段 pipeline，含 batch、memory_limiter、k8sattributes/resource 补 pod/namespace 标签</li><li>不让应用直连后端以获得解耦、重试、采样、背压；DaemonSet 收节点级日志、Gateway Deployment 做集中处理与批量导出</li><li>提 exemplar 把 metric 关联到 trace；ClickHouse 对高基数比 Prometheus 友好但也非无上限</li><li>迁移动因是 Datadog 按主机/摄入量/custom metric 与高基数罚单的费用，诚实说出自托管 ClickHouse 的运维负担（TTL/分区/备份/升级）与损失的 Datadog 成熟能力</li></ul></div></details><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="Q2:R0"><span>「都打上去方便查」</span></label></li><li><label><input type="checkbox" data-k="Q2:R1"><span>把 per-user 用量做成 Prometheus gauge</span></label></li><li><label><input type="checkbox" data-k="Q2:R2"><span>没听过 cardinality</span></label></li><li><label><input type="checkbox" data-k="Q2:R3"><span>把 Signoz 当装个 agent 的 SaaS、不知 ClickHouse 在其中的角色</span></label></li><li><label><input type="checkbox" data-k="Q2:R4"><span>ClickHouse 写在技能栏却讲不出它干什么。</span></label></li></ul><textarea class="note" data-k="note:Q2" placeholder="记录要点、原话或疑点"></textarea></div></div><div class="qb" id="Q3" data-seg="Q3"><h3><span class="qn">Q3</span>异步阻塞隔离与 Cloud Run 长请求<span class="tag must">必问</span><span class="tag">8分钟</span><span class="tag dim">D3 异步阻塞隔离与 Cloud Run 长请求</span><span class="sum" id="sum-Q3"></span></h3><details class="fold"><summary>简历原文</summary><div class="body"><div class="anchor">项目一「FastAPI 异步」「优化含 LLM 推理的长耗时请求链路」，项目二「参与 Cloud Run 部署运行维护」</div></div></details><div class="sq"><div class="sqh"><span class="lv">L1 项目切入</span></div><p class="mainq">一个请求从 FastAPI 的 async 路由到返回上游响应，整条链路哪些环节是 async、哪些是同步阻塞？点名你实际用的 HTTP 客户端和数据库驱动。</p><div class="lbl">要听的点（<span class="star">★</span>为及格线）</div><ul class="chk"><li><label><input type="checkbox" data-k="Q3:S0:L0"><span><span class="star">★</span> 理解 async 路由里同步阻塞会卡死事件循环、拖垮整实例并发</span></label></li><li><label><input type="checkbox" data-k="Q3:S0:L1"><span><span class="star">★</span> httpx 全局复用＋连接池＋分层超时</span></label></li><li><label><input type="checkbox" data-k="Q3:S0:L2"><span><span class="star">★</span> 说得出 Cloud Run concurrency/timeout 量级，并知道对 LLM 慢请求要调低 concurrency 的理由</span></label></li><li><label><input type="checkbox" data-k="Q3:S0:L3"><span><span class="star">★</span> latency 会分段定位（Langfuse/trace span），而非一律甩锅 LLM</span></label></li></ul></div><div class="sq"><div class="sqh"><span class="lv">L2 设计决策</span></div><p class="mainq">转发上游你用 httpx，client 是每个请求新建还是全局复用？连接池的 max_connections、keep-alive、超时你设了没、设成多少、为什么？</p></div><div class="sq"><div class="sqh"><span class="lv ask">情境题</span><span class="cond">前两问答得扎实再问</span><label class="askd"><input type="checkbox" data-k="Q3:S2:A">已问</label></div><p class="mainq">如果在 async 路由里误用了同步阻塞库（requests/psycopg2/time.sleep），单实例并发 50 个请求会发生什么、为什么？Cloud Run 上跑长耗时 LLM 请求，request timeout 设多少、单实例 concurrency 设几、为什么——把「平台层 concurrency」和「进程内 async 并发」这两层讲清楚。</p></div><div class="sq"><div class="sqh"><span class="lv ask">追问</span><span class="cond">上一问答得好再追问</span><label class="askd"><input type="checkbox" data-k="Q3:S3:A">已问</label></div><p class="mainq">你说某个 tool 慢——你怎么确认是它的网络/上游慢，而不是它在排队等事件循环、或等某个共享连接池的锁？trace 里你具体看哪两个时间戳之差？</p></div><details class="ans"><summary>期望的优质回答（点开查看）</summary><div class="body"><ul class="plain"><li>async 路由里跑同步阻塞会卡死整个事件循环，其余并发请求全被拖住；必须换异步驱动（httpx.AsyncClient/asyncpg），迫不得已用 run_in_executor 丢线程池</li><li>httpx client 全局单例在 lifespan/startup 建、shutdown 关，靠连接池复用；用 httpx.Limits 配连接池规模（max_connections/max_keepalive_connections），用 httpx.Timeout 分别设 connect/read/write/pool 超时</li><li>流式响应下 read timeout 要放宽或改 stream，否则长响应被误判超时</li><li>Cloud Run 请求超时最长 60 分钟（默认 5 分钟）、container concurrency 默认 80；LLM 慢请求要调低 concurrency，因每请求占内存与上游连接，否则排队与 OOM</li><li>平台层 concurrency 决定单实例同时接多少请求，进程内 async 并发是事件循环层，两层叠加；CPU 配额是否 always-allocated 影响后台任务与计算段</li><li>Agent workflow latency 分段定位：用 Langfuse 看每次 LLM call 时延、用 trace span 拆各 tool 调用，常见瓶颈是多个 tool 串行而非 LLM 本身，改 asyncio.gather 并发并用 Semaphore 限并发防打爆上游 rate limit</li><li>并发编排失败隔离用 gather(return_exceptions=True)/TaskGroup，每个 tool 包 asyncio.wait_for 单独超时，失败降级返回部分结果</li></ul></div></details><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="Q3:R0"><span>「全用 async，FastAPI 本身就是异步」却说不出客户端库名</span></label></li><li><label><input type="checkbox" data-k="Q3:R1"><span>每请求新建 AsyncClient 而不自知</span></label></li><li><label><input type="checkbox" data-k="Q3:R2"><span>把冷启动当成所有慢的原因</span></label></li><li><label><input type="checkbox" data-k="Q3:R3"><span>分不清平台层 concurrency 与进程内 async 并发</span></label></li><li><label><input type="checkbox" data-k="Q3:R4"><span>latency 笼统归给「LLM 推理慢没办法」。</span></label></li></ul><textarea class="note" data-k="note:Q3" placeholder="记录要点、原话或疑点"></textarea></div></div><div class="qb" id="Q4" data-seg="Q4"><h3><span class="qn">Q4</span>Agent Skill 模块化与金融数字防幻觉<span class="tag must">必问</span><span class="tag">8分钟</span><span class="tag dim">D4 Agent Skill 模块化与金融数字防幻觉</span><span class="sum" id="sum-Q4"></span></h3><details class="fold"><summary>简历原文</summary><div class="body"><div class="anchor">项目二 Sorin「可模块化打包的 Agent Skill 架构」「LLM 动态生成 Markdown 分析结果」</div></div></details><div class="sq"><div class="sqh"><span class="lv">L1 项目切入</span></div><p class="mainq">Sorin 里你具体独立写了哪几个 Agent Tool、哪些代码是你的？先讲讲这个系统你负责的部分。</p><div class="lbl">要听的点（<span class="star">★</span>为及格线）</div><ul class="chk"><li><label><input type="checkbox" data-k="Q4:S0:L0"><span><span class="star">★</span> 有输出侧数字溯源／校验机制，不是纯 prompt 祈祷</span></label></li><li><label><input type="checkbox" data-k="Q4:S0:L1"><span><span class="star">★</span> Skill 能说清打包格式＋发现机制＋加载入口，区别于「只是分了几个文件」</span></label></li><li><label><input type="checkbox" data-k="Q4:S0:L2"><span><span class="star">★</span> tool 参数有 schema 校验，幻觉参数有兜底与恢复路径</span></label></li><li><label><input type="checkbox" data-k="Q4:S0:L3"><span><span class="star">★</span> 有某种客观评估，而非「跑通没报错就发」</span></label></li></ul></div><div class="sq"><div class="sqh"><span class="lv">L2 设计决策</span></div><p class="mainq">一个 Skill 在你们系统里是什么形态的产物（pip 包／带清单的目录／DB 记录）？主 Agent 通过什么机制发现并加载它，是进程内 import、importlib 动态加载还是跨进程调用？</p></div><div class="sq"><div class="sqh"><span class="lv ask">情境题</span><span class="cond">前两问答得扎实再问</span><label class="askd"><input type="checkbox" data-k="Q4:S2:A">已问</label></div><p class="mainq">金融场景最怕模型把价格、涨跌幅、市值这些数字编出来。你怎么保证 Markdown 输出里的数字确实来自 tool 拿到的真实数据、而不是模型顺口生成的？别说「prompt 里让它别编」——讲程序化机制。</p></div><div class="sq"><div class="sqh"><span class="lv ask">追问</span><span class="cond">上一问答得好再追问</span><label class="askd"><input type="checkbox" data-k="Q4:S3:A">已问</label></div><p class="mainq">给一个你真实发现过的错误案例——Agent 输出了看起来合理但实际错误的结论，你怎么发现、事后加了什么机制防再犯？如果一个都举不出来，你凭什么确定它一直是对的？</p></div><details class="ans"><summary>期望的优质回答（点开查看）</summary><div class="body"><ul class="plain"><li>数字与叙述分离：tool 返回的结构化数值单独保存，展示的关键数字直接从数据层模板占位／后处理填充，而非让模型自由书写</li><li>或对模型输出的数字做回校验：提取正文数字与 tool 数据比对，不一致则标注或重生成；数字可能被换算（百分比、单位）需做匹配</li><li>坦承纯靠 prompt 约束与 temperature=0 不可靠，必须有输出侧的 grounding 校验这一层</li><li>Skill 形态具体：带 manifest（skill.yaml/entry_points）的目录，声明 name/version/入口/所需 tool 与权限；主 Agent 扫描 registry 用 importlib 或 entry_points 发现加载；能讲依赖隔离与版本冲突取舍</li><li>tool orchestration 用 function calling 提供 JSON schema，模型返回结构化 tool_call，先做 pydantic 参数校验再执行，结果回灌</li><li>幻觉参数兜底：tool 内做业务校验（ticker 是否在已知集合、日期合法性），数据源返回结构化错误让模型改参而非整链挂掉，有重试上限防死循环</li><li>输出正确性分两层评估：可客观校验部分（数字溯源通过率、tool 调用准确率、格式合法率）用测试集回归，主观分析质量用人工抽检/LLM-judge 并承认其局限</li></ul></div></details><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="Q4:R0"><span>答案停在「prompt 里强调只能用给定数据」「用了 temperature=0」</span></label></li><li><label><input type="checkbox" data-k="Q4:R1"><span>只重复「模块化/可复用」却说不出打包格式与发现机制</span></label></li><li><label><input type="checkbox" data-k="Q4:R2"><span>假设模型参数总对、tool 无校验直接透传</span></label></li><li><label><input type="checkbox" data-k="Q4:R3"><span>把「不报错」当成「结论正确」。</span></label></li></ul><textarea class="note" data-k="note:Q4" placeholder="记录要点、原话或疑点"></textarea></div></div><div class="qb" id="Q5" data-seg="Q5"><h3><span class="qn">Q5</span>Selector 评估三指标与回放命中验证<span class="tag opt">视时间</span><span class="tag">8分钟</span><span class="tag dim">D5 Selector 评估三指标与回放命中验证</span><span class="sum" id="sum-Q5"></span></h3><details class="fold"><summary>简历原文</summary><div class="body"><div class="anchor">项目三「多维度 Selector 评估（结构相似度/语义相关性/噪声抗性）」「基于队列的 HTML 分层解析」</div></div></details><div class="sq"><div class="sqh"><span class="lv">L1 项目切入</span></div><p class="mainq">这个抓取系统的完整流程走一遍——从一个 URL 进来到产出可执行 scraper，中间经过哪些步骤？</p><div class="lbl">要听的点（<span class="star">★</span>为及格线）</div><ul class="chk"><li><label><input type="checkbox" data-k="Q5:S0:L0"><span><span class="star">★</span> 三指标至少给得出输入是什么、和谁比、用什么度量，阈值来源诚实（标注集调出/部分是启发式）</span></label></li><li><label><input type="checkbox" data-k="Q5:S0:L1"><span><span class="star">★</span> selector 一定回放真实 DOM 校验，命中 0/命中多有明确分支</span></label></li><li><label><input type="checkbox" data-k="Q5:S0:L2"><span><span class="star">★</span> 分层解析的入队单元、切分终止条件、祖先上下文保留自洽</span></label></li><li><label><input type="checkbox" data-k="Q5:S0:L3"><span><span class="star">★</span> 拿得出命中率/成功率数字，或诚实承认只是原型量级</span></label></li></ul></div><div class="sq"><div class="sqh"><span class="lv">L2 设计决策</span></div><p class="mainq">「基于队列的 HTML 分层解析」入队的是 DOM 节点还是 HTML 字符串片段？什么条件下决定这一层就地切成一个 chunk，超长子树是硬截断还是递归下潜，祖先上下文怎么不丢？</p></div><div class="sq"><div class="sqh"><span class="lv ask">情境题</span><span class="cond">前两问答得扎实再问</span><label class="askd"><input type="checkbox" data-k="Q5:S2:A">已问</label></div><p class="mainq">三个评估指标分别给出精确到可计算的定义——结构相似度拿什么和什么比、用什么距离（树编辑距离/路径重合）；语义相关性向量从哪来、和谁算余弦；噪声抗性扰动什么、如何量化「抗住了」。每个指标的判定阈值是多少、这阈值怎么标定出来的？另外生成的 selector 你回放到真实 DOM 验证命中数没有、命中 0 或命中多怎么处理？</p></div><div class="sq"><div class="sqh"><span class="lv ask">追问</span><span class="cond">上一问答得好再追问</span><label class="askd"><input type="checkbox" data-k="Q5:S3:A">已问</label></div><p class="mainq">简历写「复杂企业文档场景下的稳定性与鲁棒性」——企业文档具体指哪类页面（登录后系统／PDF 转 HTML／内网报表）、样本从哪来、该场景成功率多少？如果没有真实数据支撑，你愿意把这句改成什么更准确的表述？</p></div><details class="ans"><summary>期望的优质回答（点开查看）</summary><div class="body"><ul class="plain"><li>结构相似度＝目标元素与参考锚点两条 DOM/xpath 路径的序列编辑距离（Levenshtein）或路径重合度，也可用最长公共祖先深度归一化；若对元素子树整体度量才用树编辑距离（tree edit distance）</li><li>语义相关性＝元素周边文本（或 aria-label/标题）embedding 与查询意图 embedding 的余弦</li><li>噪声抗性＝对页面扰动（增删无关节点、改 class 后缀、注入广告 div）后 selector 是否仍命中同一元素，用命中保持率量化</li><li>阈值诚实说明是自己标注的一批页面上调出的经验值，或坦白只有一两个真落成打分公式、另一个是启发式，而非硬报一个漂亮数字</li><li>selector 必回放到真实渲染 DOM（Puppeteer page.$$／jsdom querySelectorAll）执行：命中 0 触发带反馈的重生成，命中多个用预期文本/属性/nth-of-type/结构路径二次过滤或让 LLM 裁决，并对命中元素做内容断言而非只看数量</li><li>分层解析入队 DOM 节点，BFS 按层展开，切分终止条件是子树序列化 token 数≤阈值（留出 prompt＋输出余量约 6~8k），超阈值递归下潜，每个 chunk 带 root 到该节点的祖先标签＋关键属性 breadcrumb，先做属性裁剪（去 style/内联 script/base64）压体积</li><li>幻觉双层防线：生成侧把子树真实出现的 tag/class/id 作受限词表放进 prompt 或只让模型输出路径决策由程序拼 selector；执行侧回放兜底，并能给测试集规模、命中率/最终成功率、静态与动态页分层数据</li></ul></div></details><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="Q5:R0"><span>三指标只能重复中文名词或翻成英文，给不出度量与阈值出处</span></label></li><li><label><input type="checkbox" data-k="Q5:R1"><span>张口报「相似度 0.85 以上」却说不清怎么标定、在多少页面验证过</span></label></li><li><label><input type="checkbox" data-k="Q5:R2"><span>「LLM 生成的 selector 准确率很高基本不用验证」</span></label></li><li><label><input type="checkbox" data-k="Q5:R3"><span>分层解析被追问就改口成固定字符数滑窗</span></label></li><li><label><input type="checkbox" data-k="Q5:R4"><span>用「稳定性大幅提升」这类无基线形容词搪塞。</span></label></li></ul><textarea class="note" data-k="note:Q5" placeholder="记录要点、原话或疑点"></textarea></div></div><div class="qb" id="Q6" data-seg="Q6"><h3><span class="qn">Q6</span>云原生 ownership：探针配置与密钥管理<span class="tag opt">视时间</span><span class="tag">8分钟</span><span class="tag dim">D6 云原生 ownership：探针配置与密钥管理</span><span class="sum" id="sum-Q6"></span></h3><details class="fold"><summary>简历原文</summary><div class="body"><div class="anchor">「参与 K8s＋Google Cloud 部署维护」「Cloud Run 部署」「多 Provider 请求转发」隐含的上游 Key 管理</div></div></details><div class="sq"><div class="sqh"><span class="lv">L1 项目切入</span></div><p class="mainq">Exec-Layer 放 K8s、Sorin 放 Cloud Run，同一家公司两套运行时，当初为什么这么分？两个服务的流量形态、扩缩容需求、冷启动容忍度差在哪？</p><div class="lbl">要听的点（<span class="star">★</span>为及格线）</div><ul class="chk"><li><label><input type="checkbox" data-k="Q6:S0:L0"><span><span class="star">★</span> requests 与 limits 的区别、readiness 与 liveness 的区别都答对</span></label></li><li><label><input type="checkbox" data-k="Q6:S0:L1"><span><span class="star">★</span> 探针参数（initialDelay/failureThreshold）能给具体值与理由</span></label></li><li><label><input type="checkbox" data-k="Q6:S0:L2"><span><span class="star">★</span> 知道 K8s Secret 只是 base64、需外部方案，轮换与泄露回收有流程</span></label></li><li><label><input type="checkbox" data-k="Q6:S0:L3"><span><span class="star">★</span> 区分自家用户 Key 与上游 Provider Key</span></label></li></ul></div><div class="sq"><div class="sqh"><span class="lv">L2 设计决策</span></div><p class="mainq">Exec-Layer 是转发层，它的 Deployment 你会写哪些关键字段——replicas 定多少、requests/limits 的 CPU 与内存各给多少、依据是什么？</p></div><div class="sq"><div class="sqh"><span class="lv ask">情境题</span><span class="cond">前两问答得扎实再问</span><label class="askd"><input type="checkbox" data-k="Q6:S2:A">已问</label></div><p class="mainq">readiness 和 liveness 探针分别探哪个端点、失败几次才算挂、initialDelay 给多少、为什么这么设？另外上游各家 provider 的 API Key 在 K8s 里怎么存、怎么注入进容器、怎么轮换？一把上游 Key 泄露了，你的回收流程是什么？</p></div><div class="sq"><div class="sqh"><span class="lv ask">追问</span><span class="cond">上一问答得好再追问</span><label class="askd"><input type="checkbox" data-k="Q6:S3:A">已问</label></div><p class="mainq">讲一次真实的线上发布事故或回滚——发布策略是滚动/蓝绿/金丝雀？某次转发层上线后开始报错或延迟飙升，你怎么第一时间发现的、K8s 层面敲了什么命令、Cloud Run 那边又怎么回？</p></div><details class="ans"><summary>期望的优质回答（点开查看）</summary><div class="body"><ul class="plain"><li>requests（调度依据/保证值）与 limits（上限，超内存会 OOMKill）区别清楚，数值有依据（内存 limit＝观察峰值＋余量）</li><li>readiness 探轻量 /healthz 且不依赖上游、liveness 探进程存活避免误杀，两者不指向同一个重接口</li><li>initialDelaySeconds 要盖住应用启动时间，failureThreshold 不能太敏感否则滚动更新抖动，能说清 periodSeconds</li><li>K8s Secret 默认只是 base64 非加密，需开 etcd 加密或用 GCP Secret Manager，配 Workload Identity 让 Pod 免密钥访问 GCP，通过 env 或挂载 volume 注入</li><li>轮换靠 Secret Manager 更新版本＋滚动重启；泄露时先在上游控制台吊销旧 Key、更新新版本、滚动重启摘掉旧 Key</li><li>区分自家发给用户的 API Key 与上游 Provider Key 是两套东西、存储策略不同</li><li>转发层瓶颈多在 I/O 等上游、CPU 利用率低，纯按 CPU 扩 HPA 不灵，应按并发数/in-flight 请求等自定义指标扩，或诚实说固定副本手动调；回滚 K8s 用 kubectl rollout undo，Cloud Run 靠切流回上一个 revision</li></ul></div></details><div class="tail"><div class="lbl">危险信号</div><ul class="chk flag"><li><label><input type="checkbox" data-k="Q6:R0"><span>把 readiness 和 liveness 说成一回事、或都指向同一个重接口</span></label></li><li><label><input type="checkbox" data-k="Q6:R1"><span>以为 K8s Secret 是加密的、把 Key 塞环境变量或配置文件</span></label></li><li><label><input type="checkbox" data-k="Q6:R2"><span>探针只会说「配了健康检查」</span></label></li><li><label><input type="checkbox" data-k="Q6:R3"><span>HPA 张口「CPU 70%」却不知对 I/O 密集转发层不灵</span></label></li><li><label><input type="checkbox" data-k="Q6:R4"><span>把自家用户 Key 和上游 Provider Key 混为一谈。</span></label></li></ul><textarea class="note" data-k="note:Q6" placeholder="记录要点、原话或疑点"></textarea></div></div><div class="qb" data-seg="W"><h3><span class="qn">收尾</span>材料确认、合作与提问<span class="tag">7分钟</span></h3><div class="sq"><div class="sqh"><span class="lv ask">身份核验</span><label class="askd"><input type="checkbox" data-k="W:S0:A">已问</label></div><p class="mainq">把三段经历的性质讲清楚：Sahara AI 是全职吗（约 8 个月）？Capisoft 与绿盟都落在你 2022-09 至 2025-08 的硕士就读窗口内，分别是兼职、研究还是暑期实习？简历上的「2 年 Agent 开发」是怎么算出来的？</p></div><div class="sq"><div class="sqh"><span class="lv ask">LLM Gateway</span><label class="askd"><input type="checkbox" data-k="W:S1:A">已问</label></div><p class="mainq">API Key 从生成到入库到校验的完整链路：库里到底存明文还是哈希？用户下次登录还能不能看到完整 Key？校验一次请求时你怎么用 O(1) 定位到是哪个用户、而不是把全表 Key 拉出来逐个比对？前缀设计有什么用？</p></div><div class="sq"><div class="sqh"><span class="lv ask">LLM Gateway</span><label class="askd"><input type="checkbox" data-k="W:S2:A">已问</label></div><p class="mainq">OpenAI、Anthropic、Gemini 请求体差异很大——Anthropic 的 system 是顶层独立字段、role 只有 user/assistant、max_tokens 必填。你的统一层怎么抹平这些？是自己写的适配层还是基于 LiteLLM 二次开发？诚实说基于开源改是加分。</p></div><div class="sq"><div class="sqh"><span class="lv ask">LLM Gateway</span><label class="askd"><input type="checkbox" data-k="W:S3:A">已问</label></div><p class="mainq">上游某 provider 突发 5xx 或超时，你的 failover 怎么设计——同 provider 重试还是切备用？如果已经开始流式返回了一半才断，还能不能 failover，为什么？重试怎么保证幂等、避免重复计费？</p></div><div class="sq"><div class="sqh"><span class="lv ask">可观测性</span><label class="askd"><input type="checkbox" data-k="W:S4:A">已问</label></div><p class="mainq">那次 Memory Leak 最后定位到的泄漏对象具体是什么？在 FastAPI＋多 Provider 异步转发里，是每请求新建 httpx.AsyncClient 未复用未关、未 await 的 background task 堆积、还是全局无界缓存？引用链为什么让对象活着不释放？修完怎么验证不复发、在监控里加了什么护栏？</p></div><div class="sq"><div class="sqh"><span class="lv ask">可观测性</span><label class="askd"><input type="checkbox" data-k="W:S5:A">已问</label></div><p class="mainq">如果泄漏很慢、要几天才 OOM 一次，你在 CI 或预发环境怎么在几十分钟内就复现并证明修好了？光靠生产观察够不够？你怎么区分「真泄漏（内存单调上升最终 OOM）」和「高并发下的正常高水位（涨上去会回落）」——看的是哪条曲线、什么形状？</p></div><div class="sq"><div class="sqh"><span class="lv ask">Agent</span><label class="askd"><input type="checkbox" data-k="W:S6:A">已问</label></div><p class="mainq">被下载的 Skill 到底是纯配置还是含可执行 Python 代码？下载后主 Agent 怎么信任并执行它，是在沙箱/独立进程还是直接在主进程 exec？一个 Skill 要读市场数据的 API Key，凭证是打包进 Skill 还是主 Agent 注入，Skill 能不能越权拿到别的凭证？</p></div><div class="sq"><div class="sqh"><span class="lv ask">Agent</span><label class="askd"><input type="checkbox" data-k="W:S7:A">已问</label></div><p class="mainq">金融数据源具体是哪些 API？多个源数据不一致时以谁为准？行情有延迟、限流、偶发缺口，你在 tool 层的重试退避、超时、缓存 TTL 分别设成多少、为什么是这个值？分析里用的价格是什么时刻的，你怎么把时间戳传给用户避免「以为是实时」的误导？</p></div><div class="sq"><div class="sqh"><span class="lv ask">抓取</span><label class="askd"><input type="checkbox" data-k="W:S8:A">已问</label></div><p class="mainq">面对 JS 动态渲染页面，Puppeteer 在哪一步介入——所有页面都先 headless 渲染，还是先试静态 HTML、检测到某信号才升级到浏览器？这个判定信号是什么？你怎么知道页面渲染完了（waitForSelector/networkidle 还是裸 sleep）？靠滚动或点击「加载更多」才懒加载出来的目标怎么覆盖？</p></div><div class="sq"><div class="sqh"><span class="lv ask">抓取</span><label class="askd"><input type="checkbox" data-k="W:S9:A">已问</label></div><p class="mainq">更隐蔽的幻觉：selector 语法合法、也真命中了一个元素，但命中的是错的那个（语义层幻觉），回放命中数＝1 完全兜不住。这种「合法且命中但选错」的错误你怎么发现、怎么量化它在你系统里的占比？</p></div><div class="sq"><div class="sqh"><span class="lv ask">异步编排</span><label class="askd"><input type="checkbox" data-k="W:S10:A">已问</label></div><p class="mainq">asyncio.gather 里第二个 tool 抛异常，其余还在飞的 task 会怎样？如果你希望其余 task 被取消并清理，和希望它们跑完拿部分结果，代码写法有什么区别？并发放大后怎么防止把上游 rate limit 打爆？</p></div><div class="sq"><div class="sqh"><span class="lv ask">云原生</span><label class="askd"><input type="checkbox" data-k="W:S11:A">已问</label></div><p class="mainq">Signoz 自托管要自己在集群里跑 ClickHouse＋OTel Collector，这套是你部署的吗？采样是头采样还是尾采样、为什么？ClickHouse 的 TTL/保留期与存储成本怎么权衡？迁移期新旧两套怎么并行、对比数据一致后再切、避免丢数据？</p></div><textarea class="note" data-k="note:W" placeholder="记录"></textarea></div></section><section id="after"><div class="phase"><h2>面试后</h2><span class="hint">按维度打分（4超出预期、3达到要求、2部分达到、1未达到），再生成面评草稿</span></div><div class="panel"><div class="dimrow"><div class="dimh"><b>D1 LLM 网关：流式 Token 计量与成本核算</b><span class="tag core">核心</span><span class="small">证据来源：Q1</span></div><div class="auto" id="auto-D1"></div><div class="anchors"><label><input type="radio" name="D1" value="4" data-k="score:D1"><b>4</b><span>超出预期：取舍和证据讲得清楚，并能主动指出局限</span></label><label><input type="radio" name="D1" value="3" data-k="score:D1"><b>3</b><span>达到要求：命中及格线，理由合理</span></label><label><input type="radio" name="D1" value="2" data-k="score:D1"><b>2</b><span>部分达到：方向对但缺关键环节，需要提示</span></label><label><input type="radio" name="D1" value="1" data-k="score:D1"><b>1</b><span>未达到：停在术语层面或有明显错误</span></label></div><textarea class="note" data-k="ev:D1" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div><div class="dimrow"><div class="dimh"><b>D2 可观测性：高基数指标与 OTel 采集链路</b><span class="tag core">核心</span><span class="small">证据来源：Q2</span></div><div class="auto" id="auto-D2"></div><div class="anchors"><label><input type="radio" name="D2" value="4" data-k="score:D2"><b>4</b><span>超出预期：取舍和证据讲得清楚，并能主动指出局限</span></label><label><input type="radio" name="D2" value="3" data-k="score:D2"><b>3</b><span>达到要求：命中及格线，理由合理</span></label><label><input type="radio" name="D2" value="2" data-k="score:D2"><b>2</b><span>部分达到：方向对但缺关键环节，需要提示</span></label><label><input type="radio" name="D2" value="1" data-k="score:D2"><b>1</b><span>未达到：停在术语层面或有明显错误</span></label></div><textarea class="note" data-k="ev:D2" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div><div class="dimrow"><div class="dimh"><b>D3 异步阻塞隔离与 Cloud Run 长请求</b><span class="tag core">核心</span><span class="small">证据来源：Q3</span></div><div class="auto" id="auto-D3"></div><div class="anchors"><label><input type="radio" name="D3" value="4" data-k="score:D3"><b>4</b><span>超出预期：取舍和证据讲得清楚，并能主动指出局限</span></label><label><input type="radio" name="D3" value="3" data-k="score:D3"><b>3</b><span>达到要求：命中及格线，理由合理</span></label><label><input type="radio" name="D3" value="2" data-k="score:D3"><b>2</b><span>部分达到：方向对但缺关键环节，需要提示</span></label><label><input type="radio" name="D3" value="1" data-k="score:D3"><b>1</b><span>未达到：停在术语层面或有明显错误</span></label></div><textarea class="note" data-k="ev:D3" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div><div class="dimrow"><div class="dimh"><b>D4 Agent Skill 模块化与金融数字防幻觉</b><span class="tag core">核心</span><span class="small">证据来源：Q4</span></div><div class="auto" id="auto-D4"></div><div class="anchors"><label><input type="radio" name="D4" value="4" data-k="score:D4"><b>4</b><span>超出预期：取舍和证据讲得清楚，并能主动指出局限</span></label><label><input type="radio" name="D4" value="3" data-k="score:D4"><b>3</b><span>达到要求：命中及格线，理由合理</span></label><label><input type="radio" name="D4" value="2" data-k="score:D4"><b>2</b><span>部分达到：方向对但缺关键环节，需要提示</span></label><label><input type="radio" name="D4" value="1" data-k="score:D4"><b>1</b><span>未达到：停在术语层面或有明显错误</span></label></div><textarea class="note" data-k="ev:D4" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div><div class="dimrow"><div class="dimh"><b>D5 Selector 评估三指标与回放命中验证</b><span class="tag ref">参考</span><span class="small">证据来源：Q5</span></div><div class="auto" id="auto-D5"></div><div class="anchors"><label><input type="radio" name="D5" value="4" data-k="score:D5"><b>4</b><span>超出预期：取舍和证据讲得清楚，并能主动指出局限</span></label><label><input type="radio" name="D5" value="3" data-k="score:D5"><b>3</b><span>达到要求：命中及格线，理由合理</span></label><label><input type="radio" name="D5" value="2" data-k="score:D5"><b>2</b><span>部分达到：方向对但缺关键环节，需要提示</span></label><label><input type="radio" name="D5" value="1" data-k="score:D5"><b>1</b><span>未达到：停在术语层面或有明显错误</span></label></div><textarea class="note" data-k="ev:D5" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div><div class="dimrow"><div class="dimh"><b>D6 云原生 ownership：探针配置与密钥管理</b><span class="tag ref">参考</span><span class="small">证据来源：Q6</span></div><div class="auto" id="auto-D6"></div><div class="anchors"><label><input type="radio" name="D6" value="4" data-k="score:D6"><b>4</b><span>超出预期：取舍和证据讲得清楚，并能主动指出局限</span></label><label><input type="radio" name="D6" value="3" data-k="score:D6"><b>3</b><span>达到要求：命中及格线，理由合理</span></label><label><input type="radio" name="D6" value="2" data-k="score:D6"><b>2</b><span>部分达到：方向对但缺关键环节，需要提示</span></label><label><input type="radio" name="D6" value="1" data-k="score:D6"><b>1</b><span>未达到：停在术语层面或有明显错误</span></label></div><textarea class="note" data-k="ev:D6" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div><div class="dimrow"><div class="dimh"><b>D7 表达与可信度</b><span class="tag gate">门槛</span><span class="small">证据来源：开场、收尾</span></div><div class="auto" id="auto-D7"></div><div class="anchors"><label><input type="radio" name="D7" value="4" data-k="score:D7"><b>4</b><span>主动说明本人范围、项目阶段和数字口径</span></label><label><input type="radio" name="D7" value="3" data-k="score:D7"><b>3</b><span>问到时能说清本人范围和数字口径</span></label><label><input type="radio" name="D7" value="2" data-k="score:D7"><b>2</b><span>范围和口径含糊，需要反复追问</span></label><label><input type="radio" name="D7" value="1" data-k="score:D7"><b>1</b><span>关键事实前后矛盾</span></label></div><textarea class="note" data-k="ev:D7" placeholder="证据（题号＋要点），生成面评时会用到"></textarea></div></div><div class="panel"><h3 class="s2">结论</h3><p class="small">建议规则（最终由面试官判断）：通过——核心维度均≥3，表达与可信度≥3，且没有维度为1分；不通过——任一核心维度为1分，或表达与可信度为1分；待定——其余情况；在面评里写明下一轮要确认的具体问题。</p><p class="suggest" id="suggest"></p><div class="verdict"><label><input type="radio" name="verdict" value="通过" data-k="verdict"> 通过</label><label><input type="radio" name="verdict" value="待定" data-k="verdict"> 待定</label><label><input type="radio" name="verdict" value="不通过" data-k="verdict"> 不通过</label></div></div><div class="panel"><h3 class="s2">面评草稿</h3><div class="tools2"><button class="btn primary" id="draftBtn">根据记录生成草稿</button><button class="btn" id="copyBtn">复制</button><button class="btn" id="clearBtn">清空本页记录</button></div><textarea class="memo" id="memo" data-k="memo" placeholder="点“根据记录生成草稿”，再按实际情况修改"></textarea><p class="small">记录只保存在当前浏览器，换设备不会同步；需要存档时导出PDF或复制面评。</p></div></section>
+</main>
+<footer class="foot"><div class="brand">resume-grill</div></footer>
+<script type="application/json" id="kitdata">{"cand": "候选人A", "role": "对抗性技术面试 · Agent 开发工程师（示例）", "minutes": 60, "segs": [{"key": "OP", "label": "开场", "start": 0, "end": 5}, {"key": "Q1", "label": "Q1 LLM 网关", "start": 5, "end": 13}, {"key": "Q2", "label": "Q2 可观测性", "start": 13, "end": 21}, {"key": "Q3", "label": "Q3 异步阻塞隔离与 Cloud Run 长请求", "start": 21, "end": 29}, {"key": "Q4", "label": "Q4 Agent Skill 模块化与金融数字防幻觉", "start": 29, "end": 37}, {"key": "Q5", "label": "Q5 Selector 评估三指标与回放命中验证", "start": 37, "end": 45}, {"key": "Q6", "label": "Q6 云原生 ownership", "start": 45, "end": 53}, {"key": "W", "label": "收尾", "start": 53, "end": 60}], "themes": [{"n": "OP", "title": "开场", "must": true, "transferIdx": -1, "subs": [{"label": "开场", "optional": false, "listen": []}], "flags": ["把'参与'一律说成'我做的'、回避全职月数、把在校兼职说成正式工作年限、Exec-Layer 讲不清链路细节、被问 LiteLLM 时含糊，都是露馅信号。"]}, {"n": "Q1", "title": "LLM 网关：流式 Token 计量与成本核算", "must": true, "transferIdx": 2, "subs": [{"label": "L1", "optional": false, "listen": [{"t": "知道流式要边收边转、断连需 cancel 上游", "pass": true}, {"t": "知道 OpenAI 需 stream_options.include_usage，或说得出无 usage 时的兜底估算办法", "pass": true}, {"t": "承认自估与 provider 账单有偏差、最终以 provider usage/账单为准", "pass": true}, {"t": "定价按请求当时单价快照、历史账单不被调价改写", "pass": true}, {"t": "区分 QPS 限流与 token 预算限流的本质差异", "pass": true}]}, {"label": "L2", "optional": false, "listen": []}, {"label": "情境题", "optional": true, "listen": []}, {"label": "追问", "optional": true, "listen": []}], "flags": ["说「把流收完再统一返回」（等于没做流式）", "张口「tiktoken 一律能算」不知各家 tokenizer 不同", "定价「配置里写死、改的时候直接改」（历史账单会被追溯篡改）", "把 QPS 限流和 token 预算混为一谈", "说不清断连怎么计费。"]}, {"n": "Q2", "title": "可观测性：高基数指标与 OTel 采集链路", "must": true, "transferIdx": 2, "subs": [{"label": "L1", "optional": false, "listen": [{"t": "user_id/api_key 不进 metric label，明确知道 cardinality 爆炸后果", "pass": true}, {"t": "成本明细走明细表或 trace/log attribute，与聚合大盘分工清楚", "pass": true}, {"t": "知道 Signoz 背后是 OTel+ClickHouse、采集经 Collector", "pass": true}, {"t": "迁移能说出真实成本取舍，而非「开源不花钱就更好」一边倒", "pass": true}]}, {"label": "L2", "optional": false, "listen": []}, {"label": "情境题", "optional": true, "listen": []}, {"label": "追问", "optional": true, "listen": []}], "flags": ["「都打上去方便查」", "把 per-user 用量做成 Prometheus gauge", "没听过 cardinality", "把 Signoz 当装个 agent 的 SaaS、不知 ClickHouse 在其中的角色", "ClickHouse 写在技能栏却讲不出它干什么。"]}, {"n": "Q3", "title": "异步阻塞隔离与 Cloud Run 长请求", "must": true, "transferIdx": 2, "subs": [{"label": "L1", "optional": false, "listen": [{"t": "理解 async 路由里同步阻塞会卡死事件循环、拖垮整实例并发", "pass": true}, {"t": "httpx 全局复用＋连接池＋分层超时", "pass": true}, {"t": "说得出 Cloud Run concurrency/timeout 量级，并知道对 LLM 慢请求要调低 concurrency 的理由", "pass": true}, {"t": "latency 会分段定位（Langfuse/trace span），而非一律甩锅 LLM", "pass": true}]}, {"label": "L2", "optional": false, "listen": []}, {"label": "情境题", "optional": true, "listen": []}, {"label": "追问", "optional": true, "listen": []}], "flags": ["「全用 async，FastAPI 本身就是异步」却说不出客户端库名", "每请求新建 AsyncClient 而不自知", "把冷启动当成所有慢的原因", "分不清平台层 concurrency 与进程内 async 并发", "latency 笼统归给「LLM 推理慢没办法」。"]}, {"n": "Q4", "title": "Agent Skill 模块化与金融数字防幻觉", "must": true, "transferIdx": 2, "subs": [{"label": "L1", "optional": false, "listen": [{"t": "有输出侧数字溯源／校验机制，不是纯 prompt 祈祷", "pass": true}, {"t": "Skill 能说清打包格式＋发现机制＋加载入口，区别于「只是分了几个文件」", "pass": true}, {"t": "tool 参数有 schema 校验，幻觉参数有兜底与恢复路径", "pass": true}, {"t": "有某种客观评估，而非「跑通没报错就发」", "pass": true}]}, {"label": "L2", "optional": false, "listen": []}, {"label": "情境题", "optional": true, "listen": []}, {"label": "追问", "optional": true, "listen": []}], "flags": ["答案停在「prompt 里强调只能用给定数据」「用了 temperature=0」", "只重复「模块化/可复用」却说不出打包格式与发现机制", "假设模型参数总对、tool 无校验直接透传", "把「不报错」当成「结论正确」。"]}, {"n": "Q5", "title": "Selector 评估三指标与回放命中验证", "must": false, "transferIdx": 2, "subs": [{"label": "L1", "optional": false, "listen": [{"t": "三指标至少给得出输入是什么、和谁比、用什么度量，阈值来源诚实（标注集调出/部分是启发式）", "pass": true}, {"t": "selector 一定回放真实 DOM 校验，命中 0/命中多有明确分支", "pass": true}, {"t": "分层解析的入队单元、切分终止条件、祖先上下文保留自洽", "pass": true}, {"t": "拿得出命中率/成功率数字，或诚实承认只是原型量级", "pass": true}]}, {"label": "L2", "optional": false, "listen": []}, {"label": "情境题", "optional": true, "listen": []}, {"label": "追问", "optional": true, "listen": []}], "flags": ["三指标只能重复中文名词或翻成英文，给不出度量与阈值出处", "张口报「相似度 0.85 以上」却说不清怎么标定、在多少页面验证过", "「LLM 生成的 selector 准确率很高基本不用验证」", "分层解析被追问就改口成固定字符数滑窗", "用「稳定性大幅提升」这类无基线形容词搪塞。"]}, {"n": "Q6", "title": "云原生 ownership：探针配置与密钥管理", "must": false, "transferIdx": 2, "subs": [{"label": "L1", "optional": false, "listen": [{"t": "requests 与 limits 的区别、readiness 与 liveness 的区别都答对", "pass": true}, {"t": "探针参数（initialDelay/failureThreshold）能给具体值与理由", "pass": true}, {"t": "知道 K8s Secret 只是 base64、需外部方案，轮换与泄露回收有流程", "pass": true}, {"t": "区分自家用户 Key 与上游 Provider Key", "pass": true}]}, {"label": "L2", "optional": false, "listen": []}, {"label": "情境题", "optional": true, "listen": []}, {"label": "追问", "optional": true, "listen": []}], "flags": ["把 readiness 和 liveness 说成一回事、或都指向同一个重接口", "以为 K8s Secret 是加密的、把 Key 塞环境变量或配置文件", "探针只会说「配了健康检查」", "HPA 张口「CPU 70%」却不知对 I/O 密集转发层不灵", "把自家用户 Key 和上游 Provider Key 混为一谈。"]}], "t": {"by_rule": "按建议规则：", "pass": "通过", "hold": "待定", "fail": "不通过", "todo_fill": "待填", "incomplete": "评分未完成（核心维度和门槛项都打分后给出建议）", "transfer_done": "已问迁移类问题：", "transfer_none": "迁移类问题尚无记录", "not_rec": "未记录", "pass_pts": "：及格点", "flags": "，危险信号", "summary": "记录汇总：", "sum_pass": "及格点 ", "sum_flags": "　危险信号 ", "h_cand": "【候选人】", "h_verdict": "【结论】", "h_dims": "【维度评分】", "h_heard": "【听到的要点】", "h_risks": "【风险与不足】", "h_todo": "【待下一轮确认】", "h_notes": "【面试记录】", "pts": "分", "unscored": "未打分", "evidence": "证据：", "none_rec": "- 无记录", "no_flags": "- 未勾选危险信号", "unheard": "未听到的及格点：", "must_missing": "：必问但没有记录", "ref": "- 参考：", "none": "- 无", "pause": "暂停", "resume": "继续计时", "start": "开始计时", "at": "应在：", "mins": "分）", "over": "已超过", "minute": "分钟", "confirm": "再点一次确认清空", "clear": "清空本页记录", "cleared": "已清空", "copied": "已复制", "copy": "复制", "expand": "展开全部", "collapse": "收起全部", "lp": "（", "rp": "）", "dot": "。", "colon": "：", "sep": "；", "list": "、"}, "dims": [{"id": "D1", "name": "LLM 网关：流式 Token 计量与成本核算", "kind": "core", "kindLabel": "核心", "transfer": false, "qs": ["Q1"]}, {"id": "D2", "name": "可观测性：高基数指标与 OTel 采集链路", "kind": "core", "kindLabel": "核心", "transfer": false, "qs": ["Q2"]}, {"id": "D3", "name": "异步阻塞隔离与 Cloud Run 长请求", "kind": "core", "kindLabel": "核心", "transfer": false, "qs": ["Q3"]}, {"id": "D4", "name": "Agent Skill 模块化与金融数字防幻觉", "kind": "core", "kindLabel": "核心", "transfer": false, "qs": ["Q4"]}, {"id": "D5", "name": "Selector 评估三指标与回放命中验证", "kind": "ref", "kindLabel": "参考", "transfer": false, "qs": ["Q5"]}, {"id": "D6", "name": "云原生 ownership：探针配置与密钥管理", "kind": "ref", "kindLabel": "参考", "transfer": false, "qs": ["Q6"]}, {"id": "D7", "name": "表达与可信度", "kind": "gate", "kindLabel": "门槛", "transfer": false, "qs": ["OP", "W"]}], "toggle": null, "next": []}</script>
+<script>(function(){
+var body=document.body,KEY='rgkit:'+body.getAttribute('data-key'),mem={};
+try{var s=localStorage.getItem(KEY);if(s){mem=JSON.parse(s)||{};}}catch(e){mem={};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(mem));}catch(e){}}
+var D=JSON.parse(document.getElementById('kitdata').textContent),W=D.t;
+var inputs=[].slice.call(document.querySelectorAll('[data-k]'));
+function restore(){inputs.forEach(function(el){var k=el.getAttribute('data-k'),v=mem[k];
+ if(el.type==='checkbox'){el.checked=!!v;}else if(el.type==='radio'){el.checked=(v===el.value);}else{el.value=(v==null?'':v);}});}
+restore();
+inputs.forEach(function(el){el.addEventListener(el.tagName==='TEXTAREA'?'input':'change',function(){
+ var k=el.getAttribute('data-k');
+ if(el.type==='checkbox'){mem[k]=el.checked;}else if(el.type==='radio'){if(el.checked){mem[k]=el.value;}}else{mem[k]=el.value;}
+ save();refresh();});});
+function on(k){return !!mem[k];}
+function asked(t){var p=t.n+':';for(var k in mem){if(k.indexOf(p)===0&&mem[k]===true)return true;}
+ return !!(mem['note:'+t.n]&&String(mem['note:'+t.n]).trim());}
+function subAsked(t,i){var s=t.subs[i];if(!s.optional)return asked(t);if(on(t.n+':S'+i+':A'))return true;
+ for(var j=0;j<s.listen.length;j++){if(on(t.n+':S'+i+':L'+j))return true;}return false;}
+function stat(t){var pt=0,ph=0,fl=0;
+ t.subs.forEach(function(s,i){if(!subAsked(t,i))return;s.listen.forEach(function(l,j){if(l.pass){pt++;if(on(t.n+':S'+i+':L'+j))ph++;}});});
+ t.flags.forEach(function(f,i){if(on(t.n+':R'+i))fl++;});return {pt:pt,ph:ph,fl:fl};}
+function byN(n){for(var i=0;i<D.themes.length;i++){if(D.themes[i].n===n)return D.themes[i];}return null;}
+function scores(){var sc={};D.dims.forEach(function(d){var v=mem['score:'+d.id];if(v){sc[d.id]=+v;}});return sc;}
+function suggest(){var core=[],gate=[],sc=scores();
+ D.dims.forEach(function(d){if(d.kind==='core'||(D.toggle&&d.id===D.toggle.dim&&on('toggle')))core.push(d.id);if(d.kind==='gate')gate.push(d.id);});
+ var need=core.concat(gate),i;
+ for(i=0;i<need.length;i++){if(sc[need[i]]===1)return W.fail;}
+ for(i=0;i<need.length;i++){if(!sc[need[i]])return W.incomplete;}
+ var anyOne=D.dims.some(function(d){return sc[d.id]===1;});
+ if(need.every(function(id){return sc[id]>=3;})&&!anyOne)return W.pass;
+ return W.hold;}
+function dimSummary(d){
+ if(d.transfer){var a=[];D.themes.forEach(function(t){var i=t.transferIdx;if(i>=0&&subAsked(t,i))a.push(t.n);});
+  return a.length?(W.transfer_done+a.join(W.list)):W.transfer_none;}
+ var parts=[];d.qs.forEach(function(n){var t=byN(n);if(!t)return;if(!asked(t)){parts.push(n+W.not_rec);return;}
+  var s=stat(t);parts.push(n+W.pass_pts+s.ph+'/'+s.pt+(s.fl?(W.flags+s.fl):''));});
+ return parts.length?(W.summary+parts.join(W.sep)):'';}
+function refresh(){
+ D.themes.forEach(function(t){var el=document.getElementById('sum-'+t.n);if(!el)return;
+  if(!asked(t)){el.textContent='';return;}var s=stat(t);el.textContent=W.sum_pass+s.ph+'/'+s.pt+(s.fl?(W.sum_flags+s.fl):'');});
+ D.dims.forEach(function(d){var el=document.getElementById('auto-'+d.id);if(el)el.textContent=dimSummary(d);});
+ var sg=document.getElementById('suggest');if(sg)sg.textContent=W.by_rule+suggest();}
+refresh();
+function draft(){var L=[],sc=scores(),v=mem.verdict||W.todo_fill,sug=suggest();
+ L.push(W.h_cand+D.cand+' · '+D.role);
+ L.push(W.h_verdict+v+W.lp+W.by_rule+sug+W.rp);
+ L.push(W.h_dims);
+ D.dims.forEach(function(d){var ev=(mem['ev:'+d.id]||'').trim();
+  L.push(d.id+' '+d.name+W.lp+d.kindLabel+W.rp+W.colon+(sc[d.id]?sc[d.id]+W.pts:W.unscored)+W.dot+(ev?(W.evidence+ev):dimSummary(d)));});
+ var heard=[],risks=[],todo=[];
+ D.themes.forEach(function(t){var h=[],r=[],u=[];
+  t.subs.forEach(function(s,i){var sa=subAsked(t,i);s.listen.forEach(function(l,j){
+   if(on(t.n+':S'+i+':L'+j))h.push(l.t);else if(sa&&l.pass)u.push(s.label+W.colon+l.t);});});
+  t.flags.forEach(function(f,i){if(on(t.n+':R'+i))r.push(f);});
+  if(h.length)heard.push(t.n+' '+t.title+W.colon+h.join(W.sep));
+  if(r.length)risks.push(t.n+W.colon+r.join(W.sep));
+  if(asked(t)){if(u.length)todo.push(t.n+W.unheard+u.join(W.sep));}
+  else if(t.must){todo.push(t.n+' '+t.title+W.must_missing);}});
+ L.push(W.h_heard);if(heard.length){heard.forEach(function(x){L.push('- '+x);});}else{L.push(W.none_rec);}
+ L.push(W.h_risks);if(risks.length){risks.forEach(function(x){L.push('- '+x);});}else{L.push(W.no_flags);}
+ L.push(W.h_todo);todo.forEach(function(x){L.push('- '+x);});
+ if(v===W.hold||(v===W.todo_fill&&sug===W.hold)){D.next.forEach(function(x){L.push(W.ref+x);});}
+ else if(!todo.length){L.push(W.none);}
+ var notes=[];D.themes.forEach(function(t){var x=(mem['note:'+t.n]||'').trim();if(x)notes.push(t.n+W.colon+x.replace(/\s*\n\s*/g,W.sep));});
+ if(notes.length){L.push(W.h_notes);notes.forEach(function(x){L.push('- '+x);});}
+ return L.join('\n');}
+var memo=document.getElementById('memo');
+var db=document.getElementById('draftBtn');if(db)db.addEventListener('click',function(){memo.value=draft();mem.memo=memo.value;save();});
+var cb=document.getElementById('copyBtn');if(cb)cb.addEventListener('click',function(){var t=memo.value;
+ function done(){cb.textContent=W.copied;setTimeout(function(){cb.textContent=W.copy;},1500);}
+ function fallback(){memo.focus();memo.select();try{document.execCommand('copy');done();}catch(e){}}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,fallback);}else{fallback();}});
+var T=mem.__timer||{start:null,acc:0};
+var clock=document.getElementById('clock'),segEl=document.getElementById('seg'),tb=document.getElementById('timerBtn');
+function pad(n){return (n<10?'0':'')+n;}
+function elapsed(){return T.acc+(T.start?(Date.now()-T.start):0);}
+function tick(){var ms=elapsed(),m=Math.floor(ms/60000),s=Math.floor(ms/1000)%60;
+ if(clock)clock.textContent=pad(m)+':'+pad(s);
+ if(tb)tb.textContent=T.start?W.pause:(ms>0?W.resume:W.start);
+ var cur=null;D.segs.forEach(function(g){if(m>=g.start&&m<g.end)cur=g;});
+ if(segEl)segEl.textContent=(ms===0||!D.segs.length)?'':(cur?(W.at+cur.label+W.lp+cur.start+'–'+cur.end+W.mins):W.over+D.minutes+W.minute);
+ [].forEach.call(document.querySelectorAll('.qb'),function(b){b.classList.toggle('now',!!(cur&&ms>0&&b.getAttribute('data-seg')===cur.key));});}
+if(tb)tb.addEventListener('click',function(){if(T.start){T.acc=elapsed();T.start=null;}else{T.start=Date.now();}mem.__timer=T;save();tick();});
+setInterval(tick,1000);tick();
+var clr=document.getElementById('clearBtn'),armed=false;
+if(clr)clr.addEventListener('click',function(){if(!armed){armed=true;clr.textContent=W.confirm;
+  setTimeout(function(){armed=false;clr.textContent=W.clear;},3000);return;}
+ mem={};T={start:null,acc:0};save();restore();refresh();tick();armed=false;clr.textContent=W.cleared;
+ setTimeout(function(){clr.textContent=W.clear;},1500);});
+var xb=document.getElementById('expandBtn');
+if(xb)xb.addEventListener('click',function(){var ds=[].slice.call(document.querySelectorAll('main details:not(.resume)'));
+ var open=!ds.every(function(d){return d.open;});ds.forEach(function(d){d.open=open;});xb.textContent=open?W.collapse:W.expand;});
+var pb=document.getElementById('printBtn');if(pb)pb.addEventListener('click',function(){window.print();});
+var sized=[];
+window.addEventListener('beforeprint',function(){[].forEach.call(document.querySelectorAll('textarea'),function(t){if(t.value){sized.push([t,t.style.height]);t.style.height=(t.scrollHeight+4)+'px';}});});
+window.addEventListener('afterprint',function(){sized.forEach(function(p){p[0].style.height=p[1];});sized=[];});
+})();</script>
+</body>
+</html>

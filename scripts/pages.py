@@ -424,9 +424,10 @@ def index_page(payload, L, lang, nav, artifacts):
         for a in artifacts:
             if a["kind"] == "index" or (a["key"] and not d.get(a["key"])):
                 continue
+            href = (a.get("href_by_cid") or {}).get(cid, a["href"])
             tiles.append('<a class="tile" href="%s"><span class="tl">%s</span><span class="td">%s</span>'
                          '<span class="tf">%s</span></a>'
-                         % (esc(a["href"]), esc(a["label"]), esc(a["desc"]), esc(a["href"])))
+                         % (esc(href), esc(a["label"]), esc(a["desc"]), esc(href)))
         body.append('<section class="cand" id="cand-%d">%s<div class="tiles">%s</div></section>'
                     % (i, cand_head(cid, d, L), "".join(tiles)))
     return shell(L, lang, L["index_title"], subtitle_line(meta, L), nav, "\n".join(body))
